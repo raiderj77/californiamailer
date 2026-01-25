@@ -7,9 +7,16 @@ const navItems = [
   { name: 'Dashboard', href: '/' },
   { name: 'Territories', href: '/territories' },
   { name: 'Prospects', href: '/prospects' },
+  { name: 'Activities', href: '/activities' },
   { name: 'Campaigns', href: '/campaigns' },
   { name: 'Tasks', href: '/tasks' },
+  { name: 'Reminders', href: '/reminders' },
+  { name: 'Invoices', href: '/invoices' },
+  { name: 'Reports', href: '/reports' },
   { name: 'Templates', href: '/templates' },
+  { name: 'Clients', href: '/clients' },
+  { name: 'Team', href: '/team' },
+  { name: 'Import', href: '/import' },
   { name: 'Pricing', href: '/pricing' },
 ];
 
