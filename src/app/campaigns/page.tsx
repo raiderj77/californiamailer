@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { 
   Campaign, getCampaigns, addCampaign, updateCampaign, deleteCampaign,
   Territory, getTerritories 
-} from '@/lib/firestore';
+} from '@/lib/firestore'; import { downloadCSV } from '@/lib/csv';
 
 type CampaignType = 'eddm' | 'coop' | 'solo';
 type CampaignStatus = 'planning' | 'scheduled' | 'mailed' | 'completed';
@@ -42,6 +42,11 @@ export default function CampaignsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
+
+  // Filters
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [filterTerritory, setFilterTerritory] = useState('all');
 
   useEffect(() => {
     if (user) {
@@ -129,6 +134,14 @@ export default function CampaignsPage() {
     solo: 'Solo Mail',
   };
 
+  // Filter campaigns
+  const filteredCampaigns = campaigns.filter(c => {
+    if (filterStatus !== 'all' && c.status !== filterStatus) return false;
+    if (filterType !== 'all' && c.type !== filterType) return false;
+    if (filterTerritory !== 'all' && c.territoryId !== filterTerritory) return false;
+    return true;
+  });
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
   }
@@ -156,6 +169,62 @@ export default function CampaignsPage() {
             <button onClick={resetForm} className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
               + New Campaign
             </button>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div className="flex gap-4 items-center flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="planning">Planning</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="mailed">Mailed</option>
+                <option value="completed">Completed</option>
+              </select>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Types</option>
+                <option value="eddm">EDDM</option>
+                <option value="coop">9x12 Co-op</option>
+                <option value="solo">Solo Mail</option>
+              </select>
+              <select
+                value={filterTerritory}
+                onChange={(e) => setFilterTerritory(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Territories</option>
+                {territories.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <span className="text-sm text-gray-500">
+                Showing {filteredCampaigns.length} of {campaigns.length}
+              </span>
+              <button
+                onClick={() => downloadCSV(filteredCampaigns.map(c => ({
+                  'Name': c.name,
+                  'Type': c.type,
+                  'Territory': c.territoryName,
+                  'Mail Date': c.mailDate,
+                  'Quantity': c.quantity,
+                  'Cost': c.cost,
+                  'Status': c.status,
+                  'Notes': c.notes,
+                })), 'campaigns')}
+                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
 
           {showForm && (
@@ -262,9 +331,11 @@ export default function CampaignsPage() {
             </div>
           )}
 
-          {campaigns.length === 0 ? (
+          {filteredCampaigns.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <p className="text-gray-500">No campaigns yet. Create your first campaign.</p>
+              <p className="text-gray-500">
+                {campaigns.length === 0 ? 'No campaigns yet. Create your first campaign.' : 'No campaigns match the current filters.'}
+              </p>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -281,7 +352,7 @@ export default function CampaignsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {campaigns.map((c) => (
+                  {filteredCampaigns.map((c) => (
                     <tr key={c.id}>
                       <td className="px-4 py-3">{c.name}</td>
                       <td className="px-4 py-3">{typeLabels[c.type]}</td>

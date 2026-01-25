@@ -7,6 +7,7 @@ import {
   Prospect, getProspects, addProspect, updateProspect, deleteProspect,
   Territory, getTerritories 
 } from '@/lib/firestore';
+import { downloadCSV } from '@/lib/csv';
 
 type ProspectStatus = 'new' | 'contacted' | 'interested' | 'proposal' | 'closed' | 'lost';
 
@@ -43,6 +44,10 @@ export default function ProspectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
+  
+  // Filters
+  const [filterTerritory, setFilterTerritory] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
     if (user) {
@@ -127,6 +132,13 @@ export default function ProspectsPage() {
     lost: 'bg-gray-100 text-gray-700',
   };
 
+  // Filter prospects
+  const filteredProspects = prospects.filter(p => {
+    if (filterTerritory !== 'all' && p.territoryId !== filterTerritory) return false;
+    if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+    return true;
+  });
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
   }
@@ -154,6 +166,55 @@ export default function ProspectsPage() {
             <button onClick={resetForm} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
               + Add Prospect
             </button>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div className="flex gap-4 items-center flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <select
+                value={filterTerritory}
+                onChange={(e) => setFilterTerritory(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Territories</option>
+                {territories.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="new">New</option>
+                <option value="contacted">Contacted</option>
+                <option value="interested">Interested</option>
+                <option value="proposal">Proposal</option>
+                <option value="closed">Closed</option>
+                <option value="lost">Lost</option>
+              </select>
+              <span className="text-sm text-gray-500">
+                Showing {filteredProspects.length} of {prospects.length}
+              </span>
+              <button
+                onClick={() => downloadCSV(filteredProspects.map(p => ({
+                  'Business Name': p.businessName,
+                  'Contact Name': p.contactName,
+                  'Email': p.email,
+                  'Phone': p.phone,
+                  'Address': p.address,
+                  'City': p.city,
+                  'Territory': p.territoryName,
+                  'Status': p.status,
+                  'Notes': p.notes,
+                })), 'prospects')}
+                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
 
           {showForm && (
@@ -267,9 +328,11 @@ export default function ProspectsPage() {
             </div>
           )}
 
-          {prospects.length === 0 ? (
+          {filteredProspects.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <p className="text-gray-500">No prospects yet. Add your first lead.</p>
+              <p className="text-gray-500">
+                {prospects.length === 0 ? 'No prospects yet. Add your first lead.' : 'No prospects match the current filters.'}
+              </p>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -284,7 +347,7 @@ export default function ProspectsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {prospects.map((p) => (
+                  {filteredProspects.map((p) => (
                     <tr key={p.id}>
                       <td className="px-4 py-3">
                         <div>{p.businessName}</div>
