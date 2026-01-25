@@ -8,6 +8,7 @@ const navItems = [
   { name: 'Territories', href: '/territories' },
   { name: 'Prospects', href: '/prospects' },
   { name: 'Campaigns', href: '/campaigns' },
+  { name: 'Pricing', href: '/pricing' },
 ];
 
 export default function Sidebar() {
