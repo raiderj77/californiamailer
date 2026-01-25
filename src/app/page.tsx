@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/AuthContext';
+import Sidebar from '@/components/Sidebar';
 
 export default function Home() {
   const { user, loading, signInWithGoogle, logout } = useAuth();
@@ -31,25 +32,44 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900">CaliforniaMailer</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600">{user.email}</span>
-            <button
-              onClick={logout}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              Sign out
-            </button>
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar />
+      <div className="flex-1">
+        <header className="bg-white shadow-sm">
+          <div className="px-6 py-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold text-gray-900">CaliforniaMailer</h1>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600">{user.email}</span>
+              <button
+                onClick={logout}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Dashboard</h2>
-        <p className="text-gray-600">Welcome, {user.displayName || user.email}</p>
-      </main>
+        </header>
+        <main className="p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-medium text-gray-900">Territories</h3>
+              <p className="text-3xl font-bold text-blue-600 mt-2">0</p>
+              <p className="text-gray-500 text-sm mt-1">Active markets</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-medium text-gray-900">Prospects</h3>
+              <p className="text-3xl font-bold text-green-600 mt-2">0</p>
+              <p className="text-gray-500 text-sm mt-1">Total leads</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-medium text-gray-900">Campaigns</h3>
+              <p className="text-3xl font-bold text-purple-600 mt-2">0</p>
+              <p className="text-gray-500 text-sm mt-1">Active campaigns</p>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
