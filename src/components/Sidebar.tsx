@@ -9,6 +9,7 @@ const navItems = [
   { name: 'Prospects', href: '/prospects' },
   { name: 'Activities', href: '/activities' },
   { name: 'Campaigns', href: '/campaigns' },
+  { name: 'Calendar', href: '/calendar' },
   { name: 'Tasks', href: '/tasks' },
   { name: 'Reminders', href: '/reminders' },
   { name: 'Invoices', href: '/invoices' },
