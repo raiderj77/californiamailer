@@ -188,3 +188,43 @@ export async function updateVATask(id: string, data: Partial<VATask>) {
 export async function deleteVATask(id: string) {
   await deleteDoc(doc(db, 'vatasks', id));
 }
+// Email Template Types
+export interface EmailTemplate {
+  id?: string;
+  name: string;
+  subject: string;
+  body: string;
+  category: 'intro' | 'followup' | 'proposal' | 'other';
+  userId: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+// Email Templates
+export async function addEmailTemplate(template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>) {
+  const docRef = await addDoc(collection(db, 'emailtemplates'), {
+    ...template,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getEmailTemplates(userId: string) {
+  const q = query(
+    collection(db, 'emailtemplates'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as EmailTemplate));
+}
+
+export async function updateEmailTemplate(id: string, data: Partial<EmailTemplate>) {
+  const docRef = doc(db, 'emailtemplates', id);
+  await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function deleteEmailTemplate(id: string) {
+  await deleteDoc(doc(db, 'emailtemplates', id));
+}
