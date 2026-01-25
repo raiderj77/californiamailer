@@ -5,20 +5,34 @@ import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
 import { Territory, getTerritories, addTerritory, updateTerritory, deleteTerritory } from '@/lib/firestore';
 
+type TerritoryStatus = 'active' | 'research' | 'inactive';
+
+interface FormData {
+  name: string;
+  county: string;
+  cities: string;
+  households: number;
+  avgIncome: number;
+  status: TerritoryStatus;
+  notes: string;
+}
+
+const emptyForm: FormData = {
+  name: '',
+  county: '',
+  cities: '',
+  households: 0,
+  avgIncome: 0,
+  status: 'research',
+  notes: '',
+};
+
 export default function TerritoriesPage() {
   const { user, loading, logout } = useAuth();
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Territory | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    county: '',
-    cities: '',
-    households: 0,
-    avgIncome: 0,
-    status: 'research' as const,
-    notes: '',
-  });
+  const [formData, setFormData] = useState<FormData>(emptyForm);
 
   useEffect(() => {
     if (user) {
@@ -44,7 +58,7 @@ export default function TerritoriesPage() {
 
     setShowForm(false);
     setEditing(null);
-    setFormData({ name: '', county: '', cities: '', households: 0, avgIncome: 0, status: 'research', notes: '' });
+    setFormData(emptyForm);
     loadTerritories();
   }
 
@@ -67,6 +81,12 @@ export default function TerritoriesPage() {
       notes: territory.notes,
     });
     setShowForm(true);
+  }
+
+  function resetForm() {
+    setShowForm(true);
+    setEditing(null);
+    setFormData(emptyForm);
   }
 
   if (loading) {
@@ -93,10 +113,7 @@ export default function TerritoriesPage() {
         <main className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Territories</h2>
-            <button
-              onClick={() => { setShowForm(true); setEditing(null); setFormData({ name: '', county: '', cities: '', households: 0, avgIncome: 0, status: 'research', notes: '' }); }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
+            <button onClick={resetForm} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
               + Add Territory
             </button>
           </div>
@@ -107,7 +124,7 @@ export default function TerritoriesPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <label className="block text-sm font-medium mb-1">Name</label>
                     <input
                       type="text"
                       value={formData.name}
@@ -117,7 +134,7 @@ export default function TerritoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">County</label>
+                    <label className="block text-sm font-medium mb-1">County</label>
                     <input
                       type="text"
                       value={formData.county}
@@ -127,7 +144,7 @@ export default function TerritoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cities</label>
+                    <label className="block text-sm font-medium mb-1">Cities</label>
                     <input
                       type="text"
                       value={formData.cities}
@@ -137,7 +154,7 @@ export default function TerritoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Households</label>
+                    <label className="block text-sm font-medium mb-1">Households</label>
                     <input
                       type="number"
                       value={formData.households}
@@ -146,7 +163,7 @@ export default function TerritoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Avg Income</label>
+                    <label className="block text-sm font-medium mb-1">Avg Income</label>
                     <input
                       type="number"
                       value={formData.avgIncome}
@@ -155,10 +172,10 @@ export default function TerritoriesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium mb-1">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as TerritoryStatus })}
                       className="w-full border rounded-lg px-3 py-2"
                     >
                       <option value="research">Research</option>
@@ -168,7 +185,7 @@ export default function TerritoriesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium mb-1">Notes</label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}

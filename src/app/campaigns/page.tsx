@@ -8,23 +8,40 @@ import {
   Territory, getTerritories 
 } from '@/lib/firestore';
 
+type CampaignType = 'eddm' | 'coop' | 'solo';
+type CampaignStatus = 'planning' | 'scheduled' | 'mailed' | 'completed';
+
+interface FormData {
+  name: string;
+  type: CampaignType;
+  territoryId: string;
+  territoryName: string;
+  mailDate: string;
+  quantity: number;
+  cost: number;
+  status: CampaignStatus;
+  notes: string;
+}
+
+const emptyForm: FormData = {
+  name: '',
+  type: 'eddm',
+  territoryId: '',
+  territoryName: '',
+  mailDate: '',
+  quantity: 0,
+  cost: 0,
+  status: 'planning',
+  notes: '',
+};
+
 export default function CampaignsPage() {
   const { user, loading, logout } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'eddm' as const,
-    territoryId: '',
-    territoryName: '',
-    mailDate: '',
-    quantity: 0,
-    cost: 0,
-    status: 'planning' as const,
-    notes: '',
-  });
+  const [formData, setFormData] = useState<FormData>(emptyForm);
 
   useEffect(() => {
     if (user) {
@@ -66,7 +83,7 @@ export default function CampaignsPage() {
 
     setShowForm(false);
     setEditing(null);
-    setFormData({ name: '', type: 'eddm', territoryId: '', territoryName: '', mailDate: '', quantity: 0, cost: 0, status: 'planning', notes: '' });
+    setFormData(emptyForm);
     loadCampaigns();
   }
 
@@ -96,7 +113,7 @@ export default function CampaignsPage() {
   function resetForm() {
     setShowForm(true);
     setEditing(null);
-    setFormData({ name: '', type: 'eddm', territoryId: '', territoryName: '', mailDate: '', quantity: 0, cost: 0, status: 'planning', notes: '' });
+    setFormData(emptyForm);
   }
 
   const statusColors: Record<string, string> = {
@@ -160,7 +177,7 @@ export default function CampaignsPage() {
                     <label className="block text-sm font-medium mb-1">Type</label>
                     <select
                       value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value as CampaignType })}
                       className="w-full border rounded-lg px-3 py-2"
                     >
                       <option value="eddm">EDDM</option>
@@ -214,7 +231,7 @@ export default function CampaignsPage() {
                     <label className="block text-sm font-medium mb-1">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as CampaignStatus })}
                       className="w-full border rounded-lg px-3 py-2"
                     >
                       <option value="planning">Planning</option>

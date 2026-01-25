@@ -8,24 +8,41 @@ import {
   Territory, getTerritories 
 } from '@/lib/firestore';
 
+type ProspectStatus = 'new' | 'contacted' | 'interested' | 'proposal' | 'closed' | 'lost';
+
+interface FormData {
+  businessName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  territoryId: string;
+  territoryName: string;
+  status: ProspectStatus;
+  notes: string;
+}
+
+const emptyForm: FormData = {
+  businessName: '',
+  contactName: '',
+  email: '',
+  phone: '',
+  address: '',
+  city: '',
+  territoryId: '',
+  territoryName: '',
+  status: 'new',
+  notes: '',
+};
+
 export default function ProspectsPage() {
   const { user, loading, logout } = useAuth();
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Prospect | null>(null);
-  const [formData, setFormData] = useState({
-    businessName: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    territoryId: '',
-    territoryName: '',
-    status: 'new' as const,
-    notes: '',
-  });
+  const [formData, setFormData] = useState<FormData>(emptyForm);
 
   useEffect(() => {
     if (user) {
@@ -67,7 +84,7 @@ export default function ProspectsPage() {
 
     setShowForm(false);
     setEditing(null);
-    setFormData({ businessName: '', contactName: '', email: '', phone: '', address: '', city: '', territoryId: '', territoryName: '', status: 'new', notes: '' });
+    setFormData(emptyForm);
     loadProspects();
   }
 
@@ -98,7 +115,7 @@ export default function ProspectsPage() {
   function resetForm() {
     setShowForm(true);
     setEditing(null);
-    setFormData({ businessName: '', contactName: '', email: '', phone: '', address: '', city: '', territoryId: '', territoryName: '', status: 'new', notes: '' });
+    setFormData(emptyForm);
   }
 
   const statusColors: Record<string, string> = {
@@ -217,7 +234,7 @@ export default function ProspectsPage() {
                     <label className="block text-sm font-medium mb-1">Status</label>
                     <select
                       value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as ProspectStatus })}
                       className="w-full border rounded-lg px-3 py-2"
                     >
                       <option value="new">New</option>
