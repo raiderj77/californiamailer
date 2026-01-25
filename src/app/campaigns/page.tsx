@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import { 
   Campaign, getCampaigns, addCampaign, updateCampaign, deleteCampaign,
   Territory, getTerritories 
-} from '@/lib/firestore'; import { downloadCSV } from '@/lib/csv';
+} from '@/lib/firestore';
+import { downloadCSV } from '@/lib/csv';
 
 type CampaignType = 'eddm' | 'coop' | 'solo';
 type CampaignStatus = 'planning' | 'scheduled' | 'mailed' | 'completed';
@@ -47,6 +48,7 @@ export default function CampaignsPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterTerritory, setFilterTerritory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -134,11 +136,16 @@ export default function CampaignsPage() {
     solo: 'Solo Mail',
   };
 
-  // Filter campaigns
+  // Filter and search
   const filteredCampaigns = campaigns.filter(c => {
     if (filterStatus !== 'all' && c.status !== filterStatus) return false;
     if (filterType !== 'all' && c.type !== filterType) return false;
     if (filterTerritory !== 'all' && c.territoryId !== filterTerritory) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return c.name.toLowerCase().includes(query) || 
+             c.territoryName.toLowerCase().includes(query);
+    }
     return true;
   });
 
@@ -174,7 +181,13 @@ export default function CampaignsPage() {
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
             <div className="flex gap-4 items-center flex-wrap">
-              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <input
+                type="text"
+                placeholder="Search campaigns..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm w-64"
+              />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}

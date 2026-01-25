@@ -146,3 +146,45 @@ export async function updateCampaign(id: string, data: Partial<Campaign>) {
 export async function deleteCampaign(id: string) {
   await deleteDoc(doc(db, 'campaigns', id));
 }
+// VA Task Types
+export interface VATask {
+  id?: string;
+  title: string;
+  description: string;
+  assignee: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in-progress' | 'completed';
+  dueDate: string;
+  userId: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+// VA Tasks
+export async function addVATask(task: Omit<VATask, 'id' | 'createdAt' | 'updatedAt'>) {
+  const docRef = await addDoc(collection(db, 'vatasks'), {
+    ...task,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function getVATasks(userId: string) {
+  const q = query(
+    collection(db, 'vatasks'),
+    where('userId', '==', userId),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as VATask));
+}
+
+export async function updateVATask(id: string, data: Partial<VATask>) {
+  const docRef = doc(db, 'vatasks', id);
+  await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+}
+
+export async function deleteVATask(id: string) {
+  await deleteDoc(doc(db, 'vatasks', id));
+}

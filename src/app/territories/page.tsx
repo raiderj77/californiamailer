@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import Sidebar from '@/components/Sidebar';
 import { useState, useEffect } from 'react';
 import { Territory, getTerritories, addTerritory, updateTerritory, deleteTerritory } from '@/lib/firestore';
+import { downloadCSV } from '@/lib/csv';
 
 type TerritoryStatus = 'active' | 'research' | 'inactive';
 
@@ -33,6 +34,10 @@ export default function TerritoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Territory | null>(null);
   const [formData, setFormData] = useState<FormData>(emptyForm);
+  
+  // Filters
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -89,6 +94,18 @@ export default function TerritoriesPage() {
     setFormData(emptyForm);
   }
 
+  // Filter and search
+  const filteredTerritories = territories.filter(t => {
+    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return t.name.toLowerCase().includes(query) || 
+             t.county.toLowerCase().includes(query) ||
+             t.cities.toLowerCase().includes(query);
+    }
+    return true;
+  });
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
   }
@@ -116,6 +133,46 @@ export default function TerritoriesPage() {
             <button onClick={resetForm} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
               + Add Territory
             </button>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div className="flex gap-4 items-center flex-wrap">
+              <input
+                type="text"
+                placeholder="Search territories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm w-64"
+              />
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="research">Research</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <span className="text-sm text-gray-500">
+                Showing {filteredTerritories.length} of {territories.length}
+              </span>
+              <button
+                onClick={() => downloadCSV(filteredTerritories.map(t => ({
+                  'Name': t.name,
+                  'County': t.county,
+                  'Cities': t.cities,
+                  'Households': t.households,
+                  'Avg Income': t.avgIncome,
+                  'Status': t.status,
+                  'Notes': t.notes,
+                })), 'territories')}
+                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
 
           {showForm && (
@@ -205,9 +262,11 @@ export default function TerritoriesPage() {
             </div>
           )}
 
-          {territories.length === 0 ? (
+          {filteredTerritories.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm border p-6">
-              <p className="text-gray-500">No territories yet. Add your first market area.</p>
+              <p className="text-gray-500">
+                {territories.length === 0 ? 'No territories yet. Add your first market area.' : 'No territories match the current filters.'}
+              </p>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -217,16 +276,18 @@ export default function TerritoriesPage() {
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Name</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">County</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Households</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Avg Income</th>
                     <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">Status</th>
                     <th className="text-right px-4 py-3 text-sm font-medium text-gray-700">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {territories.map((t) => (
+                  {filteredTerritories.map((t) => (
                     <tr key={t.id}>
                       <td className="px-4 py-3">{t.name}</td>
                       <td className="px-4 py-3">{t.county}</td>
                       <td className="px-4 py-3">{t.households.toLocaleString()}</td>
+                      <td className="px-4 py-3">${t.avgIncome.toLocaleString()}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded text-xs ${
                           t.status === 'active' ? 'bg-green-100 text-green-700' :

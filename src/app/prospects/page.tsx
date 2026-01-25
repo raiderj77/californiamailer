@@ -48,6 +48,7 @@ export default function ProspectsPage() {
   // Filters
   const [filterTerritory, setFilterTerritory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -132,10 +133,17 @@ export default function ProspectsPage() {
     lost: 'bg-gray-100 text-gray-700',
   };
 
-  // Filter prospects
+  // Filter and search
   const filteredProspects = prospects.filter(p => {
     if (filterTerritory !== 'all' && p.territoryId !== filterTerritory) return false;
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return p.businessName.toLowerCase().includes(query) || 
+             p.contactName.toLowerCase().includes(query) ||
+             p.email.toLowerCase().includes(query) ||
+             p.city.toLowerCase().includes(query);
+    }
     return true;
   });
 
@@ -171,7 +179,13 @@ export default function ProspectsPage() {
           {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
             <div className="flex gap-4 items-center flex-wrap">
-              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <input
+                type="text"
+                placeholder="Search prospects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="border rounded-lg px-3 py-2 text-sm w-64"
+              />
               <select
                 value={filterTerritory}
                 onChange={(e) => setFilterTerritory(e.target.value)}
