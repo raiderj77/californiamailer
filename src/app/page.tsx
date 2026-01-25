@@ -2,9 +2,32 @@
 
 import { useAuth } from '@/lib/AuthContext';
 import Sidebar from '@/components/Sidebar';
+import { useState, useEffect } from 'react';
+import { getTerritories, getProspects, getCampaigns } from '@/lib/firestore';
 
 export default function Home() {
   const { user, loading, signInWithGoogle, logout } = useAuth();
+  const [counts, setCounts] = useState({ territories: 0, prospects: 0, campaigns: 0 });
+
+  useEffect(() => {
+    if (user) {
+      loadCounts();
+    }
+  }, [user]);
+
+  async function loadCounts() {
+    if (!user) return;
+    const [territories, prospects, campaigns] = await Promise.all([
+      getTerritories(user.uid),
+      getProspects(user.uid),
+      getCampaigns(user.uid),
+    ]);
+    setCounts({
+      territories: territories.filter(t => t.status === 'active').length,
+      prospects: prospects.length,
+      campaigns: campaigns.filter(c => c.status !== 'completed').length,
+    });
+  }
 
   if (loading) {
     return (
@@ -54,17 +77,17 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h3 className="text-lg font-medium text-gray-900">Territories</h3>
-              <p className="text-3xl font-bold text-blue-600 mt-2">0</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{counts.territories}</p>
               <p className="text-gray-500 text-sm mt-1">Active markets</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h3 className="text-lg font-medium text-gray-900">Prospects</h3>
-              <p className="text-3xl font-bold text-green-600 mt-2">0</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{counts.prospects}</p>
               <p className="text-gray-500 text-sm mt-1">Total leads</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border">
               <h3 className="text-lg font-medium text-gray-900">Campaigns</h3>
-              <p className="text-3xl font-bold text-purple-600 mt-2">0</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">{counts.campaigns}</p>
               <p className="text-gray-500 text-sm mt-1">Active campaigns</p>
             </div>
           </div>
