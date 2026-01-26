@@ -1,432 +1,205 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useState } from 'react';
-
-interface CoopCampaign {
-  id: string;
-  name: string;
-  city: string;
-  neighborhood: string;
-  mailDate: string;
-  quantity: number;
-  totalSpots: number;
-  soldSpots: number;
-  pricePerSpot: number;
-  cardSize: string;
-  status: 'booking' | 'filling' | 'almost-full' | 'full' | 'printing' | 'mailed';
-  takenCategories: string[];
-}
-
-// Demo data - in production this would come from Firestore
-const campaigns: CoopCampaign[] = [
-  {
-    id: 'sal-48',
-    name: 'Salinas #48',
-    city: 'Salinas',
-    neighborhood: 'Creekbridge / Santa Rita',
-    mailDate: '2026-02-15',
-    quantity: 12500,
-    totalSpots: 10,
-    soldSpots: 6,
-    pricePerSpot: 399,
-    cardSize: '9x12',
-    status: 'filling',
-    takenCategories: ['HVAC', 'Plumbing', 'Roofing', 'Real Estate', 'Dental', 'Pizza'],
-  },
-  {
-    id: 'mon-22',
-    name: 'Monterey #22',
-    city: 'Monterey',
-    neighborhood: 'Del Monte / New Monterey',
-    mailDate: '2026-02-20',
-    quantity: 8200,
-    totalSpots: 10,
-    soldSpots: 8,
-    pricePerSpot: 449,
-    cardSize: '9x12',
-    status: 'almost-full',
-    takenCategories: ['HVAC', 'Plumbing', 'Electrician', 'Real Estate', 'Restaurant', 'Gym', 'Salon', 'Auto Repair'],
-  },
-  {
-    id: 'car-13',
-    name: 'Carmel Valley #13',
-    city: 'Carmel Valley',
-    neighborhood: 'Carmel Valley Village',
-    mailDate: '2026-02-28',
-    quantity: 6800,
-    totalSpots: 8,
-    soldSpots: 3,
-    pricePerSpot: 549,
-    cardSize: '9x12',
-    status: 'booking',
-    takenCategories: ['Real Estate', 'Landscaping', 'Wine Shop'],
-  },
-  {
-    id: 'pg-09',
-    name: 'Pacific Grove #9',
-    city: 'Pacific Grove',
-    neighborhood: 'Downtown / Asilomar',
-    mailDate: '2026-03-01',
-    quantity: 7500,
-    totalSpots: 10,
-    soldSpots: 4,
-    pricePerSpot: 425,
-    cardSize: '9x12',
-    status: 'filling',
-    takenCategories: ['Restaurant', 'Yoga Studio', 'Pet Store', 'Bakery'],
-  },
-  {
-    id: 'sea-15',
-    name: 'Seaside #15',
-    city: 'Seaside',
-    neighborhood: 'Broadway / Fremont',
-    mailDate: '2026-03-10',
-    quantity: 9200,
-    totalSpots: 10,
-    soldSpots: 2,
-    pricePerSpot: 349,
-    cardSize: '9x12',
-    status: 'booking',
-    takenCategories: ['Auto Repair', 'Tax Service'],
-  },
-  {
-    id: 'sal-49',
-    name: 'Salinas #49',
-    city: 'Salinas',
-    neighborhood: 'North Salinas / Harden Ranch',
-    mailDate: '2026-03-15',
-    quantity: 14000,
-    totalSpots: 12,
-    soldSpots: 0,
-    pricePerSpot: 379,
-    cardSize: '9x12',
-    status: 'booking',
-    takenCategories: [],
-  },
-];
-
-const allCategories = [
-  'HVAC', 'Plumbing', 'Electrician', 'Roofing', 'Landscaping', 'Pest Control',
-  'Real Estate', 'Mortgage', 'Insurance', 'Financial Advisor',
-  'Restaurant', 'Pizza', 'Coffee Shop', 'Bakery', 'Catering',
-  'Dental', 'Chiropractor', 'Medical', 'Veterinarian', 'Pharmacy',
-  'Gym', 'Yoga Studio', 'Salon', 'Spa', 'Barber',
-  'Auto Repair', 'Car Wash', 'Tire Shop',
-  'Attorney', 'Accountant', 'Tax Service',
-  'Pet Store', 'Groomer', 'Daycare',
-  'Other',
-];
+import { getAvailableCoopSpots, CoopSpot } from '@/lib/firestore';
 
 export default function CoopBoardPage() {
-  const [cityFilter, setCityFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [selectedCampaign, setSelectedCampaign] = useState<CoopCampaign | null>(null);
+  const [spots, setSpots] = useState<CoopSpot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
-  const filteredCampaigns = campaigns.filter((c) => {
-    if (cityFilter !== 'all' && c.city !== cityFilter) return false;
-    if (categoryFilter && c.takenCategories.includes(categoryFilter)) return false;
-    if (c.status === 'full' || c.status === 'printing' || c.status === 'mailed') return false;
-    return true;
+  useEffect(() => {
+    loadSpots();
+  }, []);
+
+  async function loadSpots() {
+    try {
+      const data = await getAvailableCoopSpots();
+      setSpots(data);
+    } catch (error) {
+      console.error('Error loading spots:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const cities = [...new Set(spots.map(s => s.city))].sort();
+  const months = [...new Set(spots.map(s => {
+    const date = new Date(s.mailDate);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }))].sort();
+
+  const filteredSpots = spots.filter(spot => {
+    const matchCity = selectedCity === 'all' || spot.city === selectedCity;
+    const spotMonth = new Date(spot.mailDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const matchMonth = selectedMonth === 'all' || spotMonth === selectedMonth;
+    return matchCity && matchMonth;
   });
 
-  const getStatusBadge = (status: CoopCampaign['status'], soldSpots: number, totalSpots: number) => {
-    const fillRate = (soldSpots / totalSpots) * 100;
-    
-    if (status === 'full') return <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">Full</span>;
-    if (status === 'printing') return <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">Printing</span>;
-    if (status === 'mailed') return <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Mailed</span>;
-    if (fillRate >= 80) return <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Almost Full!</span>;
-    if (fillRate >= 50) return <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">Filling Fast</span>;
-    return <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Booking Now</span>;
-  };
+  const groupedSpots = filteredSpots.reduce((acc, spot) => {
+    if (!acc[spot.campaignId]) {
+      acc[spot.campaignId] = {
+        campaignName: spot.campaignName,
+        territory: spot.territory || '',
+        city: spot.city,
+        mailDate: spot.mailDate,
+        households: spot.households,
+        spots: []
+      };
+    }
+    acc[spot.campaignId].spots.push(spot);
+    return acc;
+  }, {} as Record<string, { campaignName: string; territory: string; city: string; mailDate: string; households: number; spots: CoopSpot[] }>);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { 
-      month: 'short', 
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/home" className="text-2xl font-bold text-blue-600">CaliforniaMailer</Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/services" className="text-gray-600 hover:text-gray-900">Services</Link>
-            <Link href="/home#areas" className="text-gray-600 hover:text-gray-900">Areas</Link>
-            <Link href="/quote" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Get a Quote</Link>
-            <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">Client Login</Link>
+      <header className="bg-blue-600 text-white">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/home" className="text-2xl font-bold">CaliforniaMailer</Link>
+          <nav className="hidden md:flex gap-6">
+            <Link href="/home" className="hover:text-blue-200">Home</Link>
+            <Link href="/services" className="hover:text-blue-200">Services</Link>
+            <Link href="/coop-board" className="hover:text-blue-200 font-semibold">Co-op Board</Link>
+            <Link href="/quote" className="hover:text-blue-200">Get Quote</Link>
+          </nav>
+        </div>
+      </header>
+
+      <section className="bg-gradient-to-r from-green-600 to-green-800 text-white py-12 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl font-bold mb-4">Co-op Postcard Board</h1>
+          <p className="text-xl text-green-100 mb-6">Reserve your spot on upcoming 9x12 co-op mailings in Monterey County</p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            <div className="bg-white/20 rounded-full px-4 py-2">✓ 10,000+ households per mailing</div>
+            <div className="bg-white/20 rounded-full px-4 py-2">✓ Category exclusivity</div>
+            <div className="bg-white/20 rounded-full px-4 py-2">✓ Professional design included</div>
           </div>
         </div>
-      </nav>
+      </section>
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Co-op Postcard Board</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Reserve your spot on an upcoming community postcard. Each card goes to thousands of homes 
-            with only ONE business per category — no competitors!
-          </p>
+      <section className="bg-white border-b py-4 px-4 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto flex flex-wrap gap-4 items-center">
+          <div className="font-semibold text-gray-700">Filter:</div>
+          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="border rounded-lg px-4 py-2 bg-white">
+            <option value="all">All Cities</option>
+            {cities.map(city => (<option key={city} value={city}>{city}</option>))}
+          </select>
+          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border rounded-lg px-4 py-2 bg-white">
+            <option value="all">All Months</option>
+            {months.map(month => (<option key={month} value={month}>{month}</option>))}
+          </select>
+          <div className="ml-auto text-sm text-gray-500">{filteredSpots.length} spot{filteredSpots.length !== 1 ? 's' : ''} available</div>
         </div>
+      </section>
 
-        {/* Filters */}
-        <div className="bg-white rounded-xl border p-4 mb-8 flex flex-wrap gap-4 items-center">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Filter by City</label>
-            <select
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2"
-            >
-              <option value="all">All Cities</option>
-              <option value="Salinas">Salinas</option>
-              <option value="Monterey">Monterey</option>
-              <option value="Carmel Valley">Carmel Valley</option>
-              <option value="Pacific Grove">Pacific Grove</option>
-              <option value="Seaside">Seaside</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Your Business Category</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border rounded-lg px-3 py-2"
-            >
-              <option value="">Show all campaigns</option>
-              {allCategories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+      <section className="py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading available spots...</p>
+            </div>
+          ) : Object.keys(groupedSpots).length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border">
+              <div className="text-4xl mb-4">📭</div>
+              <h3 className="text-xl font-semibold mb-2">No spots available</h3>
+              <p className="text-gray-500 mb-6">Check back soon for new co-op mailings!</p>
+              <Link href="/quote" className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">Request Custom Quote</Link>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedSpots).map(([campaignId, campaign]) => (
+                <div key={campaignId} className="bg-white rounded-xl border overflow-hidden">
+                  <div className="bg-gray-50 border-b px-6 py-4">
+                    <div className="flex flex-wrap justify-between items-start gap-4">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900">{campaign.campaignName}</h2>
+                        <p className="text-gray-600">{campaign.territory} • {campaign.city}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-500">Mail Date</div>
+                        <div className="font-semibold text-green-600">{formatDate(campaign.mailDate)}</div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-600">
+                      <span>📬 {campaign.households.toLocaleString()} households</span>
+                      <span>📋 {campaign.spots.length} spot{campaign.spots.length !== 1 ? 's' : ''} available</span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {campaign.spots.map(spot => (
+                        <div key={spot.id} className="border-2 border-dashed border-green-300 rounded-xl p-4 hover:border-green-500 hover:bg-green-50 transition-colors">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="text-sm text-gray-500">Spot #{spot.spotNumber}</div>
+                              {spot.category && (<div className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mt-1">{spot.category} reserved</div>)}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-green-600">${spot.price}</div>
+                            </div>
+                          </div>
+                          <Link href={`/quote?type=coop&spot=${spot.id}&campaign=${campaignId}`} className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg font-semibold transition-colors">Reserve This Spot</Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ))}
-            </select>
-          </div>
-          {categoryFilter && (
-            <div className="text-sm text-gray-500 ml-auto">
-              Showing campaigns with <span className="font-medium text-green-600">{categoryFilter}</span> spot available
             </div>
           )}
         </div>
+      </section>
 
-        {/* Campaign Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCampaigns.map((campaign) => {
-            const spotsLeft = campaign.totalSpots - campaign.soldSpots;
-            const fillRate = (campaign.soldSpots / campaign.totalSpots) * 100;
-            const costPerHome = (campaign.pricePerSpot / campaign.quantity * campaign.totalSpots).toFixed(3);
-
-            return (
-              <div
-                key={campaign.id}
-                className="bg-white rounded-xl border hover:shadow-lg transition-shadow overflow-hidden"
-              >
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg">{campaign.name}</h3>
-                      <p className="text-blue-100 text-sm">{campaign.neighborhood}</p>
-                    </div>
-                    {getStatusBadge(campaign.status, campaign.soldSpots, campaign.totalSpots)}
-                  </div>
-                </div>
-
-                {/* Body */}
-                <div className="p-4">
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-2 mb-4 text-center">
-                    <div className="bg-gray-50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-gray-900">{campaign.quantity.toLocaleString()}</div>
-                      <div className="text-xs text-gray-500">Homes</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-green-600">{spotsLeft}</div>
-                      <div className="text-xs text-gray-500">Spots Left</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-2">
-                      <div className="text-lg font-bold text-blue-600">${campaign.pricePerSpot}</div>
-                      <div className="text-xs text-gray-500">Per Spot</div>
-                    </div>
-                  </div>
-
-                  {/* Fill Rate Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>{campaign.soldSpots} of {campaign.totalSpots} spots sold</span>
-                      <span>{fillRate.toFixed(0)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${
-                          fillRate >= 80 ? 'bg-red-500' : fillRate >= 50 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: `${fillRate}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-2 text-sm mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Mail Date:</span>
-                      <span className="font-medium">{formatDate(campaign.mailDate)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Card Size:</span>
-                      <span className="font-medium">{campaign.cardSize}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Cost per Home:</span>
-                      <span className="font-medium text-green-600">${costPerHome}</span>
-                    </div>
-                  </div>
-
-                  {/* Taken Categories */}
-                  {campaign.takenCategories.length > 0 && (
-                    <div className="mb-4">
-                      <div className="text-xs text-gray-500 mb-2">Categories Taken:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {campaign.takenCategories.map((cat) => (
-                          <span key={cat} className="bg-red-50 text-red-600 text-xs px-2 py-1 rounded">
-                            {cat}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CTA */}
-                  <button
-                    onClick={() => setSelectedCampaign(campaign)}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700"
-                  >
-                    Reserve a Spot
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {filteredCampaigns.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📭</div>
-            <h3 className="text-xl font-bold text-gray-700 mb-2">No Available Spots</h3>
-            <p className="text-gray-500 mb-4">
-              {categoryFilter 
-                ? `All campaigns currently have a ${categoryFilter} advertiser.`
-                : 'No campaigns match your filters.'}
-            </p>
-            <Link href="/quote" className="text-blue-600 hover:underline">
-              Request a custom campaign →
-            </Link>
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-12 bg-blue-50 border border-blue-100 rounded-xl p-6">
-          <h3 className="font-bold text-lg mb-4">How Co-op Postcards Work</h3>
-          <div className="grid md:grid-cols-3 gap-6 text-sm">
-            <div>
-              <div className="font-medium mb-1">📍 Exclusive Categories</div>
-              <p className="text-gray-600">Only ONE business per category on each card. No competitors!</p>
+      <section className="bg-white py-12 px-4 border-t">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-8">How Co-op Mailings Work</h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">1</div>
+              <h3 className="font-semibold mb-1">Reserve</h3>
+              <p className="text-sm text-gray-600">Pick your spot and submit your info</p>
             </div>
-            <div>
-              <div className="font-medium mb-1">💰 All-Inclusive Price</div>
-              <p className="text-gray-600">Design, printing, and postage included. No hidden fees.</p>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">2</div>
+              <h3 className="font-semibold mb-1">Design</h3>
+              <p className="text-sm text-gray-600">We create your ad (or use yours)</p>
             </div>
-            <div>
-              <div className="font-medium mb-1">📬 Every Door</div>
-              <p className="text-gray-600">Reaches EVERY household on selected routes via USPS EDDM.</p>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">3</div>
+              <h3 className="font-semibold mb-1">Approve</h3>
+              <p className="text-sm text-gray-600">Review and approve your proof</p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">4</div>
+              <h3 className="font-semibold mb-1">Mail</h3>
+              <p className="text-sm text-gray-600">Your ad reaches 10,000+ homes</p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Reservation Modal */}
-      {selectedCampaign && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-bold">Reserve Your Spot</h3>
-                  <p className="text-gray-500">{selectedCampaign.name} - {selectedCampaign.neighborhood}</p>
-                </div>
-                <button
-                  onClick={() => setSelectedCampaign(null)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Homes Reached:</span>
-                    <span className="font-medium ml-2">{selectedCampaign.quantity.toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Mail Date:</span>
-                    <span className="font-medium ml-2">{formatDate(selectedCampaign.mailDate)}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Spot Price:</span>
-                    <span className="font-bold text-blue-600 ml-2">${selectedCampaign.pricePerSpot}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Spots Left:</span>
-                    <span className="font-medium ml-2">{selectedCampaign.totalSpots - selectedCampaign.soldSpots}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <div className="text-sm font-medium mb-2">Categories Already Taken:</div>
-                <div className="flex flex-wrap gap-1">
-                  {selectedCampaign.takenCategories.length > 0 ? (
-                    selectedCampaign.takenCategories.map((cat) => (
-                      <span key={cat} className="bg-red-50 text-red-600 text-xs px-2 py-1 rounded">
-                        {cat}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-green-600 text-sm">All categories available!</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Link
-                  href={`/quote?campaign=${selectedCampaign.id}&price=${selectedCampaign.pricePerSpot}`}
-                  className="block w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 text-center"
-                >
-                  Continue to Reservation →
-                </Link>
-                <p className="text-center text-xs text-gray-500">
-                  You'll provide your business info and select your category on the next page.
-                </p>
-              </div>
-            </div>
-          </div>
+      <section className="bg-green-600 text-white py-12 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4">Don&apos;t See Your Area?</h2>
+          <p className="text-green-100 mb-6">We can set up a custom co-op mailing for any area in Monterey County</p>
+          <Link href="/quote?type=custom-coop" className="inline-block bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">Request Custom Co-op</Link>
         </div>
-      )}
+      </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="max-w-6xl mx-auto px-6 text-center text-sm">
-          <p>© {new Date().getFullYear()} CaliforniaMailer. All rights reserved.</p>
-          <p className="mt-2">
-            <Link href="/home" className="hover:text-white">Home</Link>
-            <span className="mx-2">•</span>
-            <Link href="/quote" className="hover:text-white">Get a Quote</Link>
-            <span className="mx-2">•</span>
-            <Link href="/" className="hover:text-white">Client Login</Link>
-          </p>
+      <footer className="bg-gray-900 text-gray-400 py-8 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="text-sm">© {new Date().getFullYear()} CaliforniaMailer. All rights reserved.</p>
         </div>
       </footer>
     </div>

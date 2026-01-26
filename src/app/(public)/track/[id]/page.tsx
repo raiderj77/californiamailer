@@ -1,276 +1,196 @@
+'use client';
+
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-
-interface CampaignStatus {
-  id: string;
-  businessName: string;
-  campaignName: string;
-  territory: string;
-  quantity: number;
-  mailDate: string;
-  status: 'design' | 'proof' | 'approved' | 'printing' | 'shipping' | 'delivered' | 'in-homes';
-  statusHistory: { status: string; date: string; note?: string }[];
-  spotNumber?: number;
-  cardSize: string;
-  type: 'coop' | 'eddm' | 'solo';
-}
-
-// Demo data - in production this would come from Firestore
-const campaigns: Record<string, CampaignStatus> = {
-  'SAL48-07': {
-    id: 'SAL48-07',
-    businessName: 'Acme Plumbing',
-    campaignName: 'Salinas #48',
-    territory: 'Creekbridge / Santa Rita',
-    quantity: 12500,
-    mailDate: '2026-02-15',
-    status: 'printing',
-    spotNumber: 7,
-    cardSize: '9x12',
-    type: 'coop',
-    statusHistory: [
-      { status: 'reserved', date: '2026-01-10', note: 'Spot reserved' },
-      { status: 'design', date: '2026-01-12', note: 'Design started' },
-      { status: 'proof', date: '2026-01-14', note: 'Proof sent for review' },
-      { status: 'approved', date: '2026-01-15', note: 'Design approved by client' },
-      { status: 'printing', date: '2026-01-20', note: 'Sent to print facility' },
-    ],
-  },
-  'MON22-03': {
-    id: 'MON22-03',
-    businessName: 'Sunrise Dental',
-    campaignName: 'Monterey #22',
-    territory: 'Del Monte / New Monterey',
-    quantity: 8200,
-    mailDate: '2026-02-20',
-    status: 'proof',
-    spotNumber: 3,
-    cardSize: '9x12',
-    type: 'coop',
-    statusHistory: [
-      { status: 'reserved', date: '2026-01-15', note: 'Spot reserved' },
-      { status: 'design', date: '2026-01-18', note: 'Design started' },
-      { status: 'proof', date: '2026-01-22', note: 'Proof sent for review' },
-    ],
-  },
-  'EDDM-1042': {
-    id: 'EDDM-1042',
-    businessName: 'Green Valley Landscaping',
-    campaignName: 'Carmel Valley EDDM',
-    territory: 'Carmel Valley Village',
-    quantity: 5000,
-    mailDate: '2026-02-10',
-    status: 'in-homes',
-    cardSize: '6.5x11',
-    type: 'eddm',
-    statusHistory: [
-      { status: 'ordered', date: '2026-01-05', note: 'Order placed' },
-      { status: 'design', date: '2026-01-06', note: 'Design started' },
-      { status: 'proof', date: '2026-01-08', note: 'Proof sent' },
-      { status: 'approved', date: '2026-01-09', note: 'Approved' },
-      { status: 'printing', date: '2026-01-12', note: 'Printing' },
-      { status: 'shipping', date: '2026-01-15', note: 'Shipped to USPS' },
-      { status: 'delivered', date: '2026-01-18', note: 'Delivered to Post Office' },
-      { status: 'in-homes', date: '2026-02-10', note: 'Mail date reached - in mailboxes!' },
-    ],
-  },
-};
+import { getCampaign, getCampaignTracking, Campaign, CampaignTracking } from '@/lib/firestore';
 
 const statusSteps = [
   { key: 'design', label: 'Design', icon: '🎨' },
-  { key: 'proof', label: 'Proof Review', icon: '👁️' },
+  { key: 'proof', label: 'Proof Review', icon: '📋' },
   { key: 'approved', label: 'Approved', icon: '✅' },
   { key: 'printing', label: 'Printing', icon: '🖨️' },
-  { key: 'shipping', label: 'Shipping', icon: '📦' },
+  { key: 'shipping', label: 'Shipping to USPS', icon: '📦' },
   { key: 'delivered', label: 'At Post Office', icon: '🏤' },
-  { key: 'in-homes', label: 'In Mailboxes!', icon: '📬' },
+  { key: 'in-homes', label: 'In Homes', icon: '🏠' },
 ];
 
-export default async function TrackPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const campaign = campaigns[id.toUpperCase()];
+export default function TrackPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [tracking, setTracking] = useState<CampaignTracking | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!campaign) {
+  useEffect(() => {
+    loadData();
+  }, [id]);
+
+  async function loadData() {
+    try {
+      const campaignData = await getCampaign(id);
+      if (!campaignData) {
+        setError('Campaign not found');
+        setLoading(false);
+        return;
+      }
+      setCampaign(campaignData);
+      const trackingData = await getCampaignTracking(id);
+      setTracking(trackingData);
+    } catch (err) {
+      console.error('Error loading tracking:', err);
+      setError('Error loading campaign data');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function getCurrentStepIndex() {
+    if (!tracking) return 0;
+    const idx = statusSteps.findIndex(s => s.key === tracking.status);
+    return idx >= 0 ? idx : 0;
+  }
+
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatDateTime(dateString: string) {
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white border-b">
-          <div className="max-w-4xl mx-auto px-6 py-4">
-            <Link href="/home" className="text-2xl font-bold text-blue-600">CaliforniaMailer</Link>
-          </div>
-        </nav>
-        <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-          <div className="text-6xl mb-4">🔍</div>
-          <h1 className="text-2xl font-bold mb-2">Campaign Not Found</h1>
-          <p className="text-gray-600 mb-6">
-            We couldn't find a campaign with tracking ID: <strong>{id}</strong>
-          </p>
-          <p className="text-gray-500 text-sm mb-8">
-            Check your confirmation email for the correct tracking link, or contact us for help.
-          </p>
-          <Link href="/home" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-            Back to Home
-          </Link>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading campaign status...</p>
         </div>
       </div>
     );
   }
 
-  const currentStepIndex = statusSteps.findIndex((s) => s.key === campaign.status);
+  if (error || !campaign) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🔍</div>
+          <h1 className="text-2xl font-bold mb-2">Campaign Not Found</h1>
+          <p className="text-gray-500 mb-6">We couldn&apos;t find a campaign with ID: {id}</p>
+          <Link href="/home" className="text-blue-600 hover:underline">Return to Homepage</Link>
+        </div>
+      </div>
+    );
+  }
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'in-homes': return 'bg-green-500';
-      case 'delivered': return 'bg-green-400';
-      case 'shipping': return 'bg-blue-500';
-      case 'printing': return 'bg-purple-500';
-      case 'approved': return 'bg-teal-500';
-      case 'proof': return 'bg-yellow-500';
-      case 'design': return 'bg-orange-500';
-      default: return 'bg-gray-400';
-    }
-  };
+  const currentStep = getCurrentStepIndex();
+  const isComplete = tracking?.status === 'in-homes';
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/home" className="text-2xl font-bold text-blue-600">CaliforniaMailer</Link>
-          <Link href="/home" className="text-gray-500 hover:text-gray-700 text-sm">← Back to Home</Link>
+      <header className="bg-blue-600 text-white">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/home" className="text-xl font-bold">CaliforniaMailer</Link>
+          <span className="text-blue-200 text-sm">Campaign Tracker</span>
         </div>
-      </nav>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-xl border p-6 mb-6">
-          <div className="flex flex-wrap justify-between items-start gap-4">
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
             <div>
-              <div className="text-sm text-gray-500 mb-1">Tracking ID: {campaign.id}</div>
-              <h1 className="text-2xl font-bold">{campaign.businessName}</h1>
-              <p className="text-gray-600">{campaign.campaignName} • {campaign.territory}</p>
+              <div className="text-sm text-gray-500 mb-1">Campaign</div>
+              <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
+              <p className="text-gray-600">{campaign.territoryName || ''}</p>
             </div>
-            <div className={`${getStatusColor(campaign.status)} text-white px-4 py-2 rounded-lg font-medium`}>
-              {statusSteps.find((s) => s.key === campaign.status)?.icon}{' '}
-              {statusSteps.find((s) => s.key === campaign.status)?.label}
+            <div className="text-right">
+              <div className="text-sm text-gray-500 mb-1">Campaign ID</div>
+              <div className="font-mono text-lg bg-gray-100 px-3 py-1 rounded">{id}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-500">Type</div>
+              <div className="font-semibold capitalize">{campaign.type}</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-500">Quantity</div>
+              <div className="font-semibold">{campaign.quantity?.toLocaleString() || 'TBD'}</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-500">Mail Date</div>
+              <div className="font-semibold">{campaign.mailDate ? formatDate(campaign.mailDate) : 'TBD'}</div>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-500">Status</div>
+              <div className={`font-semibold ${isComplete ? 'text-green-600' : 'text-blue-600'}`}>{isComplete ? 'Complete' : 'In Progress'}</div>
             </div>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="bg-white rounded-xl border p-6 mb-6">
-          <h2 className="font-bold mb-6">Campaign Progress</h2>
-          <div className="relative">
-            {/* Progress Line */}
-            <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded">
-              <div
-                className="h-1 bg-blue-600 rounded transition-all duration-500"
-                style={{ width: `${((currentStepIndex + 1) / statusSteps.length) * 100}%` }}
-              />
-            </div>
-
-            {/* Steps */}
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-6">Campaign Progress</h2>
+          <div className="relative mb-8">
+            <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 rounded"></div>
+            <div className="absolute top-6 left-0 h-1 bg-green-500 rounded transition-all duration-500" style={{ width: `${(currentStep / (statusSteps.length - 1)) * 100}%` }}></div>
             <div className="relative flex justify-between">
-              {statusSteps.map((step, index) => {
-                const isComplete = index <= currentStepIndex;
-                const isCurrent = index === currentStepIndex;
-
+              {statusSteps.map((step, idx) => {
+                const isCompleted = idx < currentStep;
+                const isCurrent = idx === currentStep;
                 return (
                   <div key={step.key} className="flex flex-col items-center" style={{ width: '14%' }}>
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-lg z-10 ${
-                        isComplete
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-400'
-                      } ${isCurrent ? 'ring-4 ring-blue-200' : ''}`}
-                    >
-                      {step.icon}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl z-10 transition-all ${isCompleted ? 'bg-green-500 text-white' : isCurrent ? 'bg-blue-500 text-white ring-4 ring-blue-200' : 'bg-gray-200 text-gray-400'}`}>
+                      {isCompleted ? '✓' : step.icon}
                     </div>
-                    <div className={`text-xs mt-2 text-center ${isComplete ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
-                      {step.label}
-                    </div>
+                    <div className={`mt-2 text-xs text-center ${isCurrent ? 'font-semibold text-blue-600' : 'text-gray-500'}`}>{step.label}</div>
                   </div>
                 );
               })}
             </div>
           </div>
+          <div className={`rounded-lg p-4 ${isComplete ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{statusSteps[currentStep]?.icon}</span>
+              <div>
+                <div className={`font-semibold ${isComplete ? 'text-green-700' : 'text-blue-700'}`}>
+                  {isComplete ? 'Delivery Complete!' : `Currently: ${statusSteps[currentStep]?.label}`}
+                </div>
+                <div className={`text-sm ${isComplete ? 'text-green-600' : 'text-blue-600'}`}>
+                  {isComplete ? 'Your mailers have been delivered to homes in your target area.' : 'Your campaign is being processed and will be delivered soon.'}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Campaign Details */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="font-bold mb-4">Campaign Details</h2>
-            <dl className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Type:</dt>
-                <dd className="font-medium capitalize">{campaign.type === 'coop' ? 'Co-op Postcard' : campaign.type.toUpperCase()}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Card Size:</dt>
-                <dd className="font-medium">{campaign.cardSize}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Quantity:</dt>
-                <dd className="font-medium">{campaign.quantity.toLocaleString()} pieces</dd>
-              </div>
-              {campaign.spotNumber && (
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Spot Number:</dt>
-                  <dd className="font-medium">#{campaign.spotNumber}</dd>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Territory:</dt>
-                <dd className="font-medium">{campaign.territory}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Mail Date:</dt>
-                <dd className="font-medium text-blue-600">{formatDate(campaign.mailDate)}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="bg-white rounded-xl border p-6">
-            <h2 className="font-bold mb-4">Activity Timeline</h2>
+        {tracking?.statusHistory && tracking.statusHistory.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h2 className="text-lg font-semibold mb-6">Activity Timeline</h2>
             <div className="space-y-4">
-              {campaign.statusHistory.slice().reverse().map((item, index) => (
-                <div key={index} className="flex gap-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2" />
-                  <div>
-                    <div className="font-medium text-sm">{item.note}</div>
-                    <div className="text-xs text-gray-500">{formatDate(item.date)}</div>
+              {[...tracking.statusHistory].reverse().map((event, idx) => (
+                <div key={idx} className="flex gap-4">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="flex-1 pb-4 border-b last:border-0">
+                    <div className="flex justify-between items-start">
+                      <div className="font-medium capitalize">{statusSteps.find(s => s.key === event.status)?.label || event.status}</div>
+                      <div className="text-sm text-gray-500">{formatDateTime(event.date)}</div>
+                    </div>
+                    {event.note && (<div className="text-sm text-gray-600 mt-1">{event.note}</div>)}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Help Box */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-          <h3 className="font-bold mb-2">Questions About Your Campaign?</h3>
-          <p className="text-gray-600 text-sm mb-4">
-            We're here to help! Contact us if you have any questions about your mailing.
-          </p>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <span>📧 hello@californiamailer.com</span>
-            <span>📞 (831) 555-0100</span>
-          </div>
+        <div className="mt-8 text-center">
+          <p className="text-gray-500 text-sm mb-4">Questions about your campaign?</p>
+          <Link href="/quote" className="text-blue-600 hover:text-blue-700 font-semibold">Contact Us →</Link>
         </div>
-      </div>
+      </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 mt-12">
-        <div className="max-w-4xl mx-auto px-6 text-center text-sm">
-          <p>© {new Date().getFullYear()} CaliforniaMailer. All rights reserved.</p>
+      <footer className="bg-gray-100 py-6 px-4 mt-12">
+        <div className="max-w-4xl mx-auto text-center text-sm text-gray-500">
+          <p>Powered by <Link href="/home" className="text-blue-600 hover:underline">CaliforniaMailer</Link></p>
         </div>
       </footer>
     </div>

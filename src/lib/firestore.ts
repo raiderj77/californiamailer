@@ -466,3 +466,310 @@ export async function updateTeamMember(id: string, data: Partial<TeamMember>) {
 export async function deleteTeamMember(id: string) {
   await deleteDoc(doc(db, 'teammembers', id));
 }
+
+
+// ============ CO-OP SPOTS ============
+export interface CoopSpot {
+  id?: string;
+  campaignId: string;
+  campaignName: string;
+  territory: string;
+  city: string;
+  spotNumber: number;
+  totalSpots: number;
+  category?: string;
+  status: 'available' | 'reserved' | 'sold';
+  price: number;
+  mailDate: string;
+  households: number;
+  reservedBy?: string;
+  reservedAt?: any;
+  paidAt?: any;
+  stripePaymentId?: string;
+  createdAt?: any;
+}
+
+export async function getCoopSpots() {
+  const snapshot = await getDocs(collection(db, 'coopspots'));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoopSpot));
+}
+
+export async function getAvailableCoopSpots() {
+  const q = query(collection(db, 'coopspots'), where('status', '==', 'available'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoopSpot));
+}
+
+export async function addCoopSpot(spot: Omit<CoopSpot, 'id' | 'createdAt'>) {
+  const docRef = await addDoc(collection(db, 'coopspots'), {
+    ...spot,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateCoopSpot(id: string, data: Partial<CoopSpot>) {
+  const docRef = doc(db, 'coopspots', id);
+  await updateDoc(docRef, data);
+}
+
+export async function deleteCoopSpot(id: string) {
+  await deleteDoc(doc(db, 'coopspots', id));
+}
+
+// ============ OFFERS / COUPONS ============
+export interface Offer {
+  id?: string;
+  code: string;
+  businessName: string;
+  businessLogo?: string;
+  headline: string;
+  description: string;
+  discount: string;
+  terms: string;
+  expirationDate: string;
+  phone?: string;
+  website?: string;
+  address?: string;
+  campaignId: string;
+  category: string;
+  cta: string;
+  backgroundColor: string;
+  accentColor: string;
+  redemptions: number;
+  views: number;
+  isActive: boolean;
+  createdAt?: any;
+}
+
+export async function getOffers() {
+  const snapshot = await getDocs(collection(db, 'offers'));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Offer));
+}
+
+export async function getOfferByCode(code: string) {
+  const q = query(collection(db, 'offers'), where('code', '==', code.toUpperCase()), where('isActive', '==', true));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Offer;
+}
+
+export async function addOffer(offer: Omit<Offer, 'id' | 'createdAt'>) {
+  const docRef = await addDoc(collection(db, 'offers'), {
+    ...offer,
+    code: offer.code.toUpperCase(),
+    redemptions: 0,
+    views: 0,
+    isActive: true,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateOffer(id: string, data: Partial<Offer>) {
+  const docRef = doc(db, 'offers', id);
+  await updateDoc(docRef, data);
+}
+
+export async function incrementOfferViews(id: string) {
+  const docRef = doc(db, 'offers', id);
+  const snapshot = await getDocs(query(collection(db, 'offers'), where('__name__', '==', id)));
+  if (!snapshot.empty) {
+    const current = snapshot.docs[0].data();
+    await updateDoc(docRef, { views: (current.views || 0) + 1 });
+  }
+}
+
+export async function deleteOffer(id: string) {
+  await deleteDoc(doc(db, 'offers', id));
+}
+
+// ============ REDEMPTIONS ============
+export interface Redemption {
+  id?: string;
+  offerId: string;
+  offerCode: string;
+  businessName: string;
+  redeemedAt?: any;
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  notes?: string;
+}
+
+export async function getRedemptions() {
+  const q = query(collection(db, 'redemptions'), orderBy('redeemedAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Redemption));
+}
+
+export async function addRedemption(redemption: Omit<Redemption, 'id' | 'redeemedAt'>) {
+  const docRef = await addDoc(collection(db, 'redemptions'), {
+    ...redemption,
+    redeemedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+// ============ PROOFS ============
+export interface Proof {
+  id?: string;
+  campaignId: string;
+  campaignName: string;
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  version: number;
+  fileUrl: string;
+  thumbnailUrl?: string;
+  status: 'pending' | 'approved' | 'revision-requested';
+  feedback?: string;
+  approvedAt?: any;
+  approvedBy?: string;
+  sentAt?: any;
+  createdAt?: any;
+}
+
+export async function getProofs() {
+  const q = query(collection(db, 'proofs'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Proof));
+}
+
+export async function getProof(id: string) {
+  const snapshot = await getDocs(query(collection(db, 'proofs'), where('__name__', '==', id)));
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Proof;
+}
+
+export async function addProof(proof: Omit<Proof, 'id' | 'createdAt'>) {
+  const docRef = await addDoc(collection(db, 'proofs'), {
+    ...proof,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateProof(id: string, data: Partial<Proof>) {
+  const docRef = doc(db, 'proofs', id);
+  await updateDoc(docRef, data);
+}
+
+export async function approveProof(id: string, approvedBy: string) {
+  const docRef = doc(db, 'proofs', id);
+  await updateDoc(docRef, {
+    status: 'approved',
+    approvedAt: serverTimestamp(),
+    approvedBy,
+  });
+}
+
+export async function requestProofRevision(id: string, feedback: string) {
+  const docRef = doc(db, 'proofs', id);
+  await updateDoc(docRef, {
+    status: 'revision-requested',
+    feedback,
+  });
+}
+
+export async function deleteProof(id: string) {
+  await deleteDoc(doc(db, 'proofs', id));
+}
+
+// ============ CAMPAIGN TRACKING ============
+export interface CampaignTracking {
+  id?: string;
+  campaignId: string;
+  status: 'design' | 'proof' | 'approved' | 'printing' | 'shipping' | 'delivered' | 'in-homes';
+  statusHistory: { status: string; date: string; note?: string }[];
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  actualDelivery?: string;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export async function getCampaignTracking(campaignId: string) {
+  const q = query(collection(db, 'campaigntracking'), where('campaignId', '==', campaignId));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as CampaignTracking;
+}
+
+export async function addCampaignTracking(tracking: Omit<CampaignTracking, 'id' | 'createdAt' | 'updatedAt'>) {
+  const docRef = await addDoc(collection(db, 'campaigntracking'), {
+    ...tracking,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updateCampaignTracking(id: string, data: Partial<CampaignTracking>) {
+  const docRef = doc(db, 'campaigntracking', id);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+// ============ PAYMENTS ============
+export interface Payment {
+  id?: string;
+  stripePaymentId: string;
+  stripeCustomerId?: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded';
+  description: string;
+  clientEmail: string;
+  clientName?: string;
+  coopSpotId?: string;
+  invoiceId?: string;
+  metadata?: Record<string, string>;
+  createdAt?: any;
+}
+
+export async function getPayments() {
+  const q = query(collection(db, 'payments'), orderBy('createdAt', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payment));
+}
+
+export async function addPayment(payment: Omit<Payment, 'id' | 'createdAt'>) {
+  const docRef = await addDoc(collection(db, 'payments'), {
+    ...payment,
+    createdAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+export async function updatePayment(id: string, data: Partial<Payment>) {
+  const docRef = doc(db, 'payments', id);
+  await updateDoc(docRef, data);
+}
+
+export async function getPaymentByStripeId(stripePaymentId: string) {
+  const q = query(collection(db, 'payments'), where('stripePaymentId', '==', stripePaymentId));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Payment;
+}
+
+// ============ HELPER: GET CAMPAIGN BY ID ============
+export async function getCampaign(id: string) {
+  const snapshot = await getDocs(query(collection(db, 'campaigns'), where('__name__', '==', id)));
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, ...docSnap.data() } as Campaign;
+}
+
+// ============ HELPER: GET CLIENTS (no userId filter) ============
+export async function getAllClients() {
+  const snapshot = await getDocs(collection(db, 'clients'));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+}
