@@ -21,6 +21,7 @@ const navItems = [
   { name: 'Team', href: '/team' },
   { name: 'Import', href: '/import' },
   { name: 'Pricing', href: '/pricing' },
+  { name: 'EDDM', href: '/eddm' },
 ];
 
 export default function Sidebar() {
