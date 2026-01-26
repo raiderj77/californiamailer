@@ -16,6 +16,7 @@ const navItems = [
   { name: 'Invoices', href: '/invoices' },
   { name: 'Reports', href: '/reports' },
   { name: 'Templates', href: '/templates' },
+  { name: 'Email', href: '/email' },
   { name: 'Clients', href: '/clients' },
   { name: 'Team', href: '/team' },
   { name: 'Import', href: '/import' },
