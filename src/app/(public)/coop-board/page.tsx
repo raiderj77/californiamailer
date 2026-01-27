@@ -8,7 +8,6 @@ export default function CoopBoardPage() {
   const [spots, setSpots] = useState<CoopSpot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCity, setSelectedCity] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
   useEffect(() => {
     loadSpots();
@@ -26,16 +25,9 @@ export default function CoopBoardPage() {
   }
 
   const cities = [...new Set(spots.map(s => s.city))].sort();
-  const months = [...new Set(spots.map(s => {
-    const date = new Date(s.mailDate);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  }))].sort();
 
   const filteredSpots = spots.filter(spot => {
-    const matchCity = selectedCity === 'all' || spot.city === selectedCity;
-    const spotMonth = new Date(spot.mailDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    const matchMonth = selectedMonth === 'all' || spotMonth === selectedMonth;
-    return matchCity && matchMonth;
+    return selectedCity === 'all' || spot.city === selectedCity;
   });
 
   const groupedSpots = filteredSpots.reduce((acc, spot) => {
@@ -54,11 +46,7 @@ export default function CoopBoardPage() {
   }, {} as Record<string, { campaignName: string; territory: string; city: string; mailDate: string; households: number; spots: CoopSpot[] }>);
 
   function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   return (
@@ -87,20 +75,18 @@ export default function CoopBoardPage() {
         </div>
       </section>
 
-      <section className="bg-white border-b py-4 px-4 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-4 items-center">
-          <div className="font-semibold text-gray-700">Filter:</div>
-          <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="border rounded-lg px-4 py-2 bg-white">
-            <option value="all">All Cities</option>
-            {cities.map(city => (<option key={city} value={city}>{city}</option>))}
-          </select>
-          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="border rounded-lg px-4 py-2 bg-white">
-            <option value="all">All Months</option>
-            {months.map(month => (<option key={month} value={month}>{month}</option>))}
-          </select>
-          <div className="ml-auto text-sm text-gray-500">{filteredSpots.length} spot{filteredSpots.length !== 1 ? 's' : ''} available</div>
-        </div>
-      </section>
+      {cities.length > 0 && (
+        <section className="bg-white border-b py-4 px-4 sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto flex flex-wrap gap-4 items-center">
+            <div className="font-semibold text-gray-700">Filter by City:</div>
+            <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="border rounded-lg px-4 py-2 bg-white">
+              <option value="all">All Cities</option>
+              {cities.map(city => (<option key={city} value={city}>{city}</option>))}
+            </select>
+            <div className="ml-auto text-sm text-gray-500">{filteredSpots.length} spot{filteredSpots.length !== 1 ? 's' : ''} available</div>
+          </div>
+        </section>
+      )}
 
       <section className="py-8 px-4">
         <div className="max-w-6xl mx-auto">
@@ -112,9 +98,9 @@ export default function CoopBoardPage() {
           ) : Object.keys(groupedSpots).length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border">
               <div className="text-4xl mb-4">📭</div>
-              <h3 className="text-xl font-semibold mb-2">No spots available</h3>
-              <p className="text-gray-500 mb-6">Check back soon for new co-op mailings!</p>
-              <Link href="/quote" className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">Request Custom Quote</Link>
+              <h3 className="text-xl font-semibold mb-2">No spots currently available</h3>
+              <p className="text-gray-500 mb-6">New co-op mailings are added regularly. Contact us to be notified!</p>
+              <Link href="/quote?type=coop-waitlist" className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700">Join Waitlist</Link>
             </div>
           ) : (
             <div className="space-y-6">
@@ -143,11 +129,9 @@ export default function CoopBoardPage() {
                           <div className="flex justify-between items-start mb-3">
                             <div>
                               <div className="text-sm text-gray-500">Spot #{spot.spotNumber}</div>
-                              {spot.category && (<div className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mt-1">{spot.category} reserved</div>)}
+                              {spot.category && (<div className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded mt-1">{spot.category} category</div>)}
                             </div>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-green-600">${spot.price}</div>
-                            </div>
+                            <div className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded">Available</div>
                           </div>
                           <Link href={`/quote?type=coop&spot=${spot.id}&campaign=${campaignId}`} className="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg font-semibold transition-colors">Reserve This Spot</Link>
                         </div>
@@ -183,7 +167,7 @@ export default function CoopBoardPage() {
             <div className="text-center">
               <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-3">4</div>
               <h3 className="font-semibold mb-1">Mail</h3>
-              <p className="text-sm text-gray-600">Your ad reaches 10,000+ homes</p>
+              <p className="text-sm text-gray-600">Your ad reaches thousands of homes</p>
             </div>
           </div>
         </div>
