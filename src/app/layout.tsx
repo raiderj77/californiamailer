@@ -1,3 +1,4 @@
+import Script from 'next/script';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -38,7 +39,22 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>{children}</AuthProvider>
-        <GoogleAnalytics gaId="G-E2KDN733NL" />
+        <Script
+  id="google-analytics"
+  strategy="afterInteractive"
+  dangerouslySetInnerHTML={{
+    __html: `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-E2KDN733NL');
+    `,
+  }}
+/>
+<Script
+  src="https://www.googletagmanager.com/gtag/js?id=G-E2KDN733NL"
+  strategy="afterInteractive"
+/>
        </body>
      </html>
   );
