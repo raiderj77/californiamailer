@@ -37,7 +37,6 @@ export default function RootLayout({
         <AuthProvider>{children}</AuthProvider>
         <GoogleAnalytics gaId="G-E2KDN733NL" />
      </body>
-      </body>
-    </html>
+     </html>
   );
 }
