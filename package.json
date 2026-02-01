@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@next/third-parties": "^16.1.6",
     "firebase": "^12.8.0",
     "form-data": "^4.0.5",
     "mailgun.js": "^12.7.0",

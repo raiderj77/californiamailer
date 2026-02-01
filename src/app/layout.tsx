@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { AuthProvider } from "@/lib/AuthContext";
 
 const geistSans = Geist({
@@ -34,6 +35,8 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>{children}</AuthProvider>
+        <GoogleAnalytics gaId="G-E2KDN733NL" />
+     </body>
       </body>
     </html>
   );
