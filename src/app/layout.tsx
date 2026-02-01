@@ -38,7 +38,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <AuthProvider>{children}</AuthProvider>
+        {children}
         <Script
   id="google-analytics"
   strategy="afterInteractive"
