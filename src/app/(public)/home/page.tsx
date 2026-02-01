@@ -1,3 +1,5 @@
+import { californiaMailerOrg } from '@/lib/schemas/organization';
+import { directMailService } from '@/lib/schemas/service';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -18,6 +20,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(californiaMailerOrg)
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(directMailService)
+        }}
+      />
       {/* Navigation */}
       <nav className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
