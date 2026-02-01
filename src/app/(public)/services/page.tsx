@@ -1,3 +1,7 @@
+export const metadata = {
+  title: 'Direct Mail Services - EDDM & Co-op Postcards | CaliforniaMailer',
+  description: 'Affordable EDDM and co-op postcard services for Monterey County businesses. Starting at $0.242/piece for EDDM, $299 for co-op spots. Professional design included.',
+};
 import Link from 'next/link';
 
 export default function ServicesPage() {

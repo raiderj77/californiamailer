@@ -1,3 +1,21 @@
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const cityNames: Record<string, string> = {
+    'salinas': 'Salinas',
+    'monterey': 'Monterey',
+    'carmel': 'Carmel',
+    'carmel-valley': 'Carmel Valley',
+    'pacific-grove': 'Pacific Grove',
+    'seaside': 'Seaside',
+    'marina': 'Marina',
+  };
+  
+  const cityName = cityNames[params.slug] || 'Monterey County';
+  
+  return {
+    title: `Direct Mail Services in ${cityName} | CaliforniaMailer`,
+    description: `Affordable EDDM and co-op postcard services in ${cityName}, CA. Reach every household in your target neighborhoods. Starting at $0.242 per piece. Professional design included.`,
+  };
+}
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 

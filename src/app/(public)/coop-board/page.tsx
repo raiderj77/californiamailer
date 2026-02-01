@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getAvailableCoopSpots, CoopSpot } from '@/lib/firestore';
 
 export default function CoopBoardPage() {
+// SEO for client component
   const [spots, setSpots] = useState<CoopSpot[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCity, setSelectedCity] = useState<string>('all');
