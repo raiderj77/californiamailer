@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>{children}</AuthProvider>
         <GoogleAnalytics gaId="G-E2KDN733NL" />
-     </body>
+       </body>
      </html>
   );
 }
