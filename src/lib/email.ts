@@ -1,20 +1,12 @@
 import Mailgun from 'mailgun.js';
 import formData from 'form-data';
 
-const mailgun = new Mailgun(formData);
-const mg = mailgun.client({
-  username: 'api',
-  key: process.env.MAILGUN_API_KEY || '',
-});
-
-const DOMAIN = process.env.MAILGUN_DOMAIN || '';
-
 export async function sendEmail({
   to,
   subject,
   text,
   html,
-  from = `CaliforniaMailer <noreply@${DOMAIN}>`,
+  from,
 }: {
   to: string;
   subject: string;
@@ -22,17 +14,23 @@ export async function sendEmail({
   html?: string;
   from?: string;
 }) {
+  const key = process.env.MAILGUN_API_KEY;
+  const domain = process.env.MAILGUN_DOMAIN;
+  if (!key || !domain) return { success: false };
+
   try {
-    const result = await mg.messages.create(DOMAIN, {
-      from,
+    const mailgun = new Mailgun(formData);
+    const client = mailgun.client({ username: 'api', key });
+    const result = await client.messages.create(domain, {
+      from: from || `CaliforniaMailer <noreply@${domain}>`,
       to: [to],
       subject,
       text: text || '',
       html: html || text || '',
     });
     return { success: true, id: result.id };
-  } catch (error) {
-    console.error('Email error:', error);
-    return { success: false, error };
+  } catch {
+    console.error('Mailgun delivery failed');
+    return { success: false };
   }
 }

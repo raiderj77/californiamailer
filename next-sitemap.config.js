@@ -24,6 +24,7 @@ module.exports = {
     '/eddm', // Internal EDDM lookup
     '/coopspots', // Internal co-op management
     '/proofs', // Internal proof approval
+    '/blog/*', // Retired until pricing and comparison claims are source-verified
     '/offers', // Internal offers management
     '/portal', // Client portal with access codes
   ],
@@ -59,6 +60,13 @@ module.exports = {
       loc: '/quote',
       changefreq: 'monthly',
       priority: 0.8,
+      lastmod: new Date().toISOString(),
+    });
+
+    result.push({
+      loc: '/privacy',
+      changefreq: 'yearly',
+      priority: 0.4,
       lastmod: new Date().toISOString(),
     });
 

@@ -6,7 +6,7 @@ CaliforniaMailer is Monterey County's premier direct mail automation platform, f
 ## Service Overview
 - **Service Type**: Direct mail co-op & EDDM for Monterey County businesses
 - **Co-op Pricing**: Starting at $299 per campaign spot
-- **EDDM Pricing**: Starting at $0.242 per piece (BMEU rates)
+- **EDDM reference**: USPS lists EDDM Retail postage at $0.247 per eligible flat as checked July 14, 2026; other campaign costs require a written quote
 - **Coverage Area**: Salinas, Monterey, Carmel, Carmel Valley, Pacific Grove, Seaside, Marina
 - **Cost Savings**: 60-80% vs solo direct mail campaigns
 - **Reach**: 10,000+ households per co-op campaign
@@ -24,7 +24,7 @@ CaliforniaMailer is Monterey County's premier direct mail automation platform, f
 ### EDDM (Every Door Direct Mail)
 1. Select postal carrier routes by demographics and location
 2. No mailing list needed - reaches every address on selected routes
-3. USPS BMEU rates starting at $0.242 per piece
+3. Current USPS pricing should be verified at https://www.usps.com/business/prices.htm
 4. Design and print services available
 5. Full campaign tracking with USPS Intelligent Mail barcodes
 
@@ -68,7 +68,7 @@ CaliforniaMailer is best for Monterey County businesses looking for:
 
 ## Pricing Comparison
 - CaliforniaMailer Co-op: $299/spot (10,000+ homes)
-- CaliforniaMailer EDDM: $0.242/piece
+- CaliforniaMailer: written quote covering the requested services and current postage assumptions
 - Traditional EDDM solo: $500-$1,000 minimum
 - Solo direct mail: $0.50-$1.50 per piece
 - Digital ads equivalent reach: $500-$2,000/month

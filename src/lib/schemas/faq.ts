@@ -25,7 +25,7 @@ export const californiaMailerFAQ: WithContext<FAQPage> = {
       "name": "How much does a CaliforniaMailer campaign cost?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Co-op postcard spots start at $299 per business for campaigns reaching 10,000+ households. EDDM campaigns start at $0.242 per piece with BMEU postage rates. Co-op pricing is typically 60-80% less expensive than solo direct mail campaigns while reaching the same audience."
+        "text": "CaliforniaMailer provides written quotes based on the requested service, quantity, target area, printing, design, preparation, and postage assumptions. USPS currently lists EDDM Retail postage at $0.247 per eligible flat; verify current rates directly with USPS."
       }
     },
     {
@@ -33,7 +33,7 @@ export const californiaMailerFAQ: WithContext<FAQPage> = {
       "name": "What is EDDM and how does it work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Every Door Direct Mail (EDDM) is a USPS service that allows you to saturate entire postal carrier routes without needing a mailing list. You simply select the routes you want to target based on demographics and geography, and your mail piece goes to every address on those routes. Rates start at $0.242 per piece."
+        "text": "Every Door Direct Mail (EDDM) is a USPS service for sending eligible mailpieces across selected postal carrier routes without purchasing a traditional address list. USPS currently lists EDDM Retail postage at $0.247 per eligible flat, and rates can change. Printing, design, preparation, and service costs are separate."
       }
     },
     {
