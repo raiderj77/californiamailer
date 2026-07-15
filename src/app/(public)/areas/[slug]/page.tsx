@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   
   return {
     title: `Direct Mail Services in ${cityName} | CaliforniaMailer`,
-    description: `Affordable EDDM and co-op postcard services in ${cityName}, CA. Reach every household in your target neighborhoods. Starting at $0.242 per piece. Professional design included.`,
+    description: `Request a written quote for EDDM, co-op postcard, and custom mailing services in ${cityName}, California.`,
   };
 }
 import Link from 'next/link';
@@ -329,11 +329,10 @@ export default async function CityPage({ params }: { params: Promise<{ slug: str
             <div className="border rounded-xl p-6">
               <h3 className="font-bold mb-4">Questions?</h3>
               <p className="text-sm text-gray-600 mb-3">
-                We're happy to help you plan your {city.name} campaign.
+                We&apos;re happy to help you plan your {city.name} campaign.
               </p>
               <div className="text-sm space-y-1">
                 <div>📧 hello@californiamailer.com</div>
-                <div>📞 (831) 555-0100</div>
               </div>
             </div>
           </div>

@@ -16,42 +16,31 @@ export default function QuotePage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const submittedForm = new FormData(e.currentTarget);
     setSending(true);
+    setErrorMessage('');
 
-    // Send email via API
     try {
-      await fetch('/api/send-email', {
+      const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: 'hello@californiamailer.com',
-          subject: `Quote Request: ${formData.serviceType.toUpperCase()} - ${formData.business}`,
-          text: `
-New Quote Request
-
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone}
-Business: ${formData.business}
-
-Service Type: ${formData.serviceType}
-Target City: ${formData.city}
-Quantity: ${formData.quantity}
-
-Message:
-${formData.message}
-          `,
+          kind: 'quote',
+          ...formData,
+          website: submittedForm.get('website'),
         }),
       });
-    } catch (error) {
-      console.error('Email error:', error);
+      if (!response.ok) throw new Error('delivery');
+      setSubmitted(true);
+    } catch {
+      setErrorMessage('We could not deliver your request. Please email hello@californiamailer.com.');
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
-    setSubmitted(true);
   }
 
   if (submitted) {
@@ -68,7 +57,7 @@ ${formData.message}
           </div>
           <h1 className="text-3xl font-bold mb-4">Quote Request Received!</h1>
           <p className="text-gray-600 mb-8">
-            Thanks {formData.name}! We'll review your request and get back to you within 24 hours with a custom quote.
+            Thanks {formData.name}! Your request was delivered for review. We will respond using the contact information you provided.
           </p>
           <div className="flex justify-center gap-4">
             <Link href="/home" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
@@ -103,7 +92,7 @@ ${formData.message}
           <div>
             <h1 className="text-3xl font-bold mb-2">Get Your Free Quote</h1>
             <p className="text-gray-600 mb-8">
-              Tell us about your project and we'll send you a custom quote within 24 hours.
+              Tell us about your project and we will review the details before sending a written quote.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -151,7 +140,7 @@ ${formData.message}
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full border rounded-lg px-4 py-3"
-                    placeholder="(831) 555-0100"
+                    placeholder="Optional phone number"
                   />
                 </div>
               </div>
@@ -161,7 +150,7 @@ ${formData.message}
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { value: 'coop', label: 'Co-op Spot', desc: '$299-$500' },
-                    { value: 'eddm', label: 'EDDM', desc: '$0.24+/pc' },
+                    { value: 'eddm', label: 'EDDM', desc: 'Written quote' },
                     { value: 'solo', label: 'Solo Mailer', desc: 'Custom' },
                   ].map((option) => (
                     <label
@@ -245,6 +234,11 @@ ${formData.message}
                 />
               </div>
 
+              <div className="hidden" aria-hidden="true">
+                <label htmlFor="quote-website">Website</label>
+                <input id="quote-website" name="website" tabIndex={-1} autoComplete="off" />
+              </div>
+
               <button
                 type="submit"
                 disabled={sending}
@@ -253,8 +247,11 @@ ${formData.message}
                 {sending ? 'Sending...' : 'Get My Free Quote'}
               </button>
 
+              {errorMessage && <p className="text-center text-sm text-red-700" role="alert">{errorMessage}</p>}
+
               <p className="text-center text-sm text-gray-500">
-                No obligation. We'll respond within 24 hours.
+                No obligation. By submitting, you ask us to use these details to respond to your quote request. See our{' '}
+                <Link href="/privacy" className="text-blue-600 underline">privacy policy</Link>.
               </p>
             </form>
           </div>
@@ -263,78 +260,22 @@ ${formData.message}
           <div className="space-y-6">
             {/* Quick Stats */}
             <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-bold mb-4">Why Choose CaliforniaMailer?</h3>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <span className="text-green-500 mt-1">✓</span>
-                  <div>
-                    <div className="font-medium">All-Inclusive Pricing</div>
-                    <div className="text-sm text-gray-500">Design, print, postage — no hidden fees</div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-green-500 mt-1">✓</span>
-                  <div>
-                    <div className="font-medium">2-Week Turnaround</div>
-                    <div className="text-sm text-gray-500">From approval to mailboxes</div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-green-500 mt-1">✓</span>
-                  <div>
-                    <div className="font-medium">Category Exclusivity</div>
-                    <div className="text-sm text-gray-500">No competitors on your card</div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="text-green-500 mt-1">✓</span>
-                  <div>
-                    <div className="font-medium">Free Design Revisions</div>
-                    <div className="text-sm text-gray-500">Until you're 100% happy</div>
-                  </div>
-                </li>
-              </ul>
+              <h3 className="font-bold mb-4">What the written quote covers</h3>
+              <p className="text-sm leading-6 text-gray-600">
+                The quote will identify the requested service, estimated quantity, included work,
+                postage assumptions, schedule, and payment terms. Nothing is charged through this form.
+              </p>
             </div>
 
             {/* Contact Info */}
             <div className="bg-blue-50 rounded-xl border border-blue-100 p-6">
               <h3 className="font-bold mb-4">Prefer to Talk?</h3>
               <p className="text-gray-600 mb-4">
-                Have questions? We're happy to help you figure out the best option for your business.
+                Have questions? We&apos;re happy to help you figure out the best option for your business.
               </p>
-              <div className="space-y-2 text-sm">
-                <div>📧 hello@californiamailer.com</div>
-                <div>📞 (831) 555-0100</div>
-              </div>
+              <div className="text-sm">📧 hello@californiamailer.com</div>
             </div>
 
-            {/* Recent Campaigns */}
-            <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-bold mb-4">Recent Campaigns</h3>
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Salinas Co-op #47</div>
-                    <div className="text-gray-500">12,500 homes</div>
-                  </div>
-                  <span className="text-green-600 font-medium">Delivered</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Monterey EDDM</div>
-                    <div className="text-gray-500">8,200 homes</div>
-                  </div>
-                  <span className="text-blue-600 font-medium">In Transit</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">Carmel Valley Co-op #12</div>
-                    <div className="text-gray-500">6,800 homes</div>
-                  </div>
-                  <span className="text-purple-600 font-medium">Printing</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

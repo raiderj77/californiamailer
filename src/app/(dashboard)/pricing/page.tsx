@@ -62,7 +62,7 @@ const postageRates: Record<MailType, { name: string; rate: number; description: 
   },
   'eddm-bmeu': {
     name: 'EDDM BMEU (DDU)',
-    rate: 0.242,
+    rate: 0.247,
     description: 'Business Mail Entry Unit - DDU entry (best rate). No daily limits.',
   },
   'eddm-dscf': {

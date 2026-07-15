@@ -12,12 +12,6 @@ export default function HomePage() {
     { name: 'Marina', slug: 'marina', households: '14,000+' },
   ];
 
-  const testimonials = [
-    { name: 'Mike R.', business: 'HVAC Contractor', text: 'Filled my schedule for 3 months with one mailing.' },
-    { name: 'Sarah L.', business: 'Real Estate Agent', text: 'Best ROI of any marketing I\'ve tried.' },
-    { name: 'Tom K.', business: 'Restaurant Owner', text: 'Our lunch crowd doubled after the co-op card.' },
-  ];
-
   return (
     <div className="min-h-screen bg-white">
       <script
@@ -58,15 +52,14 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="max-w-3xl">
             <div className="inline-block bg-blue-500/30 text-blue-100 px-4 py-1 rounded-full text-sm mb-6">
-              🎯 Monterey County's #1 Direct Mail Service
+              Direct mail planning for Monterey County businesses
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               Reach Every Door in Your Target Neighborhood
             </h1>
             <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-              EDDM postcards starting at <span className="text-white font-bold">$0.24/home</span>. 
-              Co-op spots from <span className="text-white font-bold">$299</span>. 
-              No mailing list needed. Design included.
+              Plan an EDDM, co-op, or custom postcard campaign and request a written quote before
+              making any payment.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link 
@@ -82,11 +75,9 @@ export default function HomePage() {
                 View Available Spots
               </Link>
             </div>
-            <div className="mt-8 flex items-center gap-6 text-blue-200 text-sm">
-              <span>✓ No contracts</span>
-              <span>✓ Free design</span>
-              <span>✓ 2-week turnaround</span>
-            </div>
+            <p className="mt-8 text-sm text-blue-200">
+              Scope, schedule, postage assumptions, and payment terms are confirmed in writing.
+            </p>
           </div>
         </div>
       </section>
@@ -96,20 +87,20 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-400">500K+</div>
-              <div className="text-gray-400 text-sm">Postcards Delivered</div>
+              <div className="text-xl md:text-2xl font-bold text-blue-400">Local planning</div>
+              <div className="text-gray-400 text-sm">Monterey County focus</div>
             </div>
             <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-400">850+</div>
-              <div className="text-gray-400 text-sm">Local Businesses Served</div>
+              <div className="text-xl md:text-2xl font-bold text-blue-400">Written quotes</div>
+              <div className="text-gray-400 text-sm">Review before payment</div>
             </div>
             <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-400">4.4%</div>
-              <div className="text-gray-400 text-sm">Avg Response Rate</div>
+              <div className="text-xl md:text-2xl font-bold text-blue-400">Clear scope</div>
+              <div className="text-gray-400 text-sm">Services and assumptions listed</div>
             </div>
             <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-400">$0.24</div>
-              <div className="text-gray-400 text-sm">Cost Per Home</div>
+              <div className="text-xl md:text-2xl font-bold text-blue-400">No browser pricing</div>
+              <div className="text-gray-400 text-sm">Checkout remains disabled</div>
             </div>
           </div>
         </div>
@@ -130,7 +121,7 @@ export default function HomePage() {
               <div className="text-blue-600 font-bold text-sm mb-2">STEP 1</div>
               <h3 className="text-xl font-bold mb-2">Choose Your Area</h3>
               <p className="text-gray-600">
-                Pick the neighborhoods you want to target. We'll show you exactly how many homes you'll reach.
+                Pick the neighborhoods you want to target. We&apos;ll show you exactly how many homes you&apos;ll reach.
               </p>
             </div>
             <div className="text-center">
@@ -197,8 +188,8 @@ export default function HomePage() {
                 <span className="text-2xl">📬</span>
               </div>
               <h3 className="text-2xl font-bold mb-2">EDDM Postcards</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">$0.24</div>
-              <div className="text-gray-500 text-sm mb-4">per piece (postage only)</div>
+              <div className="text-3xl font-bold text-blue-600 mb-1">$0.247</div>
+              <div className="text-gray-500 text-sm mb-4">current USPS EDDM Retail postage per eligible flat</div>
               <p className="text-gray-600 mb-6">
                 Your own postcard to every door on selected carrier routes. Full creative control.
               </p>
@@ -261,7 +252,7 @@ export default function HomePage() {
             ))}
           </div>
           <p className="text-center text-gray-500 mt-8">
-            Don't see your area? <Link href="/quote" className="text-blue-600 hover:underline">Contact us</Link> — we cover all of California.
+            Don&apos;t see your area? <Link href="/quote" className="text-blue-600 hover:underline">Contact us</Link> — we cover all of California.
           </p>
         </div>
       </section>
@@ -271,7 +262,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Transparent Pricing</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            No hidden fees. Know exactly what you'll pay before you commit.
+            Review the written scope and know what you&apos;ll pay before you commit.
           </p>
           <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
             <table className="w-full">
@@ -292,7 +283,7 @@ export default function HomePage() {
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="px-6 py-4 font-medium">EDDM Postage</td>
-                  <td className="px-6 py-4 text-blue-600 font-bold">$0.242-$0.247/pc</td>
+                  <td className="px-6 py-4 text-blue-600 font-bold">$0.247/pc</td>
                   <td className="px-6 py-4 text-sm text-gray-600">Postage only</td>
                   <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">Full control, larger campaigns</td>
                 </tr>
@@ -311,31 +302,14 @@ export default function HomePage() {
               </tbody>
             </table>
           </div>
+          <p className="mt-4 text-center text-xs text-gray-500">
+            USPS rate checked July 14, 2026. Printing, design, preparation, and CaliforniaMailer service costs are separate unless a written quote says otherwise.{' '}
+            <a className="text-blue-600 underline" href="https://www.usps.com/business/prices.htm" rel="noopener noreferrer" target="_blank">Verify the current USPS price</a>.
+          </p>
           <div className="text-center mt-8">
             <Link href="/pricing" className="text-blue-600 hover:underline font-medium">
               View full pricing calculator →
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Clients Say</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <div key={i} className="bg-white border rounded-xl p-6">
-                <div className="flex items-center gap-1 text-yellow-400 mb-4">
-                  {'★★★★★'.split('').map((s, j) => <span key={j}>{s}</span>)}
-                </div>
-                <p className="text-gray-700 mb-4">"{t.text}"</p>
-                <div className="text-sm">
-                  <div className="font-bold">{t.name}</div>
-                  <div className="text-gray-500">{t.business}</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -345,7 +319,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Reach More Customers?</h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join 850+ Monterey County businesses using direct mail to grow.
+            Tell us the audience, area, quantity, and service you want reviewed.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link 
@@ -396,7 +370,7 @@ export default function HomePage() {
               <h4 className="text-white font-bold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm">
                 <li>hello@californiamailer.com</li>
-                <li>(831) 555-0100</li>
+                <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
                 <li className="pt-2">
                   <Link href="/" className="text-blue-400 hover:text-blue-300">Client Portal Login →</Link>
                 </li>
