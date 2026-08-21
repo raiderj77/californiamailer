@@ -1,4 +1,4 @@
-export type QuoteServiceType = 'coop' | 'shared_model' | 'mini_coop' | 'eddm' | 'solo';
+export type QuoteServiceType = 'coop' | 'shared_model' | 'mini_coop' | 'eddm' | 'solo' | 'pizza_box';
 export type MailingMethod = 'shared_coop' | 'eddm_saturation' | 'addressed_targeted';
 export type EddmFulfillment = 'print_only' | 'turnkey';
 
@@ -100,6 +100,7 @@ export const SERVICE_OPTIONS: ReadonlyArray<{ id: QuoteServiceType; label: strin
   { id: 'mini_coop', label: 'Small partner mailer', description: 'A smaller shared piece for a few complementary, noncompeting businesses; quoted as a separate project.' },
   { id: 'eddm', label: 'Single-business EDDM mailer', description: 'One business owns the whole saturation mail piece; route, size, and fulfillment are quoted.' },
   { id: 'solo', label: 'Targeted solo postcard', description: 'One business mails to a defined addressed audience rather than every address on a route.' },
+  { id: 'pizza_box', label: 'Pizza-box coupon or community flyer', description: 'Printing4SuperCheap prints the piece; a documented California restaurant partner distributes it. This is not USPS mail.' },
 ];
 
 export const DISCOUNT_PRINT_PRICES_CENTS: Readonly<Record<string, Readonly<Record<number, number>>>> = {

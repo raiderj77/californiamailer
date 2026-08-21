@@ -1,4 +1,8 @@
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
+import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '@/config/economicSafeguards';
 import type { SharedMailerModel } from '@/config/sharedMailerModels';
 
 export type SharedMailerRevenueMode = 'equal_unit_price' | 'custom_price_mix';
@@ -53,7 +57,7 @@ export const DEFAULT_SHARED_ECONOMICS_ASSUMPTIONS: SharedMailerEconomicsAssumpti
   ownerLaborCents: 150_000,
   softwareAndOtherCents: null,
   incomeTaxReserveBps: null,
-  targetOwnerSurplusCents: 250_000,
+  targetOwnerSurplusCents: MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
   targetEconomicMarginBps: null,
   assumptionStatus: 'editable_planning_assumptions',
   observedAt: '2026-08-18',
@@ -521,7 +525,10 @@ export function evaluateDatedPlanningPrice(
   if (safeguards && range && (safeguards.paidUnits < range.min || safeguards.paidUnits > range.max)) {
     reasons.push('The safeguarded paid-unit count is outside the model inventory.');
   }
-  if (safeguards?.targetOwnerSurplusCents !== DEFAULT_SHARED_ECONOMICS_ASSUMPTIONS.targetOwnerSurplusCents) {
+  if (
+    !safeguards
+    || safeguards.targetOwnerSurplusCents < MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS
+  ) {
     reasons.push('The planning price does not use the configured $2,500 pre-income-tax surplus floor.');
   }
 
@@ -552,15 +559,17 @@ export function evaluateDatedPlanningPrice(
         softwareAndOtherCents: safeguards.softwareAndOtherCents,
         incomeTaxReserveBps: null,
         targetOwnerSurplusCents: safeguards.targetOwnerSurplusCents,
-        targetEconomicMarginBps: null,
+        targetEconomicMarginBps: MINIMUM_ECONOMIC_MARGIN_BPS,
       });
       if (
         economics.fixedSurplusTargetGapCents === null
         || economics.fixedSurplusTargetGapCents < 0
+        || economics.marginTargetGapBps === null
+        || economics.marginTargetGapBps < 0
         || economics.requiredPriceMissingInputs.length > 0
         || economics.blockingReasons.length > 0
       ) {
-        reasons.push('The stored planning price does not clear its complete fixed-surplus safeguard calculation.');
+        reasons.push('The stored planning price does not clear both the $2,500 pre-income-tax surplus floor and 20% economic-margin floor.');
       }
     } catch {
       reasons.push('The stored planning price inputs failed safe whole-cent validation.');

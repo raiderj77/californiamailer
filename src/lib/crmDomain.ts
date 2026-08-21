@@ -134,6 +134,7 @@ export interface CrmOpportunity {
 const nextActionIds = new Set<CrmNextActionType>([
   'research',
   'write_email',
+  'prepare_sample',
   'review_reply',
   'prepare_offer',
   'review_interest',

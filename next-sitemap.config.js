@@ -9,6 +9,11 @@ const requestTimePublicPaths = [
   '/sample-card',
 ];
 
+const statewideServicePaths = [
+  '/california-postcard-mailing',
+  '/pizza-box-advertising',
+];
+
 const publicTransform = async (config, path) => ({
   loc: path,
   changefreq: path === '/coop-board' || path === '/founding-mailer'
@@ -22,6 +27,8 @@ const publicTransform = async (config, path) => ({
       ? 0.9
       : path === '/mailing-areas'
         ? 0.8
+        : statewideServicePaths.includes(path)
+          ? 0.8
         : 0.7,
   alternateRefs: config.alternateRefs ?? [],
 });

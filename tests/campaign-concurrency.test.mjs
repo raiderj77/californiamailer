@@ -12,7 +12,7 @@ test('economics edits and print approval consume one current transaction snapsho
   const transactionIndex = put.indexOf('await db.runTransaction');
   const currentReadIndex = put.indexOf('const currentSnapshot = await transaction.get(ref)');
   const updateIndex = put.indexOf('transaction.update(ref, update)');
-  const publicProjectionIndex = put.indexOf("transaction.set(\n          db.collection('publiccampaigns')");
+  const publicProjectionIndex = put.search(/transaction\.set\(\r?\n\s+db\.collection\('publiccampaigns'\)/);
   assert.ok(transactionIndex >= 0 && currentReadIndex > transactionIndex && updateIndex > currentReadIndex);
   assert.ok(publicProjectionIndex > currentReadIndex && publicProjectionIndex < updateIndex + 2_000);
   assert.match(put, /ECONOMICS_EDITABLE_STATUSES\.has\(String\(before\.status\)\)/);
@@ -43,17 +43,25 @@ test('proof and material latest-version pointers serialize on the reservation do
   const materialUpload = read('src/app/api/reservations/[id]/materials/route.ts');
   const materialReview = read('src/app/api/admin/materials/[id]/route.ts');
 
-  for (const [source, sequence, pointer, collection] of [
-    [proof, 'proofSequence', 'latestProofId', 'proofs'],
-    [materialUpload, 'materialSequence', 'latestMaterialId', 'materials'],
+  for (const [source, sequence, pointer] of [
+    [proof, 'proofSequence', 'latestProofId'],
+    [materialUpload, 'materialSequence', 'latestMaterialId'],
   ]) {
     assert.match(source, /db\.runTransaction\(async \(transaction\) =>/);
     assert.match(source, /const (?:currentReservationSnapshot|currentAccess) = await (?:transaction\.get|assertReservationAccessInTransaction)/);
-    assert.match(source, new RegExp(`transaction\\.get\\([\\s\\S]*collection\\('${collection}'\\)\\.where\\('reservationId'`));
     assert.match(source, new RegExp(`${sequence}: nextVersion`));
     assert.match(source, new RegExp(`${pointer}: (?:proofRef|materialRef)\\.id`));
     assert.doesNotMatch(source, /const version = existing\.docs\.reduce/);
   }
+
+  assert.match(proof, /transaction\.get\(db\.collection\('proofs'\)\.doc\(latestProofId\)\)/);
+  assert.doesNotMatch(
+    proof.slice(proof.indexOf('export async function POST')),
+    /collection\('proofs'\)\.where\('reservationId'/,
+  );
+  assert.match(materialUpload, /assertMaterialPointer\(currentReservation, storedSequence\)/);
+  assert.match(materialUpload, /transaction\.get\(db\.collection\('materials'\)\.doc\(latestId\)\)/);
+  assert.doesNotMatch(materialUpload, /collection\('materials'\)\.where\('reservationId'/);
 
   assert.match(materialReview, /db\.runTransaction\(async \(transaction\) =>/);
   assert.match(materialReview, /reservation\.latestMaterialId !== ref\.id/);

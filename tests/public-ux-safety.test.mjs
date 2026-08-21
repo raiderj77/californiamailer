@@ -121,3 +121,44 @@ test('admin and public coupon availability share the complete-content predicate'
   assert.match(publicPage, /couponDraftIsComplete\(content\)/);
   assert.doesNotMatch(admin, /hasPublishedContent: Boolean\(publishedContent\)/);
 });
+
+test('sample-card studies cover distinct shared-mailer families without claiming production proof', () => {
+  const sample = read('src/app/(public)/sample-card/page.tsx');
+  for (const label of [
+    '9 × 12 shared card',
+    '9 × 12 experimental card',
+    '12 × 15 shared card',
+    'M6 small shared mailer',
+    'M3 partner mailer',
+    'Community and new-mover cards',
+    'Directory-style card',
+    'Partner-distributed pizza-box flyer',
+  ]) {
+    assert.ok(sample.includes(label));
+  }
+  assert.match(sample, /Original planning diagrams · not source artwork/);
+  assert.match(sample, /not a 24-ad proof/);
+  assert.match(sample, /fit unproven/);
+  assert.match(sample, /house panel is never counted as paid funding/);
+  assert.match(sample, /New-mover targeting is not EDDM/);
+  assert.match(sample, /not equal display ads/);
+  assert.match(sample, /Not USPS mail/);
+  assert.match(sample, /Printing4SuperCheap is the required printer/);
+});
+
+test('quote page offers a bounded faceless fit preview without guarantees or silent outreach', () => {
+  const quote = read('src/app/(public)/quote/page.tsx');
+  const offerings = read('src/config/eddmOfferings.ts');
+  const intake = read('src/app/api/send-email/route.ts');
+  assert.match(quote, /Free private campaign-fit preview/);
+  assert.match(quote, /without booking a sales call/);
+  assert.match(quote, /does not guarantee that a preview or quote will be produced/);
+  assert.match(quote, /does not send an automated message, enroll you in marketing/);
+  assert.match(quote, /No predicted leads, sales, response rate, or ROI is included/);
+  assert.match(quote, /Partner-distributed—not mailed/);
+  assert.match(quote, /Printing4SuperCheap is the required printer/);
+  assert.match(offerings, /pizza_box/);
+  assert.match(offerings, /Printing4SuperCheap prints the piece/);
+  assert.match(intake, /PIZZA_BOX_QUANTITY_LABEL/);
+  assert.match(intake, /serviceType === 'pizza_box'/);
+});

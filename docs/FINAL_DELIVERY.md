@@ -3,9 +3,10 @@
 Date: 2026-08-20<br>
 Branch: `codex/faceless-sales`<br>
 Baseline: `main` at `4da58ef`<br>
-Canonical repository: `C:\Users\jason\Documents\portfolio-sites\californiamailer`
+Current writable integration clone: `C:\Users\jason\Documents\ChatGPT\California Mailer\californiamailer`<br>
+Maintained source/local origin: `C:\Users\jason\Documents\portfolio-sites\californiamailer`
 
-This is a locally committed implementation handoff. The release commit and feature branch were not pushed or deployed; production remains on baseline `main` commit `4da58ef`. No real outreach, subscriber campaign, payment, refund, printing, postage, vendor order, advertiser record, or production migration was performed.
+This is a local integrated-tree implementation handoff. The follow-up remains local and unpushed, and nothing was deployed; production remains on baseline `main` commit `4da58ef`. No real outreach, subscriber campaign, payment, refund, printing, postage, restaurant distribution, vendor order, advertiser record, provider activation, or production migration was performed.
 
 ## 1. Original project condition
 
@@ -15,7 +16,9 @@ The baseline did not safely operate the proposed business. Public pricing, reach
 
 ## 2. Summary of changes
 
-- Repositioned the public site as a truthful owner-managed, pre-funded Monterey Peninsula validation campaign.
+- Repositioned the public site as a truthful owner-managed California direct-mail service with one pre-funded Monterey Peninsula validation campaign plus quote-only statewide service intake.
+- Added a free private campaign-fit-preview offer that stores a request for manual review without promising finished creative, results, availability, a reservation, automatic outreach, or ongoing marketing consent.
+- Added original `/california-postcard-mailing` and `/pizza-box-advertising` service pages with canonical metadata, visible FAQs, safe FAQ JSON-LD, internal links, and explicit fulfillment boundaries. Their copy is relevance-focused but makes no ranking guarantee.
 - Added the versioned `shared-mailers-v2` planning catalog and active `shared-9x12-5000` experiment: 9 × 12, 14 pt, 5,000 pieces, 24 equal slot-units proposed at $349 each, and an $8,376 full funding goal. The approximately $2,500 owner target is pre-income-tax economic surplus after editable labor, reserves, and complete campaign costs—not guaranteed or personal after-tax take-home.
 - Added cross-format planning for 12 × 15, six-unit M6, custom split-layout M7–M9 concepts, M3, community, new-mover, and directory cards. Non-active formats remain quote-only until their exact layout, audience, quantity, fulfillment, and complete costs are supplied.
 - Rebuilt the public campaign board around a sanitized `publiccampaigns` projection with explicit loading, error, empty, preview, and real-published states.
@@ -26,9 +29,10 @@ The baseline did not safely operate the proposed business. Public pricing, reach
 - Added manually delivered one-time business-portal links for one reservation/business placement, with hashed database sessions, expiry, logout, and revoke-all.
 - Added paid-reservation coupon drafts, exact-version owner publication, a read-only public snapshot, and disabled-by-default server-side AI field assistance with grounding and quota controls.
 - Replaced the payment ledger/webhook with signed, payload-bound, idempotent, ownership-checked handling for cleared, failed, expired, refunded, disputed, and dispute-closed states.
-- Added editable route/cost evidence, margin calculations, refund obligations, material/disclaimer/proof counts, and a server-enforced print-readiness gate.
+- Added editable route/cost evidence, margin calculations, refund obligations, material/disclaimer/proof counts, and shared server constants for a $2,500 pre-income-tax economic-surplus floor and 2,000 bps (20%) minimum margin. Economics writes, cost calculation, operational gates, public price visibility, and print readiness enforce both floors independently.
 - Added a bounded planning-only optimizer that selects the closest whole-route subset from owner-imported rows without fetching provider data or mutating a verified plan.
-- Added private quarantined materials, versioned proofs, transactional exact-version decisions, immutable approval records, and audited owner review.
+- Added immutable structured creative-brief versions, immutable private quarantined material versions with explicit asset-rights attestations, proofs transactionally bound to the exact current brief/material/placement versions, exact-version decisions, immutable approval evidence, and audited owner review.
+- Added a bounded owner-only read-only Production Board with fail-closed readiness, canonical payment and exact creative-pointer validation, private/no-store responses, safe client-side filters, and formula-safe CSV output that excludes contact PII and private tokens/paths.
 - Added unique redirect/QR/coupon tracking, measured bot/non-bot/unknown HTTP-request counts, separate advertiser-reported outcomes, and a private written delivery record. A full provider refund deactivates the matched link; a partial refund updates cleared net funding without automatically deactivating an otherwise valid link; disputes suspend it; and only a won dispute with exact payment/inventory reconciliation can restore a previously active link.
 - Added a non-automated refund ledger. Owner decisions and provider references are recorded locally; only signed provider events confirm money movement.
 - Added an audited campaign lifecycle from fully funded through proofing, scheduled, printed, delivered, completed, or cancellation/refunding. The app records evidence but cannot order printing or postage.
@@ -44,7 +48,7 @@ The exact added, modified, and retired file list is in [`CHANGE_MANIFEST.md`](CH
 
 ## 4. Database changes
 
-All 32 new server-owned operational collections:
+All 33 new server-owned operational collections:
 
 ```text
 campaigns
@@ -58,6 +62,7 @@ reservationdedupe
 payments
 paymentevents
 refunds
+creativebriefs
 materials
 proofs
 proofapprovals
@@ -124,7 +129,7 @@ The block above is the complete set of 25 application-specific variables in `.en
 ## 6. Setup instructions
 
 ```powershell
-Set-Location 'C:\Users\jason\Documents\portfolio-sites\californiamailer'
+Set-Location 'C:\Users\jason\Documents\ChatGPT\California Mailer\californiamailer'
 npm ci
 Copy-Item .env.example .env.local
 npm run dev
@@ -141,23 +146,25 @@ npm test
 npm run typecheck
 npm run lint
 npm run build
-npm audit --audit-level=high
+npm audit --offline --audit-level=high
 git diff --check
 ```
+
+The normal release target remains `npm run build` after `npm ci` creates a real in-tree `node_modules` directory. In this sandbox clone only, the dependency directory is a junction to the read-only maintained repository, so Turbopack rejects it as outside the project root; `npx next build --webpack` followed by `npx next-sitemap` is the supported local verification fallback used below.
 
 Final local results:
 
 | Gate | Result |
 |---|---|
-| Automated tests | 198/198 passed |
+| Automated tests | 239/239 passed |
 | TypeScript | Passed |
 | ESLint | Passed |
-| Production build | Passed; Next.js generation phase completed 65/65 static pages; source inventory is 53 `page.tsx` files and 34 `route.ts` handlers |
-| Dependency audit | 0 vulnerabilities |
-| Sitemap | 19 indexed public URLs; all eight request-time public price surfaces included; private, tokenized, owner, coupon, and redirect-only URLs excluded; no build-time `lastmod` churn |
-| Browser QA | Earlier partial browser checks predate the final tree and are not final release evidence |
+| Production build | Supported webpack fallback passed with 69/69 generated static pages; source inventory is 56 `page.tsx` files and 36 `route.ts` handlers. Default Turbopack was environment-blocked only because this clone uses a temporary `node_modules` junction outside its filesystem root. |
+| Dependency audit | `npm audit --offline --audit-level=high` reported 0 vulnerabilities for the installed lockfile/cache snapshot; refresh online at release time |
+| Sitemap | 21 indexed public URLs; both statewide service pages and all eight request-time public price surfaces included; private, tokenized, owner, coupon, and redirect-only URLs excluded; zero generated `lastmod` values |
+| Browser QA | At 390 × 844 and 1440 × 900, `/home`, `/quote`, `/california-postcard-mailing`, `/pizza-box-advertising`, and `/sample-card` had no horizontal overflow; unauthenticated `/production-board` redirected to owner login. The `/quote` React dev warning was traced to browser-extension-injected `fdprocessedid`, not source divergence. |
 | CI workflow | Locally validated structure and full-SHA pins; unpushed and never run on GitHub |
-| Diff/manifest | 152 added + 46 modified + 22 deleted paths reconciled exactly; whitespace check passed |
+| Diff/manifest | 167 added + 46 modified + 22 deleted paths = 235 total versus `4da58ef`; whitespace check passed |
 
 No Firebase emulator, live Firebase, Stripe test/live, Mailgun, USPS, printer, carrier, subscriber, or production end-to-end transaction was performed.
 
@@ -198,6 +205,8 @@ Deployment is not authorized by this implementation. After explicit owner approv
 - Establish the final legal business identity, valid postal address, sender identity, reply mailbox, and owner account.
 - Select actual USPS/provider routes and record route-specific household evidence; do not substitute population.
 - Obtain dated printing, postage, shipping, processing, design, and reserve inputs.
+- For every statewide single-business postcard request, document the EDDM routes or addressed audience/list, exact postal method, and current Printing4SuperCheap project quote before pricing.
+- For every pizza-box placement request, obtain a named restaurant partner, signed distribution agreement, verified box volume, defined quantity/period, exact handoff, category terms, and completion-evidence plan before stating availability or pricing.
 - Complete an exact physical/postal preflight of the proposed 24-unit 9 × 12 artwork. HRM guidance supports roughly 16–18 comfortable ads on 9 × 12 and about 25 on 12 × 15, so 24 units on 9 × 12 are not production-proven.
 - Finalize the advertiser agreement, terms, funding/refund policy, privacy notice, content standards, and outreach disclosures with California counsel.
 - Emulator-test the rules and perform Stripe test-mode reconciliation.
@@ -224,7 +233,7 @@ Deployment is not authorized by this implementation. After explicit owner approv
 
 ## 12. Current known limitations
 
-- The release commit is local and unpushed; production still reflects another revision until separately released.
+- The current integrated tree is local and unpushed; production still reflects another revision until separately released.
 - Parent-category labels and `maximumAdvertisers` are stored, but the safe founding flow enforces one advertiser per category and exposes no multi-advertiser/conflict override UI yet.
 - Delivery evidence is an owner-entered reference/date, not independent carrier API confirmation; one immutable delivery record is supported per tracking record.
 - A full-refund webhook deactivates matching tracking. A partial refund updates the net payment ledger but does not by itself deactivate an otherwise valid link. Disputes suspend tracking; a won dispute restores a previously active link only when payment and exact inventory ownership reconcile. Full refund, non-won dispute, or ownership mismatch stays inactive/manual-review.
@@ -239,6 +248,7 @@ Deployment is not authorized by this implementation. After explicit owner approv
 - Partial provider refunds that do not map to complete recorded obligations remain manual-review items.
 - Exact routes, household count, dates, costs, profitability, and campaign contract remain unknown.
 - The 24-unit 9 × 12 inventory is an owner-requested experiment. Neither the catalog nor a favorable calculator result proves the units fit legibly around postal clear zones, branding, and disclosures.
+- Statewide postcard and pizza-box pages are inquiry/intake surfaces, not complete independent reservation, payment, scheduling, or ordering workflows. Their presence does not prove statewide capacity, restaurant availability, exclusivity, distribution, delivery, response, or search rankings.
 
 ## 13. Security concerns still open
 
@@ -252,7 +262,7 @@ Deployment is not authorized by this implementation. After explicit owner approv
 - Create a documented incident/refund/dispute reconciliation procedure and owner recovery path.
 - Obtain legal review of outreach, recorded communications, consent, privacy, advertiser claims, and refund terms.
 
-No release-blocking secret was found in the checked files, and the dependency audit reported zero vulnerabilities. That is not a substitute for provider and emulator verification.
+No release-blocking secret was found in the checked files, and the offline dependency audit reported zero vulnerabilities for the installed lockfile/cache snapshot. Refresh the audit against the online registry at release time; neither result substitutes for provider and emulator verification.
 
 ## 14. Founding planning model and economics gate
 
@@ -267,8 +277,9 @@ These are versioned planning assumptions, not verified profitability:
 | Proposed price per paid unit | Editable planning assumption | $349 |
 | Full funding goal | 24 × $349 | $8,376 |
 | Target owner economic surplus | After editable costs, reserves, and labor | Approximately $2,500 pre-income-tax |
+| Minimum economic margin | Configured production floor | 20% (2,000 bps) |
 
-The calculator starts with complete campaign costs, solves percentage and per-payment processing fees from gross revenue, adds explicit reserves and owner-labor valuation, and then enforces the selected fixed-surplus floor plus any optional economic-margin floor. The 24-unit models enforce a 16–24 paid-fill range with 16/18/24 sensitivity. A custom price mix returns the required total revenue and an average filled-unit benchmark rather than one invented customer price. Blank inputs remain unknown rather than becoming zero.
+The calculator starts with complete campaign costs, solves percentage and per-payment processing fees from gross revenue, adds explicit reserves and owner-labor valuation, and then enforces `MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS = 250_000` and `MINIMUM_ECONOMIC_MARGIN_BPS = 2_000`. The authoritative production gate requires both; clearing one does not waive the other. The economics API rejects a non-null target below $2,500, normalizes stored margin evidence to at least 2,000 bps on update, and calculation/readiness/operational gates independently fail low legacy values. Public dated-price support also requires both shared floors. The 24-unit models enforce a 16–24 paid-fill range with 16/18/24 sensitivity. A custom price mix returns the required total revenue and an average filled-unit benchmark rather than one invented customer price. Blank inputs remain unknown rather than becoming zero.
 
 The $2,500 target is not guaranteed profit, an intermediate cash balance, or personal after-tax take-home. It is a pre-income-tax planning result only. A current signed-in Printing4SuperCheap quote, exact routes, complete costs, and a model-specific layout are still required.
 
@@ -327,3 +338,25 @@ The public `/mailing-areas` page follows the observable ZIP/zone pattern used by
 `/business-portals` creates a one-time, manually copied link for one reservation/business placement. Supported invite lifetimes are 1, 24, 72, and 168 hours; consumed links create a 30-day database-backed session. Raw tokens are not stored. The URL fragment is removed before consumption, and the token-free reservation page uses the existing `cm_reservation_{reservationId}` cookie with `HttpOnly`, `SameSite=Lax`, root path, explicit expiry, and `Secure` in production. `NEXT_PUBLIC_SITE_URL` must be the canonical HTTPS origin before production link creation. Logout revokes one session; revoke-all increments the access version and invalidates legacy and current access. No email, SMS, or other delivery is automated. See [`ADVERTISER_PORTAL.md`](ADVERTISER_PORTAL.md).
 
 Coupon drafting requires the exact reservation session, current paid state, and matching tracking ownership. Manual drafts remain available without AI. Owner publication requires the submitted version and exact confirmation, copies a separate public snapshot, and never treats a draft as approved. Optional AI is server-only, disabled by default, uses `store: false`, structured two-field output, fact grounding, a hashed reservation-scoped safety identifier, and a durable per-reservation UTC-day quota. No live AI call was made. See [`AI_COUPON_RESEARCH.md`](AI_COUPON_RESEARCH.md).
+
+## 19. Free private fit-preview boundary
+
+`/quote` now presents a free private campaign-fit preview as the first no-meeting-required step. A valid same-origin request is saved privately for manual CRM review with the selected service, market, quantity, format, details, contact preference, and reply permission. It does not create finished creative, a customer price, availability, a reservation, payment, route plan, restaurant partner, automatic response, or ongoing marketing consent. The app sends nothing; any response still needs separate owner review and authorization.
+
+The preview may outline route/audience fit, a format direction, evidence still needed, and next steps. It may not promise response, ROI, exclusivity, publication, delivery, or ranking. Public service copy and metadata improve topical clarity and crawlability, but no search position has been measured or guaranteed.
+
+## 20. Statewide service and fulfillment boundaries
+
+`/california-postcard-mailing` accepts quote-only requests for one-business EDDM or addressed postcards throughout California. Printing4SuperCheap is the required printer and USPS is the documented mail-delivery channel. A written price requires exact current routes or addressed-audience/list evidence, postal method and responsibilities, a current signed-in Printing4SuperCheap quote, and complete costs that clear both the configured $2,500 pre-income-tax economic-surplus floor and 20% minimum margin.
+
+`/pizza-box-advertising` accepts quote-only requests for original partner-distributed coupon sheets or flyers throughout California. It is not USPS mail or EDDM: Printing4SuperCheap prints the approved piece, while a named restaurant partner distributes it under a signed agreement. Availability and pricing require verified box volume, a defined quantity and period, category terms, artwork rights, exact handoff, completion evidence, the current printer quote, and the same two economic floors.
+
+Both lanes are intake surfaces, not independent production/order state machines. Statewide intake does not mean every route, list, restaurant, category, format, quantity, or date is available. No provider call, quote request, payment, print order, mailing, handoff, or restaurant distribution occurred.
+
+## 21. Structured production evidence and read-only command center
+
+Each paid reservation can create immutable structured `creativebriefs` versions tied to the exact campaign delivery window. Each new private material version records its asset type, rights basis, named attestor, required source/license note, statement version, and owner-review evidence. Proof creation is bounded before buffering and transactionally binds the exact reservation, campaign, placement slot, creative-brief ID/version, material ID/version, and previous-proof pointer. Readiness treats an approved status as insufficient without a matching current pointer plus recorded approver and timestamp.
+
+Production payment evidence is stricter than aggregate funding: every paid reservation needs exactly one canonical provider-backed payment bound to its current campaign, plan, offer version, currency, reservation, and original quote. The full quoted amount must be cleared with zero refund. Partial refunds, duplicate/orphan/mismatched ledgers, unresolved states, or contradictory pointers fail closed.
+
+`/production-board` is an owner-only, bounded, read-only view of the current campaign, slot, reservation, canonical payment, brief, material, proof, tracking, coupon, and portal records. It cannot write a record, send a message, activate a provider, or order production. Collection-cap hits, unknowns, blockers, and record errors never become ready. Its client-side CSV excludes contact PII, raw tokens, storage paths, and coupon content and neutralizes spreadsheet formulas.

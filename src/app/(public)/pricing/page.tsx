@@ -50,7 +50,7 @@ export default async function PricingPage() {
           <div className="text-sm font-black uppercase tracking-[0.18em] text-blue-300">Planning prices · checkout disabled</div>
           <h1 className="mt-3 max-w-5xl text-4xl font-black text-white md:text-6xl">Dated 9 × 12 planning scenarios. Every other format is quote-only.</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-            {publicPrices.supportedCount.toLocaleString('en-US')} stored planning {publicPrices.supportedCount === 1 ? 'price currently clears' : 'prices currently clear'} the configured supplier-age and fixed-surplus safeguards. These are not active checkout prices or claims about results. Every other format keeps its own layout, audience, mailing method, and cost boundary.
+            {publicPrices.supportedCount.toLocaleString('en-US')} stored planning {publicPrices.supportedCount === 1 ? 'price currently clears' : 'prices currently clear'} the configured supplier-age, $2,500 pre-income-tax surplus, and 20% economic-margin safeguards. These are not active checkout prices or claims about results. Every other format keeps its own layout, audience, mailing method, and cost boundary.
           </p>
         </div>
       </section>
@@ -123,7 +123,7 @@ export default async function PricingPage() {
               Size, quantity, delivery area or addressed audience, artwork, timing, and fulfillment must be confirmed before CaliforniaMailer provides a written quote.
             </p>
           </div>
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
             <QuoteOnlyCard
               title="Single-business EDDM"
               description="One business owns the full saturation mail piece. Route count, final USPS eligibility, size, and fulfillment are confirmed in writing."
@@ -142,6 +142,12 @@ export default async function PricingPage() {
               options={MINI_COOP_MAIL_PIECES.map((option) => option.label)}
               footer="This custom project does not inherit the founding mailer's unit price."
             />
+            <QuoteOnlyCard
+              title="Pizza-box coupon flyer"
+              description="Noncompeting businesses share a coupon or community flyer printed by Printing4SuperCheap and distributed by a contracted California restaurant partner—not USPS."
+              options={['Restaurant and box-volume verification', 'Written distribution agreement', 'Rights-attested offers and artwork', 'Documented handoff and distribution evidence']}
+              footer="Historical flyer prices and response claims are not customer quotes or performance evidence."
+            />
           </div>
         </section>
 
@@ -151,6 +157,9 @@ export default async function PricingPage() {
               <h2 id="quote-basis" className="text-3xl font-black text-slate-950">Supplier and postage basis</h2>
               <p className="mt-4 leading-7 text-slate-700">
                 CaliforniaMailer uses <strong>{PRINTING4SUPERCHEAP.name}</strong> as the fixed print supplier. The supplier snapshot was observed on <time dateTime={PRINTING4SUPERCHEAP.priceObservedAt}>{PRINTING4SUPERCHEAP.priceObservedAt}</time>, has no stated validity-through date, and must be rechecked before each quote.
+              </p>
+              <p className="mt-4 leading-7 text-slate-700">
+                A project-specific customer price is withheld until complete costs clear the configured pre-income-tax owner-surplus target and minimum margin gate. USPS or a documented restaurant partner performs distribution; the printer name never substitutes for mailing or partner-delivery evidence.
               </p>
               <p className="mt-4 leading-7 text-slate-700">
                 USPS EDDM Retail postage is <strong>${(USPS_EDDM_RETAIL.rateMillsPerPiece / 1000).toFixed(3)} per piece</strong>, effective <time dateTime={USPS_EDDM_RETAIL.effectiveDate}>{USPS_EDDM_RETAIL.effectiveDate}</time>. EDDM Retail requires at least {USPS_EDDM_RETAIL.minimumPieces.toLocaleString('en-US')} pieces and permits no more than {USPS_EDDM_RETAIL.maximumPiecesPerDayPerZip.toLocaleString('en-US')} pieces per day per five-digit ZIP Code. Postage alone is not a complete customer price.

@@ -89,6 +89,8 @@ test('CRM browser page talks only to the owner API and links guarded operations'
   assert.match(page, /fetch\('\/api\/admin\/crm'/);
   assert.match(page, /Authorization: `Bearer \$\{await user\.getIdToken\(\)\}`/);
   assert.doesNotMatch(page, /firebase\/firestore|addDoc\(|updateDoc\(|deleteDoc\(/);
+  assert.match(page, /taskType === 'prepare_sample'/);
+  assert.match(page, /does not send, order, publish, quote, or create a provider account/);
   for (const href of ['/interest-inbox', '/sales-desk', '/proof-workflow', '/refunds', '/tracking']) {
     assert.match(page, new RegExp(href.replace('/', '\\/')));
   }

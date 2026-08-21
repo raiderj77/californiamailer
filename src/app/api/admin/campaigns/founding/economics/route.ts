@@ -3,16 +3,23 @@ import { FieldValue, type DocumentData } from 'firebase-admin/firestore';
 import { z } from 'zod';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
 import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '@/config/economicSafeguards';
+import {
   FOUNDING_CAMPAIGN,
   FOUNDING_INVENTORY_GROSS_CENTS,
   campaignMatchesActiveSharedModel,
 } from '@/config/foundingCampaign';
 import {
+  canonicalPaidPaymentEvidence,
   calculateCostSummary,
   clearedNetFundingCents,
+  completeCampaignDeliveryWindow,
   evaluatePrintReadiness,
-  hasApprovedLatestMaterial,
-  latestProofStatus,
+  hasCurrentApprovedMaterialWithRights,
+  hasCurrentCreativeBrief,
+  latestBoundProofStatus,
   quoteVerificationStatus,
 } from '@/lib/businessRules';
 import { campaignOperationalEvidenceBlockReason } from '@/lib/campaignOperationalGates';
@@ -26,6 +33,11 @@ export const runtime = 'nodejs';
 const cents = z.number().int().min(0).max(100_000_000);
 const nullableCents = cents.nullable();
 const positiveNullableCents = z.number().int().min(1).max(100_000_000).nullable();
+const ownerSurplusNullableCents = z.number()
+  .int()
+  .min(MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS)
+  .max(100_000_000)
+  .nullable();
 const updateSchema = z.object({
   plannedDeliveryStart: z.string().date().nullable(),
   plannedDeliveryEnd: z.string().date().nullable(),
@@ -38,7 +50,7 @@ const updateSchema = z.object({
     taxCostCents: nullableCents, designCostCents: nullableCents, ownerLaborCostCents: nullableCents,
     processingFeeCents: positiveNullableCents, refundReserveCents: nullableCents,
     reprintReserveCents: nullableCents, softwareAllocationCents: nullableCents, otherExpensesCents: nullableCents,
-    targetOwnerSurplusCents: nullableCents,
+    targetOwnerSurplusCents: ownerSurplusNullableCents,
     printerQuoteReference: z.string().trim().max(300).nullable(), quoteVerifiedAt: z.string().date().nullable(),
   }).strict(),
 }).strict();
@@ -53,6 +65,13 @@ const campaignDateFormatter = new Intl.DateTimeFormat('en-US', {
 function campaignDateKey(instant: string): string {
   const values = new Map(campaignDateFormatter.formatToParts(new Date(instant)).map((part) => [part.type, part.value]));
   return `${values.get('year')}-${values.get('month')}-${values.get('day')}`;
+}
+
+function enforcedMinimumMargin(value: unknown): number {
+  const candidate = Number(value);
+  return Number.isSafeInteger(candidate) && candidate >= MINIMUM_ECONOMIC_MARGIN_BPS
+    ? candidate
+    : MINIMUM_ECONOMIC_MARGIN_BPS;
 }
 
 function scheduleValidationError(input: z.infer<typeof updateSchema>): string | null {
@@ -154,31 +173,63 @@ function readinessState(
   proofDocuments: SnapshotDocument[],
   refundDocuments: SnapshotDocument[],
   materialDocuments: SnapshotDocument[],
+  creativeBriefDocuments: SnapshotDocument[],
   paymentDocuments: SnapshotDocument[],
   routePlan: DocumentData | undefined,
   atMs = Date.now(),
 ) {
   assertActiveSharedModel(data);
   const reservations: Array<DocumentData & { id: string }> = reservationDocuments.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const paid = reservations.filter((item) => item.status === 'paid'
-    && item.planId === FOUNDING_CAMPAIGN.planId
-    && item.offerModelVersion === FOUNDING_CAMPAIGN.offerModelVersion);
+  const paid = reservations.filter((item) => item.status === 'paid');
   const paidAdvertiserCount = new Set(paid.map((item) => String(item.emailNormalized || item.id))).size;
   const proofs: Array<DocumentData & { id: string }> = proofDocuments.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const paidProofStatuses = paid.map((reservation) => latestProofStatus(reservation, proofs));
   const pricePerPaidPlacementCents = FOUNDING_CAMPAIGN.placements.standard.priceCents;
   const materials: Array<DocumentData & { id: string }> = materialDocuments.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const approvedMaterialCount = paid.filter((reservation) => hasApprovedLatestMaterial(reservation, materials)).length;
+  const creativeBriefs: Array<DocumentData & { id: string }> = creativeBriefDocuments.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const deliveryWindowComplete = completeCampaignDeliveryWindow(data) !== null;
+  const creativePackages = paid.map((reservation) => {
+    const creativeBrief = creativeBriefs.find((candidate) => candidate.id === reservation.latestCreativeBriefId);
+    const material = materials.find((candidate) => candidate.id === reservation.latestMaterialId);
+    const proof = proofs.find((candidate) => candidate.id === reservation.latestProofId);
+    const creativeBriefCurrent = hasCurrentCreativeBrief(reservation, creativeBrief, data);
+    const materialCurrent = hasCurrentApprovedMaterialWithRights(
+      reservation,
+      material,
+      new Date(atMs),
+    );
+    return {
+      creativeBriefCurrent,
+      materialCurrent,
+      proofStatus: creativeBriefCurrent && materialCurrent
+        ? latestBoundProofStatus(reservation, proof, new Date(atMs))
+        : 'waiting_for_materials' as const,
+    };
+  });
+  const paidProofStatuses = creativePackages.map((item) => item.proofStatus);
+  const currentCreativeBriefCount = creativePackages.filter((item) => item.creativeBriefCurrent).length;
+  const approvedMaterialCount = creativePackages.filter((item) => item.materialCurrent).length;
   const paidDisclaimerCount = paid.filter((reservation) => typeof reservation.advertiserDisclaimer === 'string' && reservation.advertiserDisclaimer.trim().length >= 2).length;
   const refundObligationCents = refundDocuments.reduce((total, doc) => {
     const refund = doc.data();
     return ['requested', 'approved', 'submitted'].includes(String(refund.status)) ? total + Number(refund.amountCents || 0) : total;
   }, 0);
+  const allPayments = paymentDocuments
+    .map((doc) => ({ id: doc.id, ...doc.data() }));
   const payments = paymentDocuments
     .filter((doc) => doc.data().planId === FOUNDING_CAMPAIGN.planId
       && doc.data().offerModelVersion === FOUNDING_CAMPAIGN.offerModelVersion)
     .map((doc) => ({ id: doc.id, ...doc.data() })) as CampaignPayment[];
   const currentClearedFundingCents = clearedNetFundingCents(payments);
+  const canonicalPaymentEvidence = canonicalPaidPaymentEvidence(
+    reservations,
+    allPayments,
+    {
+      campaignId: FOUNDING_CAMPAIGN.id,
+      planId: FOUNDING_CAMPAIGN.planId,
+      offerModelVersion: FOUNDING_CAMPAIGN.offerModelVersion,
+    },
+    new Date(atMs),
+  );
   const unresolvedPaymentReviewCount = unresolvedPaymentReviewKeys(
     reservations,
     paymentDocuments,
@@ -191,14 +242,42 @@ function readinessState(
     routePlan,
     atMs,
   ) === null;
-  const readiness = evaluatePrintReadiness({
-    clearedFundingCents: currentClearedFundingCents, fundingGoalCents: Number(data.fundingGoalCents),
+  const baseReadiness = evaluatePrintReadiness({
+    clearedFundingCents: canonicalPaymentEvidence.clearedFundingCents, fundingGoalCents: Number(data.fundingGoalCents),
     paidReservationCount: paid.length, minimumPaidPlacements: Number(data.minimumPaidPlacements), paidProofStatuses,
     approvedMaterialCount, paidDisclaimerCount, refundObligationCents, unresolvedPaymentReviewCount, verifiedHouseholds: data.verifiedHouseholds === null || data.verifiedHouseholds === undefined ? null : Number(data.verifiedHouseholds),
     artworkPreflightApproved: Boolean(data.artworkPreflightApproved), routesConfirmed: operationalEvidenceCurrent,
     costs: campaignCosts(data), minimumMarginBps: Number(data.minimumMarginBps), ownerPrintApproved: Boolean(data.ownerPrintApproved),
     pricePerPaidPlacementCents,
   });
+  const creativeEvidenceChecks = [
+    {
+      key: 'delivery_schedule',
+      label: 'Complete planned delivery window',
+      passed: deliveryWindowComplete,
+      detail: deliveryWindowComplete
+        ? `${String(data.plannedDeliveryStart)} through ${String(data.plannedDeliveryEnd)}`
+        : 'Both valid planned delivery dates are required',
+    },
+    {
+      key: 'creative_briefs',
+      label: 'Every paid creative brief covers the current schedule',
+      passed: currentCreativeBriefCount === paid.length,
+      detail: `${currentCreativeBriefCount} current for ${paid.length} paid placements`,
+    },
+    {
+      key: 'canonical_payments',
+      label: 'Every paid reservation has one fully cleared canonical payment',
+      passed: canonicalPaymentEvidence.issues.length === 0
+        && canonicalPaymentEvidence.verifiedPaidReservationCount === paid.length,
+      detail: `${canonicalPaymentEvidence.verifiedPaidReservationCount} verified for ${paid.length} paid placements; ${canonicalPaymentEvidence.issues.length} integrity issue(s)`,
+    },
+  ];
+  const readiness = {
+    ...baseReadiness,
+    ready: baseReadiness.ready && creativeEvidenceChecks.every((check) => check.passed),
+    checks: [...baseReadiness.checks, ...creativeEvidenceChecks],
+  };
   const proofStatusCounts = proofs.reduce<Record<string, number>>((counts, proof) => {
     const status = String(proof.status || 'unknown'); counts[status] = (counts[status] || 0) + 1; return counts;
   }, {});
@@ -211,6 +290,8 @@ function readinessState(
     outstandingPaymentCount: reservations.filter((item) => ['hold', 'awaiting_payment'].includes(String(item.status))).length,
     refundObligationCents,
     currentClearedFundingCents,
+    canonicalClearedFundingCents: canonicalPaymentEvidence.clearedFundingCents,
+    canonicalPaymentIntegrityIssueCount: canonicalPaymentEvidence.issues.length,
     unresolvedPaymentReviewCount,
   };
 }
@@ -219,13 +300,14 @@ async function operationalState(data: DocumentData) {
   assertActiveSharedModel(data);
   const db = getAdminFirestore();
   const routePlanId = typeof data.routePlanId === 'string' ? data.routePlanId : null;
-  const [reservationSnapshot, proofSnapshot, refundSnapshot, interestSnapshot, paymentSnapshot, materialSnapshot, routePlanSnapshot] = await Promise.all([
+  const [reservationSnapshot, proofSnapshot, refundSnapshot, interestSnapshot, paymentSnapshot, materialSnapshot, creativeBriefSnapshot, routePlanSnapshot] = await Promise.all([
     db.collection('reservations').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     db.collection('proofs').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     db.collection('refunds').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     db.collection('reservationinterests').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     db.collection('payments').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     db.collection('materials').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
+    db.collection('creativebriefs').where('campaignId', '==', FOUNDING_CAMPAIGN.id).get(),
     routePlanId ? db.collection('routeplans').doc(routePlanId).get() : Promise.resolve(null),
   ]);
   const core = readinessState(
@@ -234,6 +316,7 @@ async function operationalState(data: DocumentData) {
     proofSnapshot.docs,
     refundSnapshot.docs,
     materialSnapshot.docs,
+    creativeBriefSnapshot.docs,
     paymentSnapshot.docs,
     routePlanSnapshot?.data(),
   );
@@ -251,9 +334,10 @@ async function responseState(data: DocumentData) {
   const pricePerPaidPlacementCents = FOUNDING_CAMPAIGN.placements.standard.priceCents;
   const thresholdSummary = calculateCostSummary(costs, Number(data.fundingGoalCents), pricePerPaidPlacementCents);
   const fullInventorySummary = calculateCostSummary(costs, FOUNDING_INVENTORY_GROSS_CENTS, pricePerPaidPlacementCents);
-  const minimumMarginFundingCents = thresholdSummary.totalCostCents === null
+  const minimumMarginBps = enforcedMinimumMargin(data.minimumMarginBps);
+  const minimumMarginFundingCents = thresholdSummary.totalCostCents === null || minimumMarginBps >= 10_000
     ? null
-    : Math.ceil(thresholdSummary.totalCostCents / (1 - Number(data.minimumMarginBps) / 10_000));
+    : Math.ceil(thresholdSummary.totalCostCents / (1 - minimumMarginBps / 10_000));
   const minimumTargetFundingCents = thresholdSummary.totalCostCents === null || thresholdSummary.targetOwnerSurplusCents === null
     ? null
     : thresholdSummary.totalCostCents + thresholdSummary.targetOwnerSurplusCents;
@@ -269,7 +353,7 @@ async function responseState(data: DocumentData) {
       reservationDeadline: data.reservationDeadline || null, artworkPreflightApproved: Boolean(data.artworkPreflightApproved), ownerPrintApproved: Boolean(data.ownerPrintApproved),
       economicsVerified: Boolean(data.economicsVerified), paymentActivation: Boolean(data.paymentActivation), clearedFundingCents: Number(data.clearedFundingCents || 0),
       fundingGoalCents: Number(data.fundingGoalCents), minimumPaidPlacements: Number(data.minimumPaidPlacements),
-      pricePerPaidPlacementCents, minimumMarginBps: Number(data.minimumMarginBps), costs,
+      pricePerPaidPlacementCents, minimumMarginBps, costs,
     },
     thresholdSummary, fullInventorySummary, minimumSafeFundingCents, ...operations,
   };
@@ -363,14 +447,16 @@ export async function PUT(request: NextRequest) {
         FOUNDING_INVENTORY_GROSS_CENTS,
         FOUNDING_CAMPAIGN.placements.standard.priceCents,
       );
+      const enforcedMinimumMarginBps = enforcedMinimumMargin(before.minimumMarginBps);
       const economicsVerified = summary.missingInputs.length === 0
         && summary.contributionMarginBps !== null
-        && summary.contributionMarginBps >= Number(before.minimumMarginBps)
+        && summary.contributionMarginBps >= enforcedMinimumMarginBps
         && summary.targetGapCents !== null
         && summary.targetGapCents >= 0;
       const update = {
         ...input,
         costs,
+        minimumMarginBps: enforcedMinimumMarginBps,
         economicsVerified,
         economicsVerifiedAt: economicsVerified ? FieldValue.serverTimestamp() : null,
         paymentActivation: false,
@@ -445,11 +531,12 @@ export async function POST(request: NextRequest) {
       const routePlanSnapshot = routePlanId
         ? await transaction.get(db.collection('routeplans').doc(routePlanId))
         : null;
-      const [reservations, proofs, refunds, materials, payments] = await Promise.all([
+      const [reservations, proofs, refunds, materials, creativeBriefs, payments] = await Promise.all([
         transaction.get(db.collection('reservations').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
         transaction.get(db.collection('proofs').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
         transaction.get(db.collection('refunds').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
         transaction.get(db.collection('materials').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
+        transaction.get(db.collection('creativebriefs').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
         transaction.get(db.collection('payments').where('campaignId', '==', FOUNDING_CAMPAIGN.id)),
       ]);
       const operations = readinessState(
@@ -458,6 +545,7 @@ export async function POST(request: NextRequest) {
         proofs.docs,
         refunds.docs,
         materials.docs,
+        creativeBriefs.docs,
         payments.docs,
         routePlanSnapshot?.data(),
       );

@@ -252,8 +252,11 @@ test('closed non-won disputes remain fail-closed pending an explicit owner inven
   const disputeHandler = webhook.slice(
     webhook.indexOf('async function applyDispute'),
     webhook.indexOf('export async function POST'),
-  );
-  const nonWon = disputeHandler.slice(disputeHandler.indexOf("transaction.update(currentPaymentSnapshot.ref, {\n      status: 'disputed'"));
+  ).replace(/\r\n/g, '\n');
+  const nonWonMarker = /transaction\.update\(currentPaymentSnapshot\.ref,\s*\{\s*status: 'disputed'/;
+  const nonWonStart = disputeHandler.search(nonWonMarker);
+  assert.ok(nonWonStart >= 0, 'non-won dispute payment update must remain present');
+  const nonWon = disputeHandler.slice(nonWonStart);
   assert.match(nonWon, /status: 'disputed'/);
   assert.match(nonWon, /transaction\.update\(reservationRef, \{ status: 'disputed'/);
   assert.match(nonWon, /paymentLifecycleSuspended: true/);

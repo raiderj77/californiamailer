@@ -1,6 +1,6 @@
 # Change manifest
 
-Snapshot: local release-commit contents on branch `codex/faceless-sales`, based on `main` commit `4da58ef`. The pre-commit `git status --porcelain=v1 -uall` inventory was 152 added, 46 modified, and 22 deleted paths (220 total), reconciled exactly below. The resulting release commit remains local and unpushed; nothing was deployed or used to mutate a production provider.
+Snapshot: current local integrated tree on branch `codex/faceless-sales`, compared with baseline `main` commit `4da58ef`. The exact `git diff --name-status --no-renames 4da58ef` plus untracked inventory is 167 added, 46 modified, and 22 deleted paths (235 total), reconciled below. The follow-up remains local and unpushed; nothing was deployed or used to mutate a production provider.
 
 ## Added
 
@@ -26,6 +26,7 @@ src/app/(dashboard)/economics/page.tsx
 src/app/(dashboard)/crm/page.tsx
 src/app/(dashboard)/interest-inbox/page.tsx
 src/app/(dashboard)/launch/page.tsx
+src/app/(dashboard)/production-board/page.tsx
 src/app/(dashboard)/proof-workflow/page.tsx
 src/app/(dashboard)/refunds/page.tsx
 src/app/(dashboard)/sales-desk/page.tsx
@@ -39,6 +40,7 @@ src/app/(public)/business-login/[reservationId]/page.tsx
 src/app/(public)/business-login/access/page.tsx
 src/app/(public)/business-login/layout.tsx
 src/app/(public)/business-login/page.tsx
+src/app/(public)/california-postcard-mailing/page.tsx
 src/app/(public)/contact/page.tsx
 src/app/(public)/coupon/[code]/page.tsx
 src/app/(public)/current-mailers/page.tsx
@@ -52,6 +54,7 @@ src/app/(public)/mailing-areas/page.tsx
 src/app/(public)/owner-login/layout.tsx
 src/app/(public)/owner-login/page.tsx
 src/app/(public)/pricing/page.tsx
+src/app/(public)/pizza-box-advertising/page.tsx
 src/app/(public)/quote/layout.tsx
 src/app/(public)/reservation/[id]/page.tsx
 src/app/(public)/reserve/layout.tsx
@@ -69,6 +72,7 @@ src/app/api/admin/crm/route.ts
 src/app/api/admin/interests/route.ts
 src/app/api/admin/materials/[id]/file/route.ts
 src/app/api/admin/materials/[id]/route.ts
+src/app/api/admin/production-board/route.ts
 src/app/api/admin/proofs/[id]/file/route.ts
 src/app/api/admin/proofs/route.ts
 src/app/api/admin/refunds/route.ts
@@ -81,6 +85,7 @@ src/app/api/auth/session/route.ts
 src/app/api/business-access/route.ts
 src/app/api/business-session/[reservationId]/logout/route.ts
 src/app/api/reservations/[id]/coupon/route.ts
+src/app/api/reservations/[id]/creative-brief/route.ts
 src/app/api/reservations/[id]/materials/route.ts
 src/app/api/reservations/[id]/proofs/[proofId]/file/route.ts
 src/app/api/reservations/[id]/proofs/route.ts
@@ -100,6 +105,7 @@ src/components/public/SiteFooter.tsx
 src/components/public/SiteHeader.tsx
 src/components/reservation/ReservationProductionPanel.tsx
 src/config/eddmOfferings.ts
+src/config/economicSafeguards.ts
 src/config/crm.ts
 src/config/foundingCampaign.ts
 src/config/sharedMailerModels.ts
@@ -112,11 +118,13 @@ src/lib/campaignSync.ts
 src/lib/campaignTypes.ts
 src/lib/couponAi.ts
 src/lib/couponRules.ts
+src/lib/creativeBrief.ts
 src/lib/crmDomain.ts
 src/lib/eddmPricing.ts
 src/lib/firebaseAdmin.ts
 src/lib/outreachTemplates.ts
 src/lib/privateUploads.ts
+src/lib/productionBoard.ts
 src/lib/prospectRules.ts
 src/lib/publicCampaigns.ts
 src/lib/publicPlanningPriceVisibility.ts
@@ -138,12 +146,18 @@ tests/campaign-sync.test.ts
 tests/coupon-origin.test.ts
 tests/coupon-rules.test.ts
 tests/coupon-security.test.mjs
+tests/creative-brief.test.ts
+tests/creative-intake-security.test.mjs
 tests/crm-domain.test.ts
 tests/crm-security.test.mjs
 tests/eddm-pricing.test.ts
 tests/firestore-owner-claim.test.mjs
 tests/founding-campaign.test.ts
 tests/prospect-rules.test.ts
+tests/production-board-security.test.mjs
+tests/production-board.test.ts
+tests/proof-readiness-binding-security.test.mjs
+tests/proof-readiness-binding.test.ts
 tests/public-planning-price-visibility.test.ts
 tests/public-ux-safety.test.mjs
 tests/rate-limit.test.ts
@@ -154,6 +168,7 @@ tests/route-plans.test.ts
 tests/route-security.test.mjs
 tests/security-boundaries.test.mjs
 tests/shared-mailer-economics.test.ts
+tests/statewide-service-pages.test.mjs
 tests/tracking-rules.test.ts
 tests/tracking-workflow.test.mjs
 tests/webhook-security.test.mjs

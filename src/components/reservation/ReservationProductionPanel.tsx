@@ -8,6 +8,15 @@ import {
   type CouponDraftContent,
   type CouponFactContext,
 } from '@/lib/couponRules';
+import {
+  ASSET_RIGHTS_LIMITS,
+  ASSET_RIGHTS_STATEMENT,
+  CREATIVE_BRIEF_LIMITS,
+  EMPTY_CREATIVE_BRIEF,
+  type AssetRightsBasis,
+  type CreativeAssetKind,
+  type CreativeBriefContent,
+} from '@/lib/creativeBrief';
 
 interface Proof {
   id: string;
@@ -23,8 +32,51 @@ interface Proof {
 
 interface Material {
   id: string;
+  version: number;
+  assetKind: CreativeAssetKind | null;
   originalName: string;
   status: string;
+  rightsAttestation: {
+    assetKind: CreativeAssetKind;
+    rightsBasis: AssetRightsBasis;
+    attestorName: string;
+    sourceOrLicenseNote: string;
+    rightsAttested: true;
+  } | null;
+  rightsAttestedAt: string | null;
+}
+
+interface CreativeBriefRecord {
+  id: string;
+  version: number;
+  status: string;
+  content: CreativeBriefContent;
+  currentDeliveryErrors: string[];
+  createdAt: string | null;
+}
+
+interface CreativeBriefWorkspace {
+  creativeBrief: CreativeBriefRecord | null;
+  initialContent: CreativeBriefContent | null;
+  deliveryWindow: {
+    startDate: string | null;
+    endDate: string | null;
+    timeZone: string;
+    validationStatus: string;
+  };
+}
+
+function isCreativeBriefDeliveryWindow(
+  value: unknown,
+): value is CreativeBriefWorkspace['deliveryWindow'] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    (record.startDate === null || typeof record.startDate === 'string')
+    && (record.endDate === null || typeof record.endDate === 'string')
+    && typeof record.timeZone === 'string'
+    && typeof record.validationStatus === 'string'
+  );
 }
 
 interface TrackingReport {
@@ -128,6 +180,8 @@ export function ReservationProductionPanel({
   const [proofsError, setProofsError] = useState('');
   const [materials, setMaterials] = useState<Material[] | undefined>(undefined);
   const [materialsError, setMaterialsError] = useState('');
+  const [creativeWorkspace, setCreativeWorkspace] = useState<CreativeBriefWorkspace | undefined>(undefined);
+  const [creativeError, setCreativeError] = useState('');
   const [tracking, setTracking] = useState<TrackingReport | null | undefined>(undefined);
   const [trackingError, setTrackingError] = useState('');
   const [couponWorkspace, setCouponWorkspace] = useState<CouponWorkspace | null | undefined>(undefined);
@@ -144,12 +198,14 @@ export function ReservationProductionPanel({
     setProofsError('');
     setMaterials(undefined);
     setMaterialsError('');
+    setCreativeWorkspace(undefined);
+    setCreativeError('');
     setTracking(undefined);
     setTrackingError('');
     setCouponWorkspace(undefined);
     setCouponUnavailableReason('');
 
-    const [proofResult, materialResult, trackingResult, couponResult] = await Promise.all([
+    const [proofResult, materialResult, creativeResult, trackingResult, couponResult] = await Promise.all([
       loadPortalResource(
         `/api/reservations/${reservationId}/proofs`,
         (payload) => {
@@ -165,6 +221,18 @@ export function ReservationProductionPanel({
           return payload.materials as Material[];
         },
         'Private materials could not be loaded. Try again before assuming no files were received.',
+      ),
+      loadPortalResource(
+        `/api/reservations/${reservationId}/creative-brief`,
+        (payload) => {
+          if (
+            !Object.hasOwn(payload, 'creativeBrief')
+            || !Object.hasOwn(payload, 'initialContent')
+            || !isCreativeBriefDeliveryWindow(payload.deliveryWindow)
+          ) throw new Error('Invalid creative brief response.');
+          return payload as unknown as CreativeBriefWorkspace;
+        },
+        'The structured creative brief could not be loaded. No empty brief is inferred.',
       ),
       loadPortalResource(
         `/api/reservations/${reservationId}/tracking`,
@@ -203,6 +271,12 @@ export function ReservationProductionPanel({
     } else {
       setMaterials(undefined);
       setMaterialsError(materialResult.error);
+    }
+    if (creativeResult.ok) {
+      setCreativeWorkspace(creativeResult.value);
+    } else {
+      setCreativeWorkspace(undefined);
+      setCreativeError(creativeResult.error);
     }
     if (trackingResult.ok) {
       setTracking(trackingResult.value);
@@ -245,7 +319,7 @@ export function ReservationProductionPanel({
       });
       const result = await response.json().catch(() => ({})) as { error?: string };
       setMessage(response.ok
-        ? 'Logo received in private quarantine for owner review.'
+        ? 'Creative asset and its rights attestation were saved as a new private version for owner review.'
         : result.error || 'Upload failed.');
       setMessageIsError(!response.ok);
       if (response.ok) {
@@ -258,6 +332,21 @@ export function ReservationProductionPanel({
     } finally {
       setBusy(false);
     }
+  }
+
+  function recordCreativeBriefSave(
+    creativeBrief: CreativeBriefRecord,
+    deliveryWindow: CreativeBriefWorkspace['deliveryWindow'],
+    notice: string,
+  ) {
+    setCreativeWorkspace((current) => current ? {
+      ...current,
+      creativeBrief,
+      initialContent: null,
+      deliveryWindow,
+    } : current);
+    setMessage(notice);
+    setMessageIsError(false);
   }
 
   async function decide(proofId: string, action: 'approve' | 'request_revision') {
@@ -294,15 +383,50 @@ export function ReservationProductionPanel({
 
   return (
     <section className="mt-8 space-y-6">
+      <CreativeBriefPanel
+        key={creativeWorkspace?.creativeBrief?.id || 'creative-brief-intake'}
+        reservationId={reservationId}
+        workspace={creativeWorkspace}
+        error={creativeError}
+        onSaved={recordCreativeBriefSave}
+      />
+
       <div className="rounded-2xl border p-6">
         <h2 className="text-xl font-black">Private materials intake</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Upload a genuine PNG or JPEG logo up to 5 MB. The randomized private object remains
-          quarantined until owner review; it is never made public by this action.
+          Upload a genuine PNG or JPEG asset up to 5 MB. Every file version requires its own
+          rights or license attestation. The randomized private object remains quarantined until
+          owner review; this action never publishes it or makes it print-ready.
         </p>
-        <form onSubmit={upload} className="mt-4 flex flex-wrap items-center gap-3">
+        <form onSubmit={upload} className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold text-slate-700">
-            Private logo file
+            Asset type
+            <select
+              required
+              name="assetKind"
+              defaultValue="logo"
+              className="mt-1 block w-full rounded-lg border bg-white px-3 py-2 font-normal"
+            >
+              <option value="logo">Business logo</option>
+              <option value="brand_image">Brand image or photo</option>
+              <option value="prior_ad_reference">Prior ad reference</option>
+            </select>
+          </label>
+          <label className="text-sm font-bold text-slate-700">
+            Rights basis
+            <select
+              required
+              name="rightsBasis"
+              defaultValue="business_owned"
+              className="mt-1 block w-full rounded-lg border bg-white px-3 py-2 font-normal"
+            >
+              <option value="business_owned">The business owns it</option>
+              <option value="licensed_for_this_use">Licensed for this use</option>
+              <option value="public_domain">Verified public domain</option>
+            </select>
+          </label>
+          <label className="text-sm font-bold text-slate-700">
+            Private creative file
             <input
               required
               name="file"
@@ -311,12 +435,43 @@ export function ReservationProductionPanel({
               className="mt-1 block text-sm font-normal"
             />
           </label>
-          <button
-            disabled={busy}
-            className="rounded-lg bg-blue-700 px-4 py-2 font-bold text-white disabled:opacity-50"
-          >
-            Upload private logo
-          </button>
+          <label className="text-sm font-bold text-slate-700">
+            Attestor’s full name
+            <input
+              required
+              name="attestorName"
+              maxLength={ASSET_RIGHTS_LIMITS.attestorName}
+              className="mt-1 block w-full rounded-lg border px-3 py-2 font-normal"
+            />
+          </label>
+          <label className="text-sm font-bold text-slate-700 sm:col-span-2">
+            Source or license note
+            <textarea
+              name="sourceOrLicenseNote"
+              rows={3}
+              maxLength={ASSET_RIGHTS_LIMITS.sourceOrLicenseNote}
+              placeholder="Required for licensed or public-domain assets: identify the source and permission or license."
+              className="mt-1 block w-full rounded-lg border px-3 py-2 font-normal"
+            />
+          </label>
+          <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-4 text-sm font-bold text-amber-950 sm:col-span-2">
+            <input
+              required
+              name="rightsAttested"
+              value="true"
+              type="checkbox"
+              className="mt-1"
+            />
+            <span>{ASSET_RIGHTS_STATEMENT} This attestation is stored on this exact file version.</span>
+          </label>
+          <div className="sm:col-span-2">
+            <button
+              disabled={busy}
+              className="rounded-lg bg-blue-700 px-4 py-2 font-bold text-white disabled:opacity-50"
+            >
+              Upload private asset with attestation
+            </button>
+          </div>
         </form>
         {materialsError ? (
           <p role="alert" className="mt-4 rounded-lg bg-rose-50 p-3 text-sm font-bold text-rose-950">
@@ -329,8 +484,25 @@ export function ReservationProductionPanel({
         ) : materials.length > 0 ? (
           <ul className="mt-4 space-y-2 text-sm">
             {materials.map((item) => (
-              <li key={item.id}>
-                {item.originalName} · <strong>{item.status.replaceAll('_', ' ')}</strong>
+              <li key={item.id} className="rounded-xl bg-slate-50 p-4">
+                <div>
+                  <strong>Version {item.version || 'unknown'} · {item.originalName}</strong>
+                  {' · '}{item.status.replaceAll('_', ' ')}
+                </div>
+                {item.rightsAttestation ? (
+                  <div className="mt-2 text-xs leading-5 text-slate-600">
+                    Rights recorded for {item.rightsAttestation.assetKind.replaceAll('_', ' ')} by{' '}
+                    <strong>{item.rightsAttestation.attestorName}</strong> under{' '}
+                    {item.rightsAttestation.rightsBasis.replaceAll('_', ' ')}.
+                    {item.rightsAttestation.sourceOrLicenseNote
+                      ? ` Source/license note: ${item.rightsAttestation.sourceOrLicenseNote}`
+                      : ''}
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs font-bold text-rose-800">
+                    Missing a valid stored rights attestation. The owner must not use this asset.
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -442,6 +614,362 @@ export function ReservationProductionPanel({
         </p>
       )}
     </section>
+  );
+}
+
+function CreativeBriefPanel({
+  reservationId,
+  workspace,
+  error,
+  onSaved,
+}: {
+  reservationId: string;
+  workspace: CreativeBriefWorkspace | undefined;
+  error: string;
+  onSaved: (
+    creativeBrief: CreativeBriefRecord,
+    deliveryWindow: CreativeBriefWorkspace['deliveryWindow'],
+    notice: string,
+  ) => void;
+}) {
+  if (error) {
+    return (
+      <div className="rounded-2xl border p-6">
+        <h2 className="text-xl font-black">Structured creative brief</h2>
+        <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-3 text-sm font-bold text-rose-950">
+          {error}
+        </p>
+      </div>
+    );
+  }
+  if (workspace === undefined) {
+    return (
+      <div role="status" aria-live="polite" className="rounded-2xl border p-6 text-sm text-slate-500">
+        Checking the private structured creative brief…
+      </div>
+    );
+  }
+  return (
+    <CreativeBriefEditor
+      reservationId={reservationId}
+      workspace={workspace}
+      onSaved={onSaved}
+    />
+  );
+}
+
+function CreativeBriefEditor({
+  reservationId,
+  workspace,
+  onSaved,
+}: {
+  reservationId: string;
+  workspace: CreativeBriefWorkspace;
+  onSaved: (
+    creativeBrief: CreativeBriefRecord,
+    deliveryWindow: CreativeBriefWorkspace['deliveryWindow'],
+    notice: string,
+  ) => void;
+}) {
+  const [draft, setDraft] = useState<CreativeBriefContent>(() => ({
+    ...EMPTY_CREATIVE_BRIEF,
+    ...(workspace.creativeBrief?.content || workspace.initialContent || {}),
+  }));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  function setText(
+    field: Exclude<keyof CreativeBriefContent, 'displayPhone' | 'displayWebsite' | 'displayAddress'>,
+    value: string,
+  ) {
+    setDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function setDisplay(
+    field: 'displayPhone' | 'displayWebsite' | 'displayAddress',
+    value: boolean,
+  ) {
+    setDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  async function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/reservations/${reservationId}/creative-brief`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: draft }),
+      });
+      const result = await response.json().catch(() => null) as {
+        creativeBrief?: CreativeBriefRecord;
+        deliveryWindow?: unknown;
+        notice?: string;
+        error?: string;
+      } | null;
+      if (
+        !response.ok
+        || !result?.creativeBrief
+        || !isCreativeBriefDeliveryWindow(result.deliveryWindow)
+      ) {
+        setError(result?.error || 'The private creative brief could not be saved.');
+        return;
+      }
+      onSaved(
+        result.creativeBrief,
+        result.deliveryWindow,
+        result.notice || `Private creative brief version ${result.creativeBrief.version} was saved.`,
+      );
+    } catch {
+      setError('The private creative brief service could not be reached.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const delivery = workspace.deliveryWindow;
+  const currentErrors = workspace.creativeBrief?.currentDeliveryErrors || [];
+  return (
+    <div className="rounded-2xl border p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black">Structured creative brief</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Facts entered here guide original design work. Saving always creates a new immutable
+            private version for owner review and revokes any earlier print readiness.
+          </p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+          {workspace.creativeBrief
+            ? `Saved version ${workspace.creativeBrief.version}`
+            : 'No saved brief yet'}
+        </span>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-blue-50 p-4 text-sm leading-6 text-blue-950">
+        <strong>Planned delivery validation:</strong>{' '}
+        {delivery.startDate || 'start not set'} through {delivery.endDate || 'end not set'} in{' '}
+        {delivery.timeZone}. When a boundary is planned, the offer must cover that boundary.
+        {delivery.validationStatus === 'campaign_schedule_not_set'
+          ? ' The owner has not set a delivery window, so date coverage cannot yet be confirmed.'
+          : ''}
+      </div>
+
+      {currentErrors.length > 0 && (
+        <div role="alert" className="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-950">
+          <strong>The saved version no longer covers the current campaign schedule:</strong>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {currentErrors.map((message) => <li key={message}>{message}</li>)}
+          </ul>
+        </div>
+      )}
+
+      <form onSubmit={save} className="mt-5">
+        <fieldset disabled={busy} className="grid gap-4 sm:grid-cols-2 disabled:opacity-60">
+          <BriefInput
+            label="Business display name"
+            required
+            value={draft.businessDisplayName}
+            maxLength={CREATIVE_BRIEF_LIMITS.businessDisplayName}
+            onChange={(value) => setText('businessDisplayName', value)}
+          />
+          <BriefInput
+            label="Phone"
+            value={draft.phone}
+            maxLength={CREATIVE_BRIEF_LIMITS.phone}
+            onChange={(value) => setText('phone', value)}
+          />
+          <BriefCheckbox
+            label="Show the phone in the design"
+            checked={draft.displayPhone}
+            onChange={(value) => setDisplay('displayPhone', value)}
+          />
+          <BriefInput
+            label="Website"
+            value={draft.website}
+            maxLength={CREATIVE_BRIEF_LIMITS.website}
+            onChange={(value) => setText('website', value)}
+          />
+          <BriefCheckbox
+            label="Show the website in the design"
+            checked={draft.displayWebsite}
+            onChange={(value) => setDisplay('displayWebsite', value)}
+          />
+          <BriefTextarea
+            label="Business address"
+            value={draft.address}
+            maxLength={CREATIVE_BRIEF_LIMITS.address}
+            onChange={(value) => setText('address', value)}
+          />
+          <BriefCheckbox
+            label="Show the address in the design"
+            checked={draft.displayAddress}
+            onChange={(value) => setDisplay('displayAddress', value)}
+          />
+          <BriefInput
+            label="Brand colors"
+            value={draft.brandColors}
+            maxLength={CREATIVE_BRIEF_LIMITS.brandColors}
+            onChange={(value) => setText('brandColors', value)}
+          />
+          <BriefTextarea
+            label="Brand guidelines"
+            value={draft.brandGuidelines}
+            maxLength={CREATIVE_BRIEF_LIMITS.brandGuidelines}
+            onChange={(value) => setText('brandGuidelines', value)}
+          />
+          <BriefTextarea
+            label="Exact factual offer"
+            required
+            value={draft.factualOffer}
+            maxLength={CREATIVE_BRIEF_LIMITS.factualOffer}
+            onChange={(value) => setText('factualOffer', value)}
+          />
+          <BriefInput
+            label="Call to action"
+            required
+            value={draft.callToAction}
+            maxLength={CREATIVE_BRIEF_LIMITS.callToAction}
+            onChange={(value) => setText('callToAction', value)}
+          />
+          <BriefInput
+            label="Offer effective date"
+            type="date"
+            required={Boolean(delivery.startDate)}
+            value={draft.effectiveOn}
+            maxLength={10}
+            onChange={(value) => setText('effectiveOn', value)}
+          />
+          <BriefInput
+            label="Offer expiration date"
+            type="date"
+            required={Boolean(delivery.endDate)}
+            value={draft.expiresOn}
+            maxLength={10}
+            onChange={(value) => setText('expiresOn', value)}
+          />
+          <BriefInput
+            label="HTTPS QR destination"
+            type="url"
+            value={draft.qrDestination}
+            maxLength={CREATIVE_BRIEF_LIMITS.qrDestination}
+            placeholder="https://business.example/offer"
+            onChange={(value) => setText('qrDestination', value)}
+          />
+          <BriefTextarea
+            label="Unique selling proposition"
+            value={draft.uniqueSellingProposition}
+            maxLength={CREATIVE_BRIEF_LIMITS.uniqueSellingProposition}
+            onChange={(value) => setText('uniqueSellingProposition', value)}
+          />
+          <BriefTextarea
+            label="Disclaimers and redemption conditions"
+            value={draft.disclaimers}
+            maxLength={CREATIVE_BRIEF_LIMITS.disclaimers}
+            onChange={(value) => setText('disclaimers', value)}
+          />
+          <BriefTextarea
+            label="Evidence notes for claims"
+            value={draft.evidenceNotes}
+            maxLength={CREATIVE_BRIEF_LIMITS.evidenceNotes}
+            onChange={(value) => setText('evidenceNotes', value)}
+          />
+          <div className="sm:col-span-2">
+            <button className="rounded-full bg-slate-950 px-5 py-3 font-black text-white disabled:opacity-40">
+              {busy ? 'Saving new private version…' : 'Save new brief version for owner review'}
+            </button>
+          </div>
+        </fieldset>
+      </form>
+      {error && (
+        <p role="alert" aria-live="assertive" className="mt-4 rounded-lg bg-rose-50 p-3 text-sm font-bold text-rose-950">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function BriefInput({
+  label,
+  value,
+  maxLength,
+  onChange,
+  required = false,
+  type = 'text',
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  maxLength: number;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: 'text' | 'date' | 'url';
+  placeholder?: string;
+}) {
+  return (
+    <label className="text-sm font-bold text-slate-700">
+      {label}
+      <input
+        required={required}
+        type={type}
+        value={value}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 block w-full rounded-lg border px-3 py-2 font-normal"
+      />
+    </label>
+  );
+}
+
+function BriefTextarea({
+  label,
+  value,
+  maxLength,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  maxLength: number;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <label className="text-sm font-bold text-slate-700">
+      {label}
+      <textarea
+        required={required}
+        rows={3}
+        value={value}
+        maxLength={maxLength}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 block w-full rounded-lg border px-3 py-2 font-normal"
+      />
+    </label>
+  );
+}
+
+function BriefCheckbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 self-end rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      {label}
+    </label>
   );
 }
 

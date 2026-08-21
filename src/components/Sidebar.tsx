@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Production Board', href: '/production-board' },
   { name: 'CRM', href: '/crm' },
   { name: 'Founding Launch', href: '/launch' },
   { name: 'Mailer Calculator', href: '/shared-mailer-calculator' },

@@ -218,6 +218,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Immutable advertiser creative-brief versions and reservation pointers are
+    // written only by reservation-scoped server routes using the Admin SDK.
+    match /creativebriefs/{docId} {
+      allow read, write: if false;
+    }
+
     match /trackinglinks/{docId} {
       allow read: if isAdmin();
       allow write: if false;

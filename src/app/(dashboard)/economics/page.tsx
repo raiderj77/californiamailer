@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
+import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '@/config/economicSafeguards';
 import { FOUNDING_INVENTORY_GROSS_CENTS, formatCurrency } from '@/config/foundingCampaign';
 import { useAuth } from '@/lib/AuthContext';
 import { DEFAULT_SHARED_ECONOMICS_ASSUMPTIONS } from '@/lib/sharedMailerEconomics';
@@ -175,6 +179,15 @@ export default function EconomicsPage() {
   async function save() {
     setBusy(true); setError(''); setNotice('');
     try {
+      const targetOwnerSurplusCents = cents(form.targetOwnerSurplus);
+      if (
+        targetOwnerSurplusCents !== null
+        && targetOwnerSurplusCents < MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS
+      ) {
+        throw new Error(
+          `Target owner surplus cannot be lower than ${formatCurrency(MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS)} before income tax.`,
+        );
+      }
       const payload = {
         plannedDeliveryStart: form.plannedDeliveryStart || null,
         plannedDeliveryEnd: form.plannedDeliveryEnd || null,
@@ -187,7 +200,7 @@ export default function EconomicsPage() {
           taxCostCents: cents(form.tax), designCostCents: cents(form.design), ownerLaborCostCents: cents(form.ownerLabor),
           processingFeeCents: cents(form.processing), refundReserveCents: cents(form.refundReserve),
           reprintReserveCents: cents(form.reprintReserve), softwareAllocationCents: cents(form.software),
-          otherExpensesCents: cents(form.other), targetOwnerSurplusCents: cents(form.targetOwnerSurplus),
+          otherExpensesCents: cents(form.other), targetOwnerSurplusCents,
           printerQuoteReference: form.printerQuoteReference.trim() || null,
           quoteVerifiedAt: form.quoteVerifiedAt || null,
         },
@@ -224,7 +237,7 @@ export default function EconomicsPage() {
   const summary = state?.fullInventorySummary;
   return <div className="min-h-screen bg-slate-50 md:flex"><Sidebar /><main className="min-w-0 flex-1 p-4 md:p-8">
     <header className="mb-7 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Financial safety gate</p><h1 className="text-3xl font-black">Campaign economics and print readiness</h1></div><button onClick={logout} className="rounded-lg border px-3 py-2 text-sm">Sign out</button></header>
-    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Every figure remains an owner-confirmed input.</strong> Blank means unknown; entering 0 deliberately records zero except where the server-enforced planning floors require more. For the active full-inventory model, processing must be at least $250.11 and the refund reserve at least $251.28; the reprint floor is 5% of printing, postage/turnkey, and shipping. Higher verified costs replace these floors. Cash before owner labor is not economic profit, and the surplus target is before personal income or self-employment tax. Saving evidence does not activate checkout, purchase printing or postage, or place an order. Full 24-unit inventory is {formatCurrency(FOUNDING_INVENTORY_GROSS_CENTS)}. <Link href="/shared-mailer-calculator" className="font-black underline">Open the planning calculator</Link>.</div>
+    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Every figure remains an owner-confirmed input.</strong> Blank means unknown; entering 0 deliberately records zero except where the server-enforced planning floors require more. Customer-price, payment, and print paths require at least {formatCurrency(MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS)} of pre-income-tax owner economic surplus and {(MINIMUM_ECONOMIC_MARGIN_BPS / 100).toFixed(0)}% economic contribution margin; either target may be higher but not lower. For the active full-inventory model, processing must be at least $250.11 and the refund reserve at least $251.28; the reprint floor is 5% of printing, postage/turnkey, and shipping. Higher verified costs replace these floors. Cash before owner labor is not economic profit, and the surplus target is before personal income or self-employment tax. Saving evidence does not activate checkout, purchase printing or postage, or place an order. Full 24-unit inventory is {formatCurrency(FOUNDING_INVENTORY_GROSS_CENTS)}. <Link href="/shared-mailer-calculator" className="font-black underline">Open the planning calculator</Link>.</div>
     {error && <Message error>{error}</Message>}{notice && <Message>{notice}</Message>}
     <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
       <Stat label="Cleared funding" value={state ? formatCurrency(state.campaign.clearedFundingCents) : 'Unknown'} />
@@ -265,8 +278,8 @@ export default function EconomicsPage() {
         </div>
       </div>
       <div className="rounded-xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Current economic inputs (USD)</h2><div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-slate-700"><strong>Fixed production supplier: {PRINTING4SUPERCHEAP.name}.</strong> The quote date must be no more than {PRINTING4SUPERCHEAP.recheckAfterDays} days old and cannot be in the future. <a href={PRINTING4SUPERCHEAP.discountSheetUrl} target="_blank" rel="noreferrer" className="font-bold text-blue-800 underline">Open the planning sheet</a> or <a href={PRINTING4SUPERCHEAP.productUrl} target="_blank" rel="noreferrer" className="font-bold text-blue-800 underline">supplier product page</a>, then record the actual reference and date.{state?.campaign.costs.supplierId !== PRINTING4SUPERCHEAP.id && <span className="mt-2 block font-bold text-amber-900">The saved cost record lacks the required supplier marker.</span>}</div><div className="mt-5 grid gap-4 md:grid-cols-2"><Input label="Mail pieces" type="number" min="1" value={form.mailPieceCount} onChange={(event) => set('mailPieceCount', event.target.value)} />{([
-        ['Printing', 'printing'], ['Postage / turnkey fulfillment', 'postage'], ['Shipping', 'shipping'], ['Tax', 'tax'], ['Design', 'design'], ['Owner labor allowance', 'ownerLabor'], ['Payment processing', 'processing'], ['Refund reserve', 'refundReserve'], ['Reprint reserve', 'reprintReserve'], ['Software allocation', 'software'], ['Other expenses', 'other'], ['Target owner surplus (pre-income-tax)', 'targetOwnerSurplus'],
-      ] as const).map(([label, key]) => <Input key={key} label={label} type="number" min="0" step="0.01" value={form[key]} onChange={(event) => set(key, event.target.value)} />)}<p className="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-950 md:col-span-2">The $2,500 target shown for an unsaved active record is an editable planning default. It is written only when you explicitly save this form. Owner labor is separate and remains unknown until entered.</p><Input label={`${PRINTING4SUPERCHEAP.name} quote reference`} value={form.printerQuoteReference} onChange={(event) => set('printerQuoteReference', event.target.value)} /><Input label="Quote verified date" type="date" value={form.quoteVerifiedAt} onChange={(event) => set('quoteVerifiedAt', event.target.value)} /><label className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold md:col-span-2"><input type="checkbox" checked={form.artworkPreflightApproved} onChange={(event) => set('artworkPreflightApproved', event.target.checked)} />Final combined artwork—including the experimental 24-unit 9 × 12 layout—passed manual preflight</label></div></div>
+        ['Printing', 'printing', '0'], ['Postage / turnkey fulfillment', 'postage', '0'], ['Shipping', 'shipping', '0'], ['Tax', 'tax', '0'], ['Design', 'design', '0'], ['Owner labor allowance', 'ownerLabor', '0'], ['Payment processing', 'processing', '0'], ['Refund reserve', 'refundReserve', '0'], ['Reprint reserve', 'reprintReserve', '0'], ['Software allocation', 'software', '0'], ['Other expenses', 'other', '0'], ['Target owner surplus (pre-income-tax)', 'targetOwnerSurplus', String(MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS / 100)],
+      ] as const).map(([label, key, minimum]) => <Input key={key} label={label} type="number" min={minimum} step="0.01" value={form[key]} onChange={(event) => set(key, event.target.value)} />)}<p className="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-950 md:col-span-2">The {formatCurrency(MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS)} value shown for an unsaved active record is the server-enforced minimum before income tax, not a lowerable default. You may enter a higher target. Owner labor is separate and remains unknown until entered.</p><Input label={`${PRINTING4SUPERCHEAP.name} quote reference`} value={form.printerQuoteReference} onChange={(event) => set('printerQuoteReference', event.target.value)} /><Input label="Quote verified date" type="date" value={form.quoteVerifiedAt} onChange={(event) => set('quoteVerifiedAt', event.target.value)} /><label className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-bold md:col-span-2"><input type="checkbox" checked={form.artworkPreflightApproved} onChange={(event) => set('artworkPreflightApproved', event.target.checked)} />Final combined artwork—including the experimental 24-unit 9 × 12 layout—passed manual preflight</label></div></div>
     </section>
     <button disabled={busy || !state} onClick={() => void save()} className="mt-6 rounded-lg bg-blue-700 px-6 py-3 font-black text-white disabled:opacity-40">{busy ? 'Working…' : 'Save evidence and recalculate'}</button>
 

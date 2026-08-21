@@ -7,6 +7,20 @@ import type {
   ProofStatus,
 } from '@/lib/campaignTypes';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
+import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '@/config/economicSafeguards';
+import {
+  ASSET_RIGHTS_STATEMENT_VERSION,
+  CREATIVE_BRIEF_STATUS,
+  CREATIVE_BRIEF_TIME_ZONE,
+  creativeBriefErrors,
+  isCalendarDate,
+  parseAssetRightsAttestation,
+  parseCreativeBriefContent,
+  type CreativeBriefDeliveryWindow,
+} from '@/lib/creativeBrief';
 
 const FUNDING_ELIGIBLE_STATUSES = new Set<PaymentStatus>(['cleared', 'partially_refunded']);
 
@@ -24,6 +38,125 @@ export function clearedNetFundingCents(payments: CampaignPayment[]): number {
     if (!FUNDING_ELIGIBLE_STATUSES.has(payment.status)) return total;
     return total + Math.max(0, payment.amountCents - payment.refundedCents);
   }, 0);
+}
+
+type PaymentEvidenceRecord = Record<string, unknown> & { id: string };
+
+export interface CanonicalPaidPaymentEvidence {
+  clearedFundingCents: number;
+  paidReservationCount: number;
+  verifiedPaidReservationCount: number;
+  issues: string[];
+}
+
+export function canonicalPaidPaymentEvidence(
+  reservations: PaymentEvidenceRecord[],
+  payments: PaymentEvidenceRecord[],
+  expected: { campaignId: string; planId: string; offerModelVersion: string },
+  now = new Date(),
+): CanonicalPaidPaymentEvidence {
+  const issues = new Set<string>();
+  const reservationsById = new Map<string, PaymentEvidenceRecord>();
+  for (const reservation of reservations) {
+    if (!reservation.id || reservationsById.has(reservation.id)) {
+      issues.add('reservation_document_id_duplicate_or_missing');
+      continue;
+    }
+    reservationsById.set(reservation.id, reservation);
+  }
+
+  for (const payment of payments) {
+    const reservationId = typeof payment.reservationId === 'string' ? payment.reservationId : '';
+    const reservationByDocumentId = reservationsById.get(payment.id);
+    const reservationByRecordedId = reservationsById.get(reservationId);
+    const reservation = reservationByDocumentId ?? reservationByRecordedId;
+    if (!reservation) {
+      issues.add('payment_orphan');
+      continue;
+    }
+    if (payment.id !== reservation.id || reservationId !== reservation.id) {
+      issues.add('payment_document_or_reservation_id_mismatch');
+    }
+    if (
+      payment.campaignId !== expected.campaignId
+      || payment.planId !== expected.planId
+      || payment.offerModelVersion !== expected.offerModelVersion
+      || payment.campaignId !== reservation.campaignId
+      || payment.planId !== reservation.planId
+      || payment.offerModelVersion !== reservation.offerModelVersion
+    ) {
+      issues.add('payment_campaign_or_offer_model_mismatch');
+    }
+  }
+
+  const paidReservations = reservations.filter((reservation) => reservation.status === 'paid');
+  let clearedFundingCents = 0;
+  let verifiedPaidReservationCount = 0;
+  for (const reservation of paidReservations) {
+    if (
+      reservation.campaignId !== expected.campaignId
+      || reservation.planId !== expected.planId
+      || reservation.offerModelVersion !== expected.offerModelVersion
+    ) {
+      issues.add('paid_reservation_campaign_or_offer_model_mismatch');
+    }
+    const relatedPayments = payments.filter((payment) => (
+      payment.id === reservation.id || payment.reservationId === reservation.id
+    ));
+    if (relatedPayments.length === 0) {
+      issues.add('paid_payment_missing');
+      continue;
+    }
+    if (relatedPayments.length !== 1) {
+      issues.add('paid_payment_duplicate');
+      continue;
+    }
+
+    const [payment] = relatedPayments;
+    const quoteCents = reservation.quotedPriceCents;
+    const amountCents = payment.amountCents;
+    const refundedCents = payment.refundedCents;
+    const clearedAt = recordedTimestampMillis(payment.clearedAt);
+    const exactBinding = payment.id === reservation.id
+      && payment.reservationId === reservation.id
+      && payment.campaignId === expected.campaignId
+      && payment.campaignId === reservation.campaignId
+      && payment.planId === expected.planId
+      && payment.planId === reservation.planId
+      && payment.offerModelVersion === expected.offerModelVersion
+      && payment.offerModelVersion === reservation.offerModelVersion;
+    const exactQuote = Number.isSafeInteger(quoteCents)
+      && Number(quoteCents) > 0
+      && Number.isSafeInteger(amountCents)
+      && Number(amountCents) === Number(quoteCents);
+    const zeroRefund = Number.isSafeInteger(refundedCents) && Number(refundedCents) === 0;
+    const clearedEvidence = payment.status === 'cleared'
+      && payment.provider === 'stripe'
+      && payment.currency === 'usd'
+      && typeof payment.externalPaymentId === 'string'
+      && Boolean(payment.externalPaymentId.trim())
+      && clearedAt > 0
+      && clearedAt <= now.getTime();
+
+    if (!exactBinding) issues.add('paid_payment_binding_mismatch');
+    if (!exactQuote) issues.add('paid_payment_quote_mismatch');
+    if (!zeroRefund) issues.add('paid_payment_refund_present_or_invalid');
+    if (!clearedEvidence) issues.add('paid_payment_not_fully_cleared');
+    if (!exactBinding || !exactQuote || !zeroRefund || !clearedEvidence) continue;
+    if (!Number.isSafeInteger(clearedFundingCents + Number(amountCents))) {
+      issues.add('paid_payment_funding_overflow');
+      continue;
+    }
+    clearedFundingCents += Number(amountCents);
+    verifiedPaidReservationCount += 1;
+  }
+
+  return {
+    clearedFundingCents,
+    paidReservationCount: paidReservations.length,
+    verifiedPaidReservationCount,
+    issues: [...issues],
+  };
 }
 
 export function reservedFundingCents(
@@ -63,6 +196,169 @@ export function hasApprovedLatestMaterial(
   return materials.some((material) => material.id === reservation.latestMaterialId
     && material.reservationId === reservation.id
     && material.status === 'owner_approved_private');
+}
+
+type PrivateCreativeRecord = Record<string, unknown> & { id: string };
+
+export function completeCampaignDeliveryWindow(
+  campaign: Record<string, unknown>,
+): CreativeBriefDeliveryWindow | null {
+  const startDate = campaign.plannedDeliveryStart;
+  const endDate = campaign.plannedDeliveryEnd;
+  if (
+    typeof startDate !== 'string'
+    || typeof endDate !== 'string'
+    || !isCalendarDate(startDate)
+    || !isCalendarDate(endDate)
+    || startDate > endDate
+  ) {
+    return null;
+  }
+  return { startDate, endDate };
+}
+
+export function hasCurrentCreativeBrief(
+  reservation: PrivateCreativeRecord,
+  creativeBrief: PrivateCreativeRecord | undefined,
+  campaign: Record<string, unknown>,
+): boolean {
+  const sequence = reservation.creativeBriefSequence;
+  const deliveryWindow = completeCampaignDeliveryWindow(campaign);
+  if (
+    !deliveryWindow
+    || typeof reservation.latestCreativeBriefId !== 'string'
+    || !reservation.latestCreativeBriefId
+    || !Number.isSafeInteger(sequence)
+    || Number(sequence) < 1
+    || !creativeBrief
+    || creativeBrief.id !== reservation.latestCreativeBriefId
+    || creativeBrief.reservationId !== reservation.id
+    || creativeBrief.campaignId !== reservation.campaignId
+    || creativeBrief.placementSlotId !== reservation.placementSlotId
+    || creativeBrief.version !== sequence
+    || creativeBrief.status !== CREATIVE_BRIEF_STATUS
+  ) {
+    return false;
+  }
+  const content = parseCreativeBriefContent(creativeBrief.content);
+  const savedWindow = creativeBrief.deliveryWindow;
+  const savedWindowMatches = typeof savedWindow === 'object'
+    && savedWindow !== null
+    && !Array.isArray(savedWindow)
+    && (savedWindow as Record<string, unknown>).startDate === deliveryWindow.startDate
+    && (savedWindow as Record<string, unknown>).endDate === deliveryWindow.endDate
+    && (savedWindow as Record<string, unknown>).timeZone === CREATIVE_BRIEF_TIME_ZONE
+    && (savedWindow as Record<string, unknown>).validationStatus === 'validated_for_planned_window';
+  return Boolean(
+    content
+    && savedWindowMatches
+    && creativeBriefErrors(content, deliveryWindow).length === 0,
+  );
+}
+
+export function hasCurrentApprovedMaterialWithRights(
+  reservation: PrivateCreativeRecord,
+  material: PrivateCreativeRecord | undefined,
+  now = new Date(),
+): boolean {
+  const sequence = reservation.materialSequence;
+  if (
+    typeof reservation.latestMaterialId !== 'string'
+    || !reservation.latestMaterialId
+    || !Number.isSafeInteger(sequence)
+    || Number(sequence) < 1
+    || !material
+    || material.id !== reservation.latestMaterialId
+    || material.reservationId !== reservation.id
+    || material.campaignId !== reservation.campaignId
+    || material.placementSlotId !== reservation.placementSlotId
+    || material.version !== sequence
+    || material.status !== 'owner_approved_private'
+    || typeof material.reviewedBy !== 'string'
+    || !material.reviewedBy.trim()
+    || recordedTimestampMillis(material.reviewedAt) <= 0
+    || recordedTimestampMillis(material.reviewedAt) > now.getTime()
+    || recordedTimestampMillis(material.rightsAttestedAt) <= 0
+    || recordedTimestampMillis(material.rightsAttestedAt) > now.getTime()
+  ) {
+    return false;
+  }
+  const rights = material.rightsAttestation;
+  if (typeof rights !== 'object' || rights === null || Array.isArray(rights)) return false;
+  const record = rights as Record<string, unknown>;
+  if (
+    record.statementVersion !== ASSET_RIGHTS_STATEMENT_VERSION
+    || record.assetKind !== material.assetKind
+  ) {
+    return false;
+  }
+  return Boolean(parseAssetRightsAttestation({
+    assetKind: record.assetKind,
+    rightsBasis: record.rightsBasis,
+    attestorName: record.attestorName,
+    sourceOrLicenseNote: record.sourceOrLicenseNote,
+    rightsAttested: record.rightsAttested,
+  }));
+}
+
+export function latestBoundProofStatus(
+  reservation: PrivateCreativeRecord,
+  proof: PrivateCreativeRecord | undefined,
+  now = new Date(),
+): ProofStatus {
+  const sequence = reservation.proofSequence;
+  if (
+    typeof reservation.latestProofId !== 'string'
+    || !reservation.latestProofId
+    || !Number.isSafeInteger(sequence)
+    || Number(sequence) < 1
+    || !proof
+    || proof.id !== reservation.latestProofId
+    || proof.reservationId !== reservation.id
+    || proof.campaignId !== reservation.campaignId
+    || proof.placementSlotId !== reservation.placementSlotId
+    || proof.version !== sequence
+    || proof.creativeBriefId !== reservation.latestCreativeBriefId
+    || proof.creativeBriefVersion !== reservation.creativeBriefSequence
+    || proof.materialId !== reservation.latestMaterialId
+    || proof.materialVersion !== reservation.materialSequence
+  ) {
+    return 'waiting_for_materials';
+  }
+  const status = typeof proof.status === 'string' ? proof.status : 'waiting_for_materials';
+  if (['approved', 'locked_for_print'].includes(status)) {
+    const approvedAt = recordedTimestampMillis(proof.approvedAt);
+    if (
+      typeof proof.approvedBy !== 'string'
+      || !proof.approvedBy.trim()
+      || approvedAt <= 0
+      || approvedAt > now.getTime()
+    ) {
+      return 'waiting_for_materials';
+    }
+  }
+  return status as ProofStatus;
+}
+
+function recordedTimestampMillis(value: unknown): number {
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : 0;
+  if (typeof value === 'string') {
+    const milliseconds = Date.parse(value);
+    return Number.isFinite(milliseconds) ? milliseconds : 0;
+  }
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (value && typeof value === 'object') {
+    const candidate = value as { toMillis?: () => unknown; toDate?: () => unknown };
+    if (typeof candidate.toMillis === 'function') {
+      const milliseconds = Number(candidate.toMillis());
+      return Number.isFinite(milliseconds) ? milliseconds : 0;
+    }
+    if (typeof candidate.toDate === 'function') {
+      const date = candidate.toDate();
+      return date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : 0;
+    }
+  }
+  return 0;
 }
 
 export function latestProofStatus(
@@ -147,6 +443,14 @@ export function calculateCostSummary(
   const missingInputs = CASH_COST_FIELDS.filter((field) => costs[field] === null).map(String);
   if (costs.ownerLaborCostCents === null) missingInputs.push('ownerLaborCostCents');
   if (costs.targetOwnerSurplusCents === null) missingInputs.push('targetOwnerSurplusCents');
+  if (
+    costs.targetOwnerSurplusCents !== null
+    && costs.targetOwnerSurplusCents < MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS
+  ) {
+    missingInputs.push(
+      `targetOwnerSurplusCents must be at least ${MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS}`,
+    );
+  }
   if (costs.supplierId !== PRINTING4SUPERCHEAP.id) missingInputs.unshift('supplierId');
   if (costs.mailPieceCount === null) missingInputs.unshift('mailPieceCount');
   if (costs.mailPieceCount !== null && (!Number.isSafeInteger(costs.mailPieceCount) || costs.mailPieceCount <= 0)) {
@@ -259,6 +563,9 @@ export function evaluatePrintReadiness(input: PrintReadinessInput): {
   const everyPaidProofApproved =
     input.paidProofStatuses.length === input.paidReservationCount &&
     input.paidProofStatuses.every((status) => ['approved', 'locked_for_print'].includes(status));
+  const marginFloorConfigured = Number.isSafeInteger(input.minimumMarginBps)
+    && input.minimumMarginBps >= MINIMUM_ECONOMIC_MARGIN_BPS
+    && input.minimumMarginBps <= 10_000;
 
   const checks: ReadinessCheck[] = [
     {
@@ -338,10 +645,13 @@ export function evaluatePrintReadiness(input: PrintReadinessInput): {
       key: 'margin',
       label: 'Minimum contribution margin',
       passed:
+        marginFloorConfigured &&
         costSummary.contributionMarginBps !== null &&
         costSummary.contributionMarginBps >= input.minimumMarginBps,
       detail:
-        costSummary.contributionMarginBps === null
+        !marginFloorConfigured
+          ? `Campaign minimum must be ${MINIMUM_ECONOMIC_MARGIN_BPS} bps or higher`
+          : costSummary.contributionMarginBps === null
           ? 'Unavailable until costs are complete'
           : `${costSummary.contributionMarginBps} bps; minimum ${input.minimumMarginBps} bps`,
     },

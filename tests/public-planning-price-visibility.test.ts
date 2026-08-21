@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FOUNDING_CAMPAIGN } from '../src/config/foundingCampaign';
+import { MINIMUM_ECONOMIC_MARGIN_BPS } from '../src/config/economicSafeguards';
 import { SHARED_MAILER_MODELS } from '../src/config/sharedMailerModels';
 import {
   PUBLIC_PRICE_WITHHELD_LABEL,
@@ -15,6 +16,7 @@ test('current dated safeguards expose only supported customer prices and derived
   assert.equal(visibility.active.customerUnitPriceLabel, '$349');
   assert.equal(visibility.active.derivedFundingGoalCents, 837_600);
   assert.equal(visibility.active.derivedFundingGoalLabel, '$8,376');
+  assert.ok((visibility.active.economicMarginBps ?? -1) >= MINIMUM_ECONOMIC_MARGIN_BPS);
 
   const tenThousandModel = SHARED_MAILER_MODELS.find((model) => model.quantity === 10_000);
   assert.ok(tenThousandModel);
@@ -24,6 +26,7 @@ test('current dated safeguards expose only supported customer prices and derived
   assert.equal(tenThousandVisibility?.supported, true);
   assert.equal(tenThousandVisibility?.customerUnitPriceLabel, '$479');
   assert.equal(tenThousandVisibility?.derivedFundingGoalLabel, '$11,496');
+  assert.ok((tenThousandVisibility?.economicMarginBps ?? -1) >= MINIMUM_ECONOMIC_MARGIN_BPS);
 });
 
 test('stale supplier evidence withholds every configured customer price and derived goal', () => {

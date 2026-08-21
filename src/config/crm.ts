@@ -51,6 +51,7 @@ export type CrmStageId = (typeof CRM_PIPELINE_STAGES)[number]['id'];
 export const CRM_NEXT_ACTION_TYPES = [
   { id: 'research', label: 'Research business' },
   { id: 'write_email', label: 'Prepare written outreach' },
+  { id: 'prepare_sample', label: 'Prepare private fit preview' },
   { id: 'review_reply', label: 'Review reply' },
   { id: 'prepare_offer', label: 'Prepare offer' },
   { id: 'review_interest', label: 'Review inbound interest' },

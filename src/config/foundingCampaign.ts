@@ -3,6 +3,7 @@ import {
   ACTIVE_SHARED_PLAN_ID,
   getSharedMailerModel,
 } from '@/config/sharedMailerModels';
+import { MINIMUM_ECONOMIC_MARGIN_BPS } from '@/config/economicSafeguards';
 
 export const CAMPAIGN_STATUSES = [
   'draft',
@@ -162,7 +163,7 @@ export const FOUNDING_CAMPAIGN = {
   minimumAdvertisers: ACTIVE_SHARED_MODEL.slots.paidUnitsDefault,
   minimumPaidPlacements: ACTIVE_SHARED_MODEL.slots.paidUnitsDefault,
   holdMinutes: 60,
-  minimumMarginBps: 2_000,
+  minimumMarginBps: MINIMUM_ECONOMIC_MARGIN_BPS,
   clearedFundingCents: 0,
   reservedFundingCents: 0,
   currentAdvertiserCount: 0,

@@ -1,8 +1,8 @@
 # CaliforniaMailer
 
-CaliforniaMailer is a one-owner operating system for validating one pre-funded cooperative direct-mail campaign on the Monterey Peninsula. It combines a truthful public campaign site with a private prospect desk, reservation/payment guardrails, cost and print-readiness checks, proof approvals, and measured-vs-reported tracking.
+CaliforniaMailer is a one-owner operating system for an evidence-gated California direct-mail business. The current local tree combines one pre-funded Monterey Peninsula co-op experiment with quote-only statewide single-business postcard and pizza-box-placement intake, a private prospect desk, reservation/payment guardrails, cost and print-readiness checks, proof approvals, and measured-vs-reported tracking.
 
-**Release state:** implemented and tested in a local release commit on branch `codex/faceless-sales`. The commit and feature branch have not been pushed or deployed. Production still points to baseline `main` commit `4da58ef`, and the local CI workflow has not run on GitHub. No outreach was sent, no real advertiser/subscriber/payment records were created, no checkout was enabled, and no print or postage purchase was made.
+**Release state:** implemented and tested in the current local integration tree on branch `codex/faceless-sales`. The working copy is `C:\Users\jason\Documents\ChatGPT\California Mailer\californiamailer`; its local origin is the maintained repository at `C:\Users\jason\Documents\portfolio-sites\californiamailer`. The integrated follow-up remains local and unpushed, and nothing was deployed. Production still points to baseline `main` commit `4da58ef`, and the local CI workflow has not run on GitHub. No outreach was sent, no real advertiser/subscriber/payment records were created, no checkout was enabled, no provider was activated, and no print, postage, or restaurant-distribution order was made.
 
 The active planning model is versioned in [`src/config/sharedMailerModels.ts`](src/config/sharedMailerModels.ts) and mirrored into the founding-campaign workflow:
 
@@ -22,7 +22,9 @@ The maintained starting application was a broad Firebase CRM with inconsistent p
 The local implementation now provides:
 
 - truthful owner-managed public positioning and one honest pre-launch campaign;
-- a request-time price-visibility gate across all eight rendered public price surfaces that withholds numeric planning prices and derived funding goals as soon as the dated supplier snapshot or complete economic safeguards stop passing, without waiting for a redeploy;
+- a free, private campaign-fit-preview request that promises only manual review of route/audience fit, format, and next-step evidence—never results, instant availability, or silent marketing consent;
+- original statewide service pages for `/california-postcard-mailing` and `/pizza-box-advertising`, with descriptive metadata, visible FAQs, safe FAQ structured data, and quote-only boundaries rather than a search-ranking claim;
+- a request-time price-visibility gate across all eight rendered public price surfaces that withholds numeric planning prices and derived funding goals as soon as the dated supplier snapshot or either shared economic floor stops passing, without waiting for a redeploy;
 - a sanitized database-backed public campaign projection with distinct loading, error, empty, and published states;
 - a typed campaign, inventory, category, reservation, payment, cost, proof, tracking, consent, and audit model;
 - a one-owner prospect desk with qualification evidence, DNC, follow-ups, history, search/filter/sort/pagination, bulk updates, safe CSV import/export, and duplicate/conflict warnings;
@@ -34,10 +36,11 @@ The local implementation now provides:
 - paid-reservation coupon drafting with an owner publication gate and optional disabled-by-default AI field assistance;
 - hosted Stripe Checkout code behind independent activation gates, including a bounded transactional review that blocks unresolved active-model payment/reservation ledgers and fails closed on review-query overflow;
 - verified, idempotent Stripe webhook handling for paid, failed, expired, refunded, and disputed states;
-- editable route/cost evidence and a server-enforced print-readiness gate;
+- editable route/cost evidence and a server-enforced print-readiness gate with a configured $2,500 pre-income-tax economic-surplus floor and 20% minimum margin;
 - a bounded planning-only whole-route optimizer that operates only on owner-imported evidence and never fetches, orders, or changes a verified plan automatically;
 - an audited funding-to-proofing-to-print-to-delivery lifecycle that records evidence but never orders a vendor service;
-- private quarantined materials, versioned proofs, exact-version approval records, and owner review;
+- structured immutable creative briefs, immutable private material versions with explicit asset-rights attestations, proofs bound to the exact current brief/material/placement versions, exact-version approval evidence, and owner review;
+- a bounded, owner-only, read-only Production Board that fails closed on blockers, unknowns, record errors, truncated reads, partial refunds, or contradictory pointers and exports a formula-safe no-contact-PII CSV;
 - unique QR/landing/coupon tracking that separates measured HTTP visits from owner-recorded advertiser reports;
 - a private written delivery record and advertiser-facing measured-versus-reported report;
 - a transactional refund-obligation ledger that never initiates a provider refund and reconciles only signed provider events;
@@ -71,8 +74,9 @@ verified prospect
   -> 24-unit template preflight + current quote/full economics + activation gates
   -> hosted checkout
   -> provider-verified cleared payment
-  -> materials and versioned proof
-  -> written exact-version approval
+  -> structured creative brief + rights-attested material
+  -> proof bound to the exact brief/material/placement versions
+  -> written exact-version approval evidence
   -> funding + advertiser + route + cost + margin + final-artwork gates
   -> exact owner readiness confirmation
   -> vendor ordering remains a separate, manual action
@@ -137,12 +141,12 @@ These are all 25 application-specific variables in `.env.example`. The Admin SDK
 
 ### New operational collections
 
-The 32 new server-owned collections are:
+The 33 new server-owned collections are:
 
 - `campaigns`, `publiccampaigns`, `placementslots`, `categoryclaims`
 - `reservationinterests`, `reservationinvites`, `reservations`, `reservationdedupe`
 - `payments`, `paymentevents`, `refunds`
-- `materials`, `proofs`, `proofapprovals`
+- `creativebriefs`, `materials`, `proofs`, `proofapprovals`
 - `trackinglinks`, `trackingcouponclaims`, `trackingevents`, `trackingreports`, `deliveryreports`
 - `subscribers`, `suppressions`, `consentrecords`
 - `quoteinquiries`, `crmsettings`, `publicrequestguards`
@@ -198,6 +202,14 @@ Initialization and publication do not enable checkout, send email, or authorize 
 
 The research basis and source cautions are in [`docs/FACELESS_SALES_RESEARCH.md`](docs/FACELESS_SALES_RESEARCH.md).
 
+### Free fit preview and statewide service intake
+
+- `/quote` offers a free private campaign-fit preview for manual review. It collects the requested California market, service type, quantity, format, contact preference, reply permission, and project details, but it does not create a quote, reserve inventory, grant ongoing marketing consent, send a message, or start checkout.
+- `/california-postcard-mailing` covers one-business EDDM and addressed postcards throughout California. Printing4SuperCheap is the required printer and USPS is the documented mail-delivery channel. Exact routes or addressed-audience evidence, postal method, list responsibilities, and a current project quote remain mandatory.
+- `/pizza-box-advertising` covers partner-distributed coupon sheets or flyers throughout California. Printing4SuperCheap is the required printer, but the restaurant—not USPS—distributes the approved piece. Each market needs a named restaurant location, signed distribution agreement, verified box volume, defined quantity/period, exact handoff, and completion-evidence plan.
+- Both statewide pages are original, crawlable service explanations with canonical metadata, FAQs, and internal links. They create no guarantee of ranking, reach, response, restaurant availability, category exclusivity, or statewide fulfillment.
+- Both services remain quote/intake-only. A customer price or future payment path must use a current signed-in Printing4SuperCheap total and complete costs that clear both the configured $2,500 pre-income-tax economic-surplus floor and 2,000 bps (20%) minimum margin. Neither service currently has an independent production/order state machine.
+
 ### Campaign economics and print gate
 
 1. Open `/eddm`, create the mailing territory, and record route rows from a dated USPS EDDM lookup or documented Printing4SuperCheap route quote. The server derives every aggregate; the browser cannot submit a trusted total.
@@ -206,7 +218,7 @@ The research basis and source cautions are in [`docs/FACELESS_SALES_RESEARCH.md`
 3. Obtain a written, dated quote from the configured production supplier, Printing4SuperCheap. Its public discount sheet is a planning reference only and must be rechecked immediately before quoting or ordering.
 4. Enter every schedule and cost/reserve input in `/economics`; route evidence is read-only there, zero is a deliberate entered value, and blank is unknown.
 5. Confirm mail-piece count, planned dates, and artwork preflight. The owner form renders the stored reservation instant in the browser's local time; the API stores an offset ISO instant and rejects an end before the start, a nonfuture deadline, or a deadline whose Pacific calendar date is not before delivery start.
-6. The server recalculates complete cost, payment fees, reserves, owner-labor value, the fixed pre-income-tax surplus floor, any optional economic-margin floor, required cleared revenue, and bounded fill sensitivity. A custom SKU mix receives a total-revenue requirement and average benchmark—not a false uniform price.
+6. The server recalculates complete cost, payment fees, reserves, owner-labor value, the shared `MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS` floor ($2,500), the shared `MINIMUM_ECONOMIC_MARGIN_BPS` floor (2,000 bps / 20%), required cleared revenue, and bounded fill sensitivity. A custom SKU mix receives a total-revenue requirement and average benchmark—not a false uniform price. The API rejects a non-null target below $2,500; cost summary, readiness, and operational gates independently fail low legacy targets/margins, and stored margin evidence is normalized to at least 2,000 bps on economics update.
 7. Any economics update revokes prior owner readiness approval.
 8. `APPROVE PRINT READINESS` is accepted only when every other gate passes. It records readiness; it does not contact a printer, order anything, or spend money.
 
@@ -224,8 +236,9 @@ The research basis and source cautions are in [`docs/FACELESS_SALES_RESEARCH.md`
 ### Cross-format, single-business, and small shared mailers
 
 - `/quote` keeps the founding co-op, a small partner mailer, single-business EDDM, and addressed targeted solo mail as separate quote models.
+- The free fit preview is a manual qualification step, not free finished creative, a guaranteed quote, a route reservation, or authorization to contact the requester beyond the submitted inquiry.
 - `/shared-mailer-calculator` compares the versioned shared-mailer catalog without treating formats as interchangeable: experimental 9 × 12, larger 12 × 15, six-unit M6, custom split-layout M7–M9 concepts, M3, community cards, new-mover cards, and directory cards.
-- The catalog stores $349 and $479 equal-unit planning prices for the experimental 5,000- and 10,000-piece 9 × 12 scenarios. The public page shows either only while its dated Printing4SuperCheap snapshot remains inside the 30-day planning window and the configured complete safeguards still clear the $2,500 pre-income-tax surplus floor. Every other shared format is quote-only.
+- The catalog stores $349 and $479 equal-unit planning prices for the experimental 5,000- and 10,000-piece 9 × 12 scenarios. The public page shows either only while its dated Printing4SuperCheap snapshot remains inside the 30-day planning window and the configured complete safeguards still clear both the $2,500 pre-income-tax surplus floor and the 2,000 bps (20%) minimum margin. Every other shared format is quote-only.
 - EDDM choices come from the current Printing4SuperCheap catalog and discount sheet. Smaller targeted pieces are not mislabeled as EDDM.
 - The owner-only `/eddm` page combines dated route evidence with supplier-cost references and the current USPS EDDM Retail rate. Unknown tax, design, list, bundling, delivery, or other costs remain unknown rather than becoming zero.
 - Public inquiries choose a model, piece, quantity, target area, and fulfillment preference. They cannot submit a price, reserve inventory, start checkout, or place a print order.
@@ -240,8 +253,11 @@ The research basis and source cautions are in [`docs/FACELESS_SALES_RESEARCH.md`
 
 ### Proofs and tracking
 
-- Paid advertisers upload logo materials into private quarantine. The owner approves or rejects the material before use.
-- Each draft is a private, numbered proof. Only the latest exact version can be approved or sent back for revision; the approver name and timestamp are stored separately.
+- Each paid reservation saves immutable structured creative-brief versions covering business facts, offer, call to action, disclaimer, owner-controlled QR destination, and the exact campaign delivery window.
+- Paid advertisers upload one immutable material version at a time into private quarantine with an explicit asset type, rights basis, named attestor, and source/license note where required. Only the exact latest owner-approved, rights-attested version can feed a proof.
+- Each draft is a private, numbered proof bound transactionally to the exact reservation, campaign, placement slot, creative-brief ID/version, material ID/version, and previous-proof pointer. Only the exact latest version can be approved or sent back for revision; approval requires a recorded approver and timestamp.
+- `/production-board` is an owner-only, bounded, read-only view. It combines exact reservation, canonical payment, creative, material, proof, tracking, coupon, and portal pointers; truncated or contradictory evidence stays unknown/error and can never be promoted to ready. Its CSV excludes contact PII, raw tokens, storage paths, and coupon content.
+- Production readiness requires exactly one canonical provider-verified payment for each paid reservation, bound to the current campaign/plan/offer/currency and original quote, with the full amount cleared and zero refund. A partial refund, duplicate/orphan/mismatched payment, or unresolved ledger fails closed even if aggregate net funding appears sufficient.
 - Tracking records start inactive. The owner verifies the public HTTPS destination and then activates the unique redirect/QR/coupon. A full provider refund deactivates tracking; a partial refund reduces cleared net funding but does not by itself deactivate an otherwise valid link. An open or non-won dispute suspends tracking. A won dispute restores a previously active link only when payment and exact inventory ownership reconcile; otherwise the record remains inactive/manual-review.
 - Redirect requests are measured HTTP events, with likely bots labeled separately. Calls, leads, appointments, sales, and advertiser notes are explicitly owner-recorded advertiser reports.
 
@@ -263,12 +279,13 @@ npm audit --audit-level=high
 
 The final local verification pass on August 20, 2026 recorded:
 
-- 198 of 198 automated business/security tests passing;
+- 239 of 239 automated business/security tests passing;
 - clean TypeScript and repository-wide ESLint;
-- a passing production build whose Next.js generation phase completed 65/65 static pages; the source tree contains 53 `page.tsx` files and 34 `route.ts` handlers;
-- 19 indexed sitemap URLs, including all eight request-time public price surfaces, with private, tokenized, coupon, owner, and redirect-only routes excluded;
-- `npm audit --audit-level=high` reporting 0 vulnerabilities;
-- a `.github/workflows/ci.yml` in the local release commit using Node 24, least permissions, concurrency cancellation, and full-SHA action pins. It is unpushed and has never run on GitHub;
+- a supported webpack production build (`npx next build --webpack`) whose generation phase completed 69/69 static pages; the source tree contains 56 `page.tsx` files and 36 `route.ts` handlers;
+- 21 indexed sitemap URLs with zero generated `lastmod` values, including both statewide service pages and all eight request-time public price surfaces, with private, tokenized, coupon, owner, and redirect-only routes excluded;
+- the default Turbopack `npm run build` was environment-blocked in this writable clone because its temporary `node_modules` junction points outside Turbopack's filesystem root; a normal local `npm ci` directory is still required to verify the exact default CI command;
+- `npm audit --offline --audit-level=high` reporting zero vulnerabilities for the installed lockfile/cache snapshot; an online registry refresh remains a release-time check;
+- a `.github/workflows/ci.yml` in the local tree using Node 24, least permissions, concurrency cancellation, and full-SHA action pins. It is unpushed and has never run on GitHub;
 
 - category conflicts and exclusive purchase rules;
 - unpaid hold expiry;
@@ -277,7 +294,8 @@ The final local verification pass on August 20, 2026 recorded:
 - prospect normalization, duplicate detection, qualification, DNC, and CSV formula safety;
 - tracking destination safety;
 - owner/private-data security boundaries;
-- static coverage for public price freshness, private-route boundaries, mobile navigation, honest loading/error/empty states, canonicals/noindex, and route redirects. The earlier partial browser run predates the final tree and is not claimed as final browser evidence.
+- static coverage for public price freshness, private-route boundaries, mobile navigation, honest loading/error/empty states, canonicals/noindex, and route redirects;
+- browser QA at 390 × 844 and 1440 × 900 for `/home`, `/quote`, `/california-postcard-mailing`, `/pizza-box-advertising`, and `/sample-card`, with no horizontal overflow; `/production-board` redirected unauthenticated access to owner login. A React development warning on `/quote` was traced to browser-extension-injected `fdprocessedid` attributes rather than source markup divergence.
 
 No live Stripe, Mailgun, Firebase, USPS, printer, subscriber, or production end-to-end transaction was performed.
 
@@ -317,7 +335,7 @@ Deployment requires explicit owner approval. Do not run these steps as an implic
 
 ## Known limitations and open security work
 
-- The release commit is local and unpushed. A read-only August 20 audit verified Vercel project `californiamailer` and a ready apex production alias at baseline GitHub `main` SHA `4da58ef`; `/business-login`, `/crm`, and the new territory/portal APIs were absent there. `www.californiamailer.com` did not resolve.
+- The current integrated tree is local and unpushed. A read-only August 20 audit verified Vercel project `californiamailer` and a ready apex production alias at baseline GitHub `main` SHA `4da58ef`; `/business-login`, `/crm`, the statewide service pages, Production Board, and the new territory/portal APIs were absent there. `www.californiamailer.com` did not resolve.
 - Vercel contained only the six public Firebase names plus Mailgun and Stripe names across Production/Preview/Development. Values were never accessed. No Firebase Admin credential name, `NEXT_PUBLIC_SITE_URL`, `OWNER_EMAIL`, activation flag, tracking secret, or AI variable was present, so the local server features are not production-configured.
 - Local Firebase configuration names project `californiamailer-1998`, database `(default)` in `nam5`, and four composite indexes. Provider reads returned HTTP 401 from an expired/invalid CLI credential; Firebase app identity, IAM, data, billing, and deployed rules/indexes remain unknown. Rules were not emulator-tested because Java is unavailable.
 - GitHub `main` was unprotected with no Actions workflows/checks, no remote `codex/faceless-sales` branch, and no open PR at audit time. The new CI workflow remains local and cannot be treated as a passed provider check.
@@ -351,8 +369,9 @@ Active planning version: `shared-mailers-v2`, model `shared-9x12-5000`.
 | Proposed unit price | Editable assumption | $349 |
 | Full funding goal | 24 × $349 | $8,376 |
 | Owner economic-surplus target | Pre-income-tax planning target | Approximately $2,500 |
+| Minimum economic margin | Configured production floor | 20% (2,000 bps) |
 
-The $2,500 target is calculated only after the model's editable complete campaign costs, reserves, processing fees, and owner-labor valuation. It is not guaranteed profit, personal after-tax take-home, or a substitute for cash-flow planning. The 24-unit models enforce a 16–24 paid-fill range and show 16/18/24 sensitivity. A separate calculator mode keeps the $2,500 floor while also matching the active model's dated economic margin across formats. Missing costs stay unknown rather than becoming zero.
+The $2,500 target is calculated only after the model's editable complete campaign costs, reserves, processing fees, and owner-labor valuation. The authoritative founding-campaign gate requires both that fixed floor and the configured 20% minimum margin; clearing one does not waive the other. Neither is guaranteed profit, personal after-tax take-home, or a substitute for cash-flow planning. The 24-unit models enforce a 16–24 paid-fill range and show 16/18/24 sensitivity. A separate calculator mode keeps the $2,500 floor while also matching the active model's dated economic margin across formats. Missing costs stay unknown rather than becoming zero.
 
 The owner calculator's 10% tax-contingency reset values are exactly $120.90 for the dated $1,209 print component at 5,000 pieces and $229.90 for the dated $2,299 print component at 10,000 pieces. They are editable safeguards that must be replaced with the current signed-in supplier total. At 24 paid units, the stored $349 scenario models a 33.73% pre-income-tax economic margin and the $479 scenario models 23.47%; both clear the fixed $2,500 floor, but $479 does not match the 5,000-piece margin. These are planning assumptions, not instant customer quotes or authorization to accept payment.
 

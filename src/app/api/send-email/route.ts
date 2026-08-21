@@ -31,6 +31,7 @@ const QUOTE_EMAIL_LIMIT = 3;
 const QUOTE_EMAIL_WINDOW_MS = 60 * 60_000;
 const QUOTE_CONTENT_DEDUPE_WINDOW_MS = 24 * 60 * 60_000;
 const COOP_QUANTITY_LABEL = 'one placement inquiry';
+const PIZZA_BOX_QUANTITY_LABEL = 'partner distribution volume to verify';
 const singleLineControls = /[\u0000-\u001f\u007f]/;
 const messageControls = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/;
 
@@ -116,8 +117,9 @@ export async function POST(request: NextRequest) {
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     return NextResponse.json({ error: 'JSON is required.' }, { status: 415 });
   }
-  const contentLength = Number(request.headers.get('content-length') || 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+  const contentLengthHeader = request.headers.get('content-length');
+  const contentLength = Number(contentLengthHeader);
+  if (!contentLengthHeader || !Number.isSafeInteger(contentLength) || contentLength <= 0 || contentLength > MAX_BODY_BYTES) {
     return NextResponse.json({ error: 'Request is too large.' }, { status: 413 });
   }
   const rawBody = await request.text().catch(() => '');
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest) {
 
   const serviceType = serviceValue as QuoteServiceType;
   const sharedModel = serviceType === 'shared_model' ? getSharedMailerModel(sharedModelId) : null;
-  const catalogPieceRequired = !['coop', 'shared_model'].includes(serviceType);
+  const catalogPieceRequired = !['coop', 'shared_model', 'pizza_box'].includes(serviceType);
   const mailPiece = catalogPieceRequired ? mailPieceForQuote(serviceType, mailerSpecId) : null;
   const numericQuantity = catalogPieceRequired ? Number(quantity) : null;
 
@@ -165,6 +167,9 @@ export async function POST(request: NextRequest) {
   }
   if (serviceType === 'coop' && quantity !== COOP_QUANTITY_LABEL) {
     return NextResponse.json({ error: 'Choose the founding shared placement.' }, { status: 400 });
+  }
+  if (serviceType === 'pizza_box' && quantity !== PIZZA_BOX_QUANTITY_LABEL) {
+    return NextResponse.json({ error: 'Choose the partner-distributed placement.' }, { status: 400 });
   }
   if (serviceType === 'solo' && !targetedAudiences.has(targeting)) {
     return NextResponse.json({ error: 'Choose a targeted audience.' }, { status: 400 });
@@ -190,10 +195,15 @@ export async function POST(request: NextRequest) {
     category,
     serviceType,
     city,
-    quantity: sharedModel?.quantity || numericQuantity || (serviceType === 'coop' ? COOP_QUANTITY_LABEL : null),
+    quantity: sharedModel?.quantity
+      || numericQuantity
+      || (serviceType === 'coop' ? COOP_QUANTITY_LABEL : null)
+      || (serviceType === 'pizza_box' ? PIZZA_BOX_QUANTITY_LABEL : null),
     sharedModelId: sharedModel?.id || null,
     mailerSpecId: mailPiece?.id || null,
-    mailerLabel: sharedModel?.name || mailPiece?.label || 'Founding shared placement',
+    mailerLabel: sharedModel?.name
+      || mailPiece?.label
+      || (serviceType === 'pizza_box' ? 'Pizza-box coupon or community flyer' : 'Founding shared placement'),
     targeting: serviceType === 'solo' ? targeting : null,
     fulfillment: serviceType === 'eddm' ? fulfillment : null,
     message,

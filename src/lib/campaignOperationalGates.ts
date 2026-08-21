@@ -1,5 +1,9 @@
 import type { DocumentData } from 'firebase-admin/firestore';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
+import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '@/config/economicSafeguards';
 import { quoteVerificationStatus } from '@/lib/businessRules';
 import {
   assertStoredRoutePlanIntegrity,
@@ -22,6 +26,8 @@ export type CampaignOperationalEvidenceBlockReason =
   | 'campaign-evidence-time-invalid'
   | 'campaign-economics-not-verified'
   | 'campaign-economics-evidence-timestamp-invalid'
+  | 'campaign-owner-surplus-floor-not-met'
+  | 'campaign-margin-floor-not-met'
   | 'campaign-supplier-mismatch'
   | 'campaign-supplier-reference-missing'
   | 'campaign-supplier-quote-not-current'
@@ -46,9 +52,24 @@ export function campaignSupplierEvidenceBlockReason(
   if (economicsVerifiedMs === null || economicsVerifiedMs > atMs) {
     return 'campaign-economics-evidence-timestamp-invalid';
   }
+  const minimumMarginBps = Number(campaign.minimumMarginBps);
+  if (
+    !Number.isSafeInteger(minimumMarginBps)
+    || minimumMarginBps < MINIMUM_ECONOMIC_MARGIN_BPS
+    || minimumMarginBps > 10_000
+  ) {
+    return 'campaign-margin-floor-not-met';
+  }
   const costs = campaign.costs && typeof campaign.costs === 'object'
     ? campaign.costs as DocumentData
     : {};
+  const targetOwnerSurplusCents = Number(costs.targetOwnerSurplusCents);
+  if (
+    !Number.isSafeInteger(targetOwnerSurplusCents)
+    || targetOwnerSurplusCents < MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS
+  ) {
+    return 'campaign-owner-surplus-floor-not-met';
+  }
   if (costs.supplierId !== PRINTING4SUPERCHEAP.id) return 'campaign-supplier-mismatch';
   if (typeof costs.printerQuoteReference !== 'string' || !costs.printerQuoteReference.trim()) {
     return 'campaign-supplier-reference-missing';
@@ -175,6 +196,12 @@ export function campaignOperationalEvidenceBlockerLabel(
   if (!reason) return null;
   if (reason.startsWith('campaign-supplier-') || reason.startsWith('campaign-economics-')) {
     return 'Current verified Printing4SuperCheap quote and economics evidence';
+  }
+  if (reason === 'campaign-owner-surplus-floor-not-met') {
+    return 'Server minimum $2,500 pre-income-tax owner economic surplus';
+  }
+  if (reason === 'campaign-margin-floor-not-met') {
+    return 'Server minimum 20% economic contribution margin';
   }
   if (reason === 'campaign-evidence-time-invalid') return 'Valid evidence-check time';
   return 'Current intact attached carrier-route evidence';

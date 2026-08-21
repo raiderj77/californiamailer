@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PRINTING4SUPERCHEAP } from '../src/config/eddmOfferings';
 import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '../src/config/economicSafeguards';
+import {
   campaignOperationalEvidenceBlockReason,
   campaignRouteEvidenceBlockReason,
   campaignSupplierEvidenceBlockReason,
@@ -62,10 +66,12 @@ function campaign(sourceCheckedAt = '2026-08-19') {
     targetHouseholds: 800,
     economicsVerified: true,
     economicsVerifiedAt: { toMillis: () => AT_MS - 60_000 },
+    minimumMarginBps: MINIMUM_ECONOMIC_MARGIN_BPS,
     costs: {
       supplierId: PRINTING4SUPERCHEAP.id,
       printerQuoteReference: 'P4SC quote 2026-08-19',
       quoteVerifiedAt: '2026-08-19',
+      targetOwnerSurplusCents: MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
     },
   };
 }
@@ -181,5 +187,26 @@ test('the route boundary rejects tampering, stale quotes, and campaign-plan mism
       economicsVerifiedAt: { toMillis: () => AT_MS + 1 },
     }, AT_MS),
     'campaign-economics-evidence-timestamp-invalid',
+  );
+});
+
+test('legacy verified economics cannot bypass either server economic floor', () => {
+  const currentCampaign = campaign();
+  assert.equal(
+    campaignSupplierEvidenceBlockReason({
+      ...currentCampaign,
+      minimumMarginBps: MINIMUM_ECONOMIC_MARGIN_BPS - 1,
+    }, AT_MS),
+    'campaign-margin-floor-not-met',
+  );
+  assert.equal(
+    campaignSupplierEvidenceBlockReason({
+      ...currentCampaign,
+      costs: {
+        ...currentCampaign.costs,
+        targetOwnerSurplusCents: MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS - 1,
+      },
+    }, AT_MS),
+    'campaign-owner-surplus-floor-not-met',
   );
 });

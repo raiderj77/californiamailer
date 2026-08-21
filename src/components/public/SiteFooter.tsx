@@ -7,8 +7,8 @@ export function SiteFooter() {
         <div>
           <div className="text-lg font-black text-white">CaliforniaMailer</div>
           <p className="mt-3 max-w-md text-sm leading-6">
-            An owner-managed shared-mailer service being prepared for one Monterey Peninsula founding campaign.
-            No campaign result or advertiser response is promised.
+            Owner-managed California direct-mail and partner-placement planning: one Monterey Peninsula founding shared mailer plus
+            quote-only single-business postcards and documented partner-distributed placements. No campaign result or advertiser response is promised.
           </p>
           <p className="mt-3 text-sm">Email: hello@californiamailer.com</p>
         </div>
@@ -18,6 +18,8 @@ export function SiteFooter() {
             <li><Link href="/founding-mailer" className="hover:text-white">Founding mailer</Link></li>
             <li><Link href="/mailing-areas" className="hover:text-white">Mailing areas</Link></li>
             <li><Link href="/pricing" className="hover:text-white">Proposed pricing</Link></li>
+            <li><Link href="/california-postcard-mailing" className="hover:text-white">California postcard mailing</Link></li>
+            <li><Link href="/pizza-box-advertising" className="hover:text-white">Pizza box advertising</Link></li>
             <li><Link href="/funding-policy" className="hover:text-white">Funding and refunds</Link></li>
             <li><Link href="/advertiser-content-standards" className="hover:text-white">Content standards</Link></li>
           </ul>

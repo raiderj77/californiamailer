@@ -291,6 +291,35 @@ test('dated 5k and 10k planning prices clear fixed-surplus safeguards while stal
   assert.match(stale.reasons.join(' '), /older than the 30-day planning window/i);
 });
 
+test('public planning-price support requires both hard economic floors', () => {
+  const base = getSharedMailerModel('shared-9x12-10000');
+  assert.ok(base);
+  const belowMargin = {
+    ...base,
+    suggestedPricePerPaidUnitCents: 60_000,
+    costBasis: {
+      ...base.costBasis,
+      supplierSubtotalCents: 808_000,
+    },
+  } as typeof base;
+  const marginEvaluation = evaluateDatedPlanningPrice(belowMargin, '2026-08-20');
+  assert.ok((marginEvaluation.economics?.fixedSurplusTargetGapCents ?? -1) >= 0);
+  assert.equal(marginEvaluation.economics?.economicMarginBps, 1_999);
+  assert.equal(marginEvaluation.supported, false);
+  assert.match(marginEvaluation.reasons.join(' '), /20% economic-margin floor/);
+
+  const belowSurplusFloor = {
+    ...base,
+    planningPriceSafeguards: {
+      ...base.planningPriceSafeguards!,
+      targetOwnerSurplusCents: 249_999,
+    },
+  } as typeof base;
+  const surplusEvaluation = evaluateDatedPlanningPrice(belowSurplusFloor, '2026-08-20');
+  assert.equal(surplusEvaluation.supported, false);
+  assert.match(surplusEvaluation.reasons.join(' '), /\$2,500 pre-income-tax surplus floor/);
+});
+
 test('custom price mixes solve a total-revenue floor and average benchmark, never a uniform SKU price', () => {
   const result = calculateSharedMailerEconomics(completeInput({
     paidSlotUnits: 18,

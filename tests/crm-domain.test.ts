@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   CRM_ADDONS,
   CRM_AUTOMATION_POLICY,
+  CRM_NEXT_ACTION_TYPES,
   DEFAULT_CRM_ADDON_STATE,
 } from '../src/config/crm';
 import {
@@ -51,6 +52,15 @@ test('task state is deterministic from explicit California calendar dates', () =
   assert.equal(crmTaskState('2026-08-18', '2026-08-19'), 'overdue');
   assert.equal(crmTaskState('2026-08-19', '2026-08-19'), 'today');
   assert.equal(crmTaskState('2026-08-20', '2026-08-19'), 'upcoming');
+});
+
+test('private samples are an owner task, not an automated outreach or provider add-on', () => {
+  assert.ok(CRM_NEXT_ACTION_TYPES.some((action) => (
+    action.id === 'prepare_sample' && action.label === 'Prepare private fit preview'
+  )));
+  assert.equal(CRM_ADDONS.some((addon) => String(addon.id) === 'samples'), false);
+  assert.equal(CRM_AUTOMATION_POLICY.outboundEmail, 'disabled');
+  assert.equal(CRM_AUTOMATION_POLICY.socialMessages, 'disabled');
 });
 
 test('unified CRM uses linked source records without duplicating promoted inquiries', () => {

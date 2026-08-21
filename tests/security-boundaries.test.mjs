@@ -161,6 +161,10 @@ test('print approval requires the exact phrase and all computed gates', () => {
   assert.match(route, /taxCostCents/);
   assert.match(route, /ownerLaborCostCents/);
   assert.match(route, /targetOwnerSurplusCents/);
+  assert.match(updateSchema, /ownerSurplusNullableCents/);
+  assert.match(route, /MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS/);
+  assert.match(route, /MINIMUM_ECONOMIC_MARGIN_BPS/);
+  assert.match(putHandler, /minimumMarginBps: enforcedMinimumMarginBps/);
   assert.match(route, /PRINTING4SUPERCHEAP\.recheckAfterDays|quoteVerificationStatus/);
   assert.match(route, /summary\.targetGapCents >= 0/);
   assert.match(putHandler, /economicsVerifiedAt: economicsVerified \? FieldValue\.serverTimestamp\(\) : null/);
@@ -173,6 +177,8 @@ test('print approval requires the exact phrase and all computed gates', () => {
   }
   assert.match(economics, /Open Territories &amp; routes/);
   assert.match(economics, /They cannot be confirmed on this financial form/);
+  assert.match(economics, /server-enforced minimum before income tax/);
+  assert.match(economics, /min=\{minimum\}/);
   assert.doesNotMatch(economics, /set\('routesConfirmed'/);
 });
 

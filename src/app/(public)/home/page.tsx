@@ -7,13 +7,13 @@ import { PublicShell } from '@/components/public/PublicShell';
 import { getPublicPlanningPriceVisibility } from '@/lib/publicPlanningPriceVisibility';
 
 export const metadata: Metadata = {
-  title: 'CaliforniaMailer | Experimental Monterey Peninsula shared mailer',
+  title: 'California Postcard Mailing & Local Advertising | CaliforniaMailer',
   description:
-    'An owner-managed, pre-funded shared-mailer plan being validated for selected Monterey Peninsula carrier routes.',
+    'Plan single-business postcards, shared mailers, and partner-distributed pizza-box advertising across California with current printer, route, partner, and margin evidence.',
   alternates: { canonical: 'https://californiamailer.com/home' },
   openGraph: {
-    title: 'CaliforniaMailer founding mailer',
-    description: 'One experimental shared local mailer. Verified before payment and print.',
+    title: 'California postcard mailing and local advertising',
+    description: 'Statewide quote-only postcard and partner-placement planning, plus an experimental Monterey Peninsula shared-mailer campaign.',
     url: 'https://californiamailer.com/home',
     type: 'website',
   },
@@ -40,19 +40,25 @@ const mailingPaths = [
     title: 'Single-business EDDM',
     fit: 'For one advertiser reaching every eligible residential address on selected carrier routes.',
     examples: 'Supplier catalog sizes with print-only or turnkey planning',
-    href: '/pricing#quote-only-options',
+    href: '/california-postcard-mailing',
   },
   {
     title: 'Addressed solo mail',
     fit: 'For a defined list or audience such as a customer file, radius, farm, or verified mover segment.',
     examples: 'Audience, list rights, postage, and fulfillment quoted separately',
-    href: '/pricing#quote-only-options',
+    href: '/california-postcard-mailing',
   },
   {
     title: 'Targeted community programs',
     fit: 'For new-mover, neighborhood, partner, or directory projects that need a custom cadence and mix.',
     examples: 'No borrowed slot count or price from a different format',
     href: '/quote',
+  },
+  {
+    title: 'Pizza-box advertising',
+    fit: 'For noncompeting local advertisers placed with the orders of a documented California restaurant partner.',
+    examples: 'Printing4SuperCheap production · signed partner agreement · verified box volume',
+    href: '/pizza-box-advertising',
   },
 ];
 
@@ -64,16 +70,15 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-[1.2fr_0.8fr] md:py-28">
           <div>
             <div className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-100">
-              Experimental founding plan · checkout disabled
+              California postcard and partner advertising · quote only
             </div>
             <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[1.03] tracking-tight text-white md:text-7xl">
-              One shared local mailer. Proven before it is sold or printed.
+              Local postcard and partner placements, proven before they are sold or printed.
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
-              CaliforniaMailer is planning a 9 × 12 shared mailer for approximately{' '}
+              CaliforniaMailer accepts statewide requests for single-business postcards and documented pizza-box placements while validating a 9 × 12 shared mailer for approximately{' '}
               {FOUNDING_CAMPAIGN.targetHouseholds.toLocaleString()} selected Monterey Peninsula residences.
-              Businesses may review the concept and record interest now; checkout stays off until the layout,
-              routes, supplier total, policies, and full economics pass their gates.
+              Every path stays behind current printer, route or partner, rights, cost, margin, payment, and production gates.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link href="/founding-mailer" className="rounded-full bg-blue-500 px-6 py-3 font-black text-white hover:bg-blue-400">
@@ -83,7 +88,7 @@ export default async function HomePage() {
                 Review the preflight concept
               </Link>
               <Link href="/quote" className="rounded-full border border-slate-600 px-6 py-3 font-black text-white hover:border-slate-300">
-                Request a written quote
+                Request a free private fit preview
               </Link>
             </div>
             <p className="mt-5 text-sm text-slate-400">
@@ -139,8 +144,8 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-slate-950 p-6 text-white">
-          <div><strong className="text-lg">Prefer a faceless sales process?</strong><p className="mt-1 text-sm leading-6 text-slate-300">Choose “Email only — no sales call” on the quote form. A request enters the private owner CRM before notification is attempted.</p></div>
-          <Link href="/quote" className="rounded-full bg-blue-500 px-5 py-3 font-black hover:bg-blue-400">Start the product finder</Link>
+          <div><strong className="text-lg">Prefer a faceless sales process?</strong><p className="mt-1 text-sm leading-6 text-slate-300">Choose “Email only — no sales call” on the quote form. A request enters the private owner CRM for a possible free fit preview; no notification or marketing sequence is sent automatically.</p></div>
+          <Link href="/quote" className="rounded-full bg-blue-500 px-5 py-3 font-black hover:bg-blue-400">Request a private fit preview</Link>
         </div>
       </section>
 

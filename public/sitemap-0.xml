@@ -2,11 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
 <url><loc>https://californiamailer.com/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/advertiser-content-standards</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+<url><loc>https://californiamailer.com/california-postcard-mailing</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 <url><loc>https://californiamailer.com/contact</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/how-it-works</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/local-deals</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/mailing-areas</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+<url><loc>https://californiamailer.com/pizza-box-advertising</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
 <url><loc>https://californiamailer.com/privacy</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/quote</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 <url><loc>https://californiamailer.com/terms</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>

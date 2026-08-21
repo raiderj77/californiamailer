@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  MINIMUM_ECONOMIC_MARGIN_BPS,
+  MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS,
+} from '../src/config/economicSafeguards';
+import {
   calculateCostSummary,
   categoryConflict,
   clearedNetFundingCents,
@@ -361,15 +365,31 @@ test('print readiness requires the explicit pre-income-tax surplus target', () =
 
   const atLowerExplicitTarget = evaluatePrintReadiness({
     ...input,
-    costs: { ...input.costs, targetOwnerSurplusCents: 200_000 },
+    costs: {
+      ...input.costs,
+      targetOwnerSurplusCents: MINIMUM_PRE_INCOME_TAX_OWNER_ECONOMIC_SURPLUS_CENTS - 1,
+    },
   });
-  assert.equal(atLowerExplicitTarget.checks.find((check) => check.key === 'economic_surplus_target')?.passed, true);
+  assert.equal(atLowerExplicitTarget.checks.find((check) => check.key === 'economic_surplus_target')?.passed, false);
+  assert.match(
+    atLowerExplicitTarget.costSummary.missingInputs.join(' '),
+    /targetOwnerSurplusCents must be at least 250000/,
+  );
 
   const underPaymentReview = evaluatePrintReadiness({
     ...input,
-    costs: { ...input.costs, targetOwnerSurplusCents: 200_000 },
     unresolvedPaymentReviewCount: 1,
   });
   assert.equal(underPaymentReview.checks.find((check) => check.key === 'payment_reviews')?.passed, false);
   assert.equal(underPaymentReview.ready, false);
+
+  const atLowerStoredMargin = evaluatePrintReadiness({
+    ...input,
+    minimumMarginBps: MINIMUM_ECONOMIC_MARGIN_BPS - 1,
+  });
+  assert.equal(atLowerStoredMargin.checks.find((check) => check.key === 'margin')?.passed, false);
+  assert.match(
+    atLowerStoredMargin.checks.find((check) => check.key === 'margin')?.detail ?? '',
+    /2000 bps or higher/,
+  );
 });

@@ -74,8 +74,8 @@ export default function QuotePage() {
   const mailPieces = mailPiecesFor(form.serviceType);
   const selectedService = SERVICE_OPTIONS.find((option) => option.id === form.serviceType);
   const needsSharedModel = form.serviceType === 'shared_model';
-  const needsMailerSpec = !['coop', 'shared_model'].includes(form.serviceType);
-  const needsQuantity = !['coop', 'shared_model'].includes(form.serviceType);
+  const needsMailerSpec = !['coop', 'shared_model', 'pizza_box'].includes(form.serviceType);
+  const needsQuantity = !['coop', 'shared_model', 'pizza_box'].includes(form.serviceType);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -84,7 +84,11 @@ export default function QuotePage() {
       const quotePayload = {
         kind: 'quote' as const,
         ...form,
-        quantity: needsQuantity ? form.quantity : 'one placement inquiry',
+        quantity: needsQuantity
+          ? form.quantity
+          : form.serviceType === 'pizza_box'
+            ? 'partner distribution volume to verify'
+            : 'one placement inquiry',
         mailerSpecId: needsMailerSpec ? form.mailerSpecId : '',
         sharedModelId: needsSharedModel ? form.sharedModelId : '',
         targeting: form.serviceType === 'solo' ? form.targeting : '',
@@ -139,8 +143,8 @@ export default function QuotePage() {
     return (
       <PublicShell>
         <section role="status" aria-live="polite" aria-atomic="true" className="mx-auto max-w-2xl px-5 py-24 text-center">
-          <h1 className="text-4xl font-black">Request accepted for manual review</h1>
-          <p className="mt-5 leading-8 text-slate-600">Your request is stored in the owner-only CRM review queue. No email, text, call, or notification was queued or sent by this submission. Nothing was reserved, sold, ordered, or charged. The owner can manually verify the route and supplier inputs before replying with a written quote.</p>
+          <h1 className="text-4xl font-black">Fit-preview request accepted for manual review</h1>
+          <p className="mt-5 leading-8 text-slate-600">Your request is stored in the owner-only CRM review queue. If the project is a fit, the owner can prepare a free private planning preview before issuing any written quote. No email, text, call, or notification was queued or sent by this submission. Nothing was reserved, sold, ordered, or charged.</p>
           <p className="mt-4 text-sm font-bold text-slate-700">Reference: {reference}</p>
           <Link href="/pricing" className="mt-8 inline-block rounded-full bg-blue-700 px-6 py-3 font-black text-white">Review mailer options</Link>
         </section>
@@ -153,9 +157,10 @@ export default function QuotePage() {
       <div className="mx-auto max-w-6xl px-5 py-16">
         <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
           <section>
-            <p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Written planning request</p>
-            <h1 className="mt-2 text-4xl font-black md:text-6xl">Choose the mailer before asking for a quote.</h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">CaliforniaMailer can plan the founding card, larger and smaller shared formats, M6/M3 variants, community, new-mover, and directory concepts, single-business EDDM, or an addressed solo postcard. Every option stays quote-only until its actual layout, audience, quantity, current supplier price, postage, and fulfillment are verified. You can <Link href="/mailing-areas" className="font-bold text-blue-700 underline underline-offset-4">review public mailing-area status</Link> first, then describe your geography in your own words.</p>
+            <p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Free private campaign-fit preview</p>
+            <h1 className="mt-2 text-4xl font-black md:text-6xl">Explore a local-mail offer without booking a sales call.</h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">Submit the facts once. If the request is a fit, the owner can manually prepare a private planning preview covering the likely mailer family, audience or route evidence to verify, real category conflicts, and the unknown costs that must be resolved before a written quote. It is a diagnostic—not finished artwork, reserved inventory, or a response guarantee.</p>
+            <p className="mt-4 max-w-3xl leading-7 text-slate-600">CaliforniaMailer can plan the founding card, larger and smaller shared formats, M6/M3 variants, community, new-mover, directory, and partner-distributed concepts, single-business EDDM, or an addressed solo postcard. Printing4SuperCheap is the required printer; USPS or a documented restaurant partner performs the selected distribution. Every option stays quote-only until its actual layout, audience, quantity, current supplier price, postage or distribution method, and fulfillment are verified. You can <Link href="/mailing-areas" className="font-bold text-blue-700 underline underline-offset-4">review public mailing-area status</Link> first, then describe your geography in your own words.</p>
 
             <form onSubmit={submit} className="mt-8 grid gap-5 rounded-2xl border bg-white p-6 shadow-sm md:grid-cols-2">
               <label className="block text-sm font-bold md:col-span-2">Mailer model *
@@ -205,6 +210,11 @@ export default function QuotePage() {
                 </select>
               </label>}
 
+              {form.serviceType === 'pizza_box' && <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 text-sm leading-6 text-slate-700 md:col-span-2">
+                <p className="font-black text-violet-950">Partner-distributed—not mailed</p>
+                <p className="mt-1">Describe the California market, desired business categories, and any restaurant relationship in the details field. A quote requires a signed distribution agreement, verified box volume, a current Printing4SuperCheap print quote, artwork rights, and an evidence plan for handoff and distribution.</p>
+              </div>}
+
               <label className="block text-sm font-bold">Target city, ZIP, or mailing area *
                 <input value={form.city} onChange={(event) => set('city', event.target.value)} required className="mt-1 w-full rounded-lg border px-3 py-3 font-normal" />
                 <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">Keep this free-form. Candidate areas do not reserve a route or category. <Link href="/mailing-areas" className="font-bold text-blue-700 underline">Open the mailing-area explorer</Link>.</span>
@@ -231,13 +241,23 @@ export default function QuotePage() {
                 <textarea required minLength={10} maxLength={2_000} rows={5} value={form.message} onChange={(event) => set('message', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal" />
               </label>
               <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{state === 'submitting' ? 'Saving the planning request for manual owner review.' : ''}</p>
-              <button disabled={state === 'submitting'} className="rounded-lg bg-blue-700 px-5 py-3 font-black text-white disabled:opacity-50 md:col-span-2">{state === 'submitting' ? 'Saving request…' : 'Submit request for owner review'}</button>
+              <button disabled={state === 'submitting'} className="rounded-lg bg-blue-700 px-5 py-3 font-black text-white disabled:opacity-50 md:col-span-2">{state === 'submitting' ? 'Saving request…' : 'Request my free private fit preview'}</button>
               {state === 'error' && <p role="alert" aria-live="assertive" aria-atomic="true" className="text-sm font-bold text-rose-800 md:col-span-2">The request could not be confirmed as recorded. Nothing was queued or sent. Please review the fields and try again.</p>}
-              <p className="text-xs leading-5 text-slate-500 md:col-span-2">Submitting stores this request for manual owner review and permits CaliforniaMailer to respond to this inquiry only. It does not send an automated message, enroll you in marketing, reserve inventory, approve a route, place a print order, or authorize a charge. See the <Link href="/privacy" className="underline">privacy policy</Link>.</p>
+              <p className="text-xs leading-5 text-slate-500 md:col-span-2">The preview request is free, but submission does not guarantee that a preview or quote will be produced. Submitting stores this request for manual owner review and permits CaliforniaMailer to respond to this inquiry only. It does not send an automated message, enroll you in marketing, reserve inventory, approve a route, place a print order, or authorize a charge. See the <Link href="/privacy" className="underline">privacy policy</Link>.</p>
             </form>
           </section>
 
           <aside className="space-y-4">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+              <h2 className="font-black">What the free preview can contain</h2>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                <li>• A likely mailer family and audience path</li>
+                <li>• Route, category, rights, and offer facts to verify</li>
+                <li>• A private concept outline using original—not copied—artwork</li>
+                <li>• The cost unknowns and written next step</li>
+              </ul>
+              <p className="mt-3 text-xs leading-5 text-slate-600">No predicted leads, sales, response rate, or ROI is included.</p>
+            </div>
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <h2 className="font-black">Start with the mailing area</h2>
               <p className="mt-2 text-sm leading-6 text-slate-700">Search candidate places and ZIP Codes, then check whether a current verified route snapshot is public. Exact counts are still rechecked before a written quote or order.</p>
