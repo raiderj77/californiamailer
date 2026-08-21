@@ -1,309 +1,46 @@
 'use client';
 
-import { useAuth } from '@/lib/AuthContext';
 import Sidebar from '@/components/Sidebar';
-import { useState, useEffect } from 'react';
-import { Activity, getActivities, addActivity, deleteActivity, Prospect, getProspects } from '@/lib/firestore';
+import { useAuth } from '@/lib/AuthContext';
+import { addActivity, getActivities, getProspects, type Activity, type Prospect, updateProspect } from '@/lib/firestore';
 import { downloadCSV } from '@/lib/csv';
+import { useEffect, useMemo, useState } from 'react';
 
-type ActivityType = 'call' | 'email' | 'meeting' | 'note' | 'proposal';
-
-interface FormData {
-  prospectId: string;
-  prospectName: string;
-  type: ActivityType;
-  description: string;
-  outcome: string;
-  followUpDate: string;
-}
-
-const emptyForm: FormData = {
-  prospectId: '',
-  prospectName: '',
-  type: 'call',
-  description: '',
-  outcome: '',
-  followUpDate: '',
-};
+type ActivityType = Activity['type'];
 
 export default function ActivitiesPage() {
   const { user, loading, logout } = useAuth();
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [prospects, setProspects] = useState<Prospect[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<FormData>(emptyForm);
-  
-  const [filterType, setFilterType] = useState('all');
-  const [filterProspect, setFilterProspect] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-
+  const [activities, setActivities] = useState<Activity[]>([]); const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [prospectId, setProspectId] = useState(''); const [type, setType] = useState<ActivityType>('email');
+  const [description, setDescription] = useState(''); const [outcome, setOutcome] = useState(''); const [followUpDate, setFollowUpDate] = useState('');
+  const [filter, setFilter] = useState('all'); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [notice, setNotice] = useState('');
   useEffect(() => {
-    if (user) {
-      loadData();
-    }
+    let active = true;
+    if (user) Promise.all([getActivities(user.uid), getProspects(user.uid)])
+      .then(([activityRecords, prospectRecords]) => { if (active) { setActivities(activityRecords); setProspects(prospectRecords); } })
+      .catch(() => { if (active) setError('Contact history could not be loaded.'); });
+    return () => { active = false; };
   }, [user]);
-
-  async function loadData() {
-    if (!user) return;
-    const [a, p] = await Promise.all([
-      getActivities(user.uid),
-      getProspects(user.uid),
-    ]);
-    setActivities(a);
-    setProspects(p);
+  const visible = useMemo(() => activities.filter((item) => filter === 'all' || item.type === filter), [activities, filter]);
+  async function refresh() { if (user) setActivities(await getActivities(user.uid)); }
+  async function save(event: React.FormEvent) {
+    event.preventDefault(); if (!user) return; const prospect = prospects.find((item) => item.id === prospectId);
+    if (!prospect?.id) { setError('Select a prospect.'); return; }
+    if ((prospect.doNotContact || prospect.status === 'do_not_contact') && ['email', 'call', 'proposal'].includes(type)) { setError('This record is suppressed. Log an internal note instead of outreach.'); return; }
+    setBusy(true); setError(''); setNotice('');
+    try {
+      await addActivity({ prospectId: prospect.id, prospectName: prospect.businessName, type, description, outcome, followUpDate, userId: user.uid });
+      if (['email', 'call'].includes(type)) await updateProspect(prospect.id, { lastContactDate: new Date().toISOString().slice(0, 10), nextFollowUpDate: followUpDate, contactAttempts: Number(prospect.contactAttempts || 0) + 1, status: prospect.status === 'ready_to_contact' ? 'contacted' : prospect.status });
+      setDescription(''); setOutcome(''); setFollowUpDate(''); setNotice('Activity recorded. This log does not prove an email was delivered or read.'); await refresh();
+    } catch { setError('Activity could not be recorded.'); }
+    finally { setBusy(false); }
   }
-
-  function handleProspectChange(prospectId: string) {
-    const prospect = prospects.find(p => p.id === prospectId);
-    setFormData({
-      ...formData,
-      prospectId,
-      prospectName: prospect?.businessName || '',
-    });
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) return;
-
-    await addActivity({ ...formData, userId: user.uid });
-
-    setShowForm(false);
-    setFormData(emptyForm);
-    loadData();
-  }
-
-  async function handleDelete(id: string) {
-    if (confirm('Delete this activity?')) {
-      await deleteActivity(id);
-      loadData();
-    }
-  }
-
-  const typeColors: Record<string, string> = {
-    call: 'bg-blue-100 text-blue-700',
-    email: 'bg-green-100 text-green-700',
-    meeting: 'bg-purple-100 text-purple-700',
-    note: 'bg-gray-100 text-gray-700',
-    proposal: 'bg-orange-100 text-orange-700',
-  };
-
-  const typeIcons: Record<string, string> = {
-    call: '📞',
-    email: '✉️',
-    meeting: '🤝',
-    note: '📝',
-    proposal: '📋',
-  };
-
-  const filteredActivities = activities.filter(a => {
-    if (filterType !== 'all' && a.type !== filterType) return false;
-    if (filterProspect !== 'all' && a.prospectId !== filterProspect) return false;
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      return a.prospectName.toLowerCase().includes(query) ||
-             a.description.toLowerCase().includes(query) ||
-             a.outcome.toLowerCase().includes(query);
-    }
-    return true;
-  });
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
-  }
-
-  if (!user) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Please sign in</p></div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1">
-        <header className="bg-white shadow-sm">
-          <div className="px-6 py-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold text-gray-900">CaliforniaMailer</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600">{user.email}</span>
-              <button onClick={logout} className="text-gray-500 hover:text-gray-700">Sign out</button>
-            </div>
-          </div>
-        </header>
-        <main className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Activity Log</h2>
-            <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              + Log Activity
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
-            <div className="flex gap-4 items-center flex-wrap">
-              <input
-                type="text"
-                placeholder="Search activities..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm w-64"
-              />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="all">All Types</option>
-                <option value="call">Call</option>
-                <option value="email">Email</option>
-                <option value="meeting">Meeting</option>
-                <option value="note">Note</option>
-                <option value="proposal">Proposal</option>
-              </select>
-              <select
-                value={filterProspect}
-                onChange={(e) => setFilterProspect(e.target.value)}
-                className="border rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="all">All Prospects</option>
-                {prospects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.businessName}</option>
-                ))}
-              </select>
-              <span className="text-sm text-gray-500">
-                Showing {filteredActivities.length} of {activities.length}
-              </span>
-              <button
-                onClick={() => downloadCSV(filteredActivities.map(a => ({
-                  'Prospect': a.prospectName,
-                  'Type': a.type,
-                  'Description': a.description,
-                  'Outcome': a.outcome,
-                  'Follow Up': a.followUpDate,
-                })), 'activities')}
-                className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-200"
-              >
-                Export CSV
-              </button>
-            </div>
-          </div>
-
-          {showForm && (
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-              <h3 className="text-lg font-medium mb-4">Log Activity</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Prospect</label>
-                    <select
-                      value={formData.prospectId}
-                      onChange={(e) => handleProspectChange(e.target.value)}
-                      className="w-full border rounded-lg px-3 py-2"
-                      required
-                    >
-                      <option value="">Select prospect...</option>
-                      {prospects.map((p) => (
-                        <option key={p.id} value={p.id}>{p.businessName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Type</label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as ActivityType })}
-                      className="w-full border rounded-lg px-3 py-2"
-                    >
-                      <option value="call">📞 Call</option>
-                      <option value="email">✉️ Email</option>
-                      <option value="meeting">🤝 Meeting</option>
-                      <option value="note">📝 Note</option>
-                      <option value="proposal">📋 Proposal</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2"
-                    rows={3}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Outcome</label>
-                    <input
-                      type="text"
-                      value={formData.outcome}
-                      onChange={(e) => setFormData({ ...formData, outcome: e.target.value })}
-                      className="w-full border rounded-lg px-3 py-2"
-                      placeholder="e.g., Left voicemail, Scheduled demo"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Follow-up Date</label>
-                    <input
-                      type="date"
-                      value={formData.followUpDate}
-                      onChange={(e) => setFormData({ ...formData, followUpDate: e.target.value })}
-                      className="w-full border rounded-lg px-3 py-2"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                    Save Activity
-                  </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="bg-gray-200 px-4 py-2 rounded-lg">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {filteredActivities.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <p className="text-gray-500">No activities logged yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredActivities.map((a) => (
-                <div key={a.id} className="bg-white rounded-lg shadow-sm border p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-3">
-                      <span className="text-2xl">{typeIcons[a.type]}</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{a.prospectName}</span>
-                          <span className={`px-2 py-0.5 rounded text-xs ${typeColors[a.type]}`}>
-                            {a.type}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">{a.description}</p>
-                        {a.outcome && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            <span className="font-medium">Outcome:</span> {a.outcome}
-                          </p>
-                        )}
-                        {a.followUpDate && (
-                          <p className="text-sm text-orange-600 mt-1">
-                            📅 Follow-up: {a.followUpDate}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <button onClick={() => handleDelete(a.id!)} className="text-red-600 hover:underline text-sm">
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
+  if (loading) return <Centered>Loading owner access…</Centered>;
+  if (!user) return <Centered>Sign in with the owner account.</Centered>;
+  return <div className="min-h-screen bg-slate-50 md:flex"><Sidebar /><main className="min-w-0 flex-1 p-4 md:p-8"><header className="mb-7 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Manual audit trail</p><h1 className="text-3xl font-black">Contact history</h1></div><button onClick={logout} className="rounded-lg border px-3 py-2 text-sm">Sign out</button></header>{error && <div className="mb-4 rounded-lg bg-rose-100 p-3 text-sm text-rose-900">{error}</div>}{notice && <div className="mb-4 rounded-lg bg-emerald-100 p-3 text-sm text-emerald-900">{notice}</div>}
+    <section className="grid gap-6 xl:grid-cols-[420px_1fr]"><form onSubmit={save} className="rounded-xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Record an owner action</h2><p className="mt-2 text-sm leading-6 text-slate-500">Record only what actually happened. Copying a draft is not delivery; an email send is not a read or response.</p><Select label="Prospect" value={prospectId} onChange={(e) => setProspectId(e.target.value)}><option value="">Select…</option>{prospects.map((item) => <option key={item.id} value={item.id}>{item.businessName}{item.doNotContact ? ' — SUPPRESSED' : ''}</option>)}</Select><Select label="Activity type" value={type} onChange={(e) => setType(e.target.value as ActivityType)}><option value="email">Manual email</option><option value="call">Call</option><option value="note">Internal note</option><option value="proposal">Written offer</option><option value="meeting">Meeting (only if it occurred)</option></Select><label className="mt-4 block text-sm font-bold">What happened<textarea required minLength={3} maxLength={1000} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 font-normal" /></label><label className="mt-4 block text-sm font-bold">Outcome<textarea required minLength={2} maxLength={500} rows={3} value={outcome} onChange={(e) => setOutcome(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 font-normal" /></label><label className="mt-4 block text-sm font-bold">Next follow-up<input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 font-normal" /></label><button disabled={busy} className="mt-5 w-full rounded-lg bg-blue-700 px-5 py-3 font-black text-white disabled:opacity-50">{busy ? 'Recording…' : 'Save factual log'}</button></form>
+      <div className="rounded-xl border bg-white shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3 border-b p-5"><div><h2 className="text-xl font-black">Recorded history</h2><p className="text-sm text-slate-500">Append-only in this screen</p></div><div className="flex items-end gap-2"><label className="grid gap-1 text-xs font-bold text-slate-600">Activity type<select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-lg border px-3 py-2 text-sm font-normal text-slate-950"><option value="all">All types</option>{['email', 'call', 'note', 'proposal', 'meeting'].map((item) => <option key={item} value={item}>{item}</option>)}</select></label><button onClick={() => downloadCSV(visible.map((item) => ({ Prospect: item.prospectName, Type: item.type, Description: item.description, Outcome: item.outcome, 'Follow Up': item.followUpDate })), 'californiamailer-contact-history')} className="rounded-lg border px-3 py-2 text-sm font-bold">Export</button></div></div>{visible.length ? <ul className="divide-y">{visible.map((item) => <li key={item.id} className="p-5"><div className="flex flex-wrap justify-between gap-2"><strong>{item.prospectName}</strong><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold">{item.type}</span></div><p className="mt-2 text-sm text-slate-700">{item.description}</p><p className="mt-1 text-sm text-slate-500">Outcome: {item.outcome}{item.followUpDate ? ` · Follow-up ${item.followUpDate}` : ''}</p></li>)}</ul> : <p className="p-8 text-center text-sm text-slate-500">No matching activity. No sample logs are created.</p>}</div></section>
+  </main></div>;
 }
+function Select({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; children: React.ReactNode }) { return <label className="mt-4 block text-sm font-bold">{label}<select {...props} className="mt-1 w-full rounded-lg border px-3 py-2 font-normal">{children}</select></label>; }
+function Centered({ children }: { children: React.ReactNode }) { return <div className="flex min-h-screen items-center justify-center p-8 text-center text-slate-600">{children}</div>; }

@@ -1,32 +1,19 @@
-import { WithContext, Service } from 'schema-dts';
+import type { Service, WithContext } from 'schema-dts';
 
 export const directMailService: WithContext<Service> = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  "name": "Direct Mail Co-op & EDDM Service",
-  "serviceType": "Direct Mail Marketing",
-  "provider": {
-    "@type": "Organization",
-    "name": "CaliforniaMailer"
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'CaliforniaMailer founding shared mailer',
+  description:
+    'A proposed category-exclusive shared-mailer placement with ad layout, online proof approval, a tracking option, and delivery documentation. The campaign is pre-launch and does not promise advertiser results.',
+  provider: {
+    '@type': 'Organization',
+    name: 'CaliforniaMailer',
+    url: 'https://californiamailer.com',
   },
-  "areaServed": {
-    "@type": "State",
-    "name": "California",
-    "containsPlace": {
-      "@type": "City",
-      "name": "Monterey County"
-    }
+  areaServed: {
+    '@type': 'Place',
+    name: 'Monterey Peninsula, California',
   },
-  "description": "Affordable direct mail campaigns for Monterey County businesses through shared co-op mailing costs and Every Door Direct Mail (EDDM) services. Reach 10,000+ households per campaign.",
-  "offers": {
-    "@type": "Offer",
-    "priceCurrency": "USD",
-    "price": "299",
-    "priceSpecification": {
-      "@type": "UnitPriceSpecification",
-      "priceCurrency": "USD",
-      "price": "299",
-      "unitText": "per co-op spot"
-    }
-  }
+  serviceType: 'Shared direct-mail advertising placement',
 };

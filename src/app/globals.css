@@ -1,35 +1,27 @@
 @import "tailwindcss";
 
-/* Global text defaults */
-body {
-  color: #111827;
-}
+@layer base {
+  body {
+    color: #111827;
+  }
 
-/* Headings */
-h1, h2, h3, h4, h5, h6 {
-  color: #111827;
-}
+  h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+  }
 
-/* Form inputs */
-input, select, textarea {
-  color: #111827;
-}
+  input, select, textarea {
+    color: #111827;
+  }
 
-input::placeholder, textarea::placeholder {
-  color: #9ca3af;
-}
+  input::placeholder, textarea::placeholder {
+    color: #6b7280;
+  }
 
-/* Labels */
-label {
-  color: #374151;
-}
+  label {
+    color: inherit;
+  }
 
-/* Buttons need visible text */
-button {
-  color: inherit;
-}
-
-/* Fix gray background buttons */
-button.bg-gray-200, button.bg-gray-100 {
-  color: #374151;
+  button {
+    color: inherit;
+  }
 }

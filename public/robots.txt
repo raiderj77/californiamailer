@@ -1,65 +1,48 @@
-# CaliforniaMailer Robots.txt
-# Welcome to all search engines and AI crawlers
-
-# Standard web crawlers
 User-agent: *
 Allow: /
-Sitemap: https://californiamailer.com/sitemap.xml
-
-# OpenAI GPTBot (ChatGPT)
-User-agent: GPTBot
-Allow: /
-Allow: /llms.txt
-
-# OpenAI ChatGPT-User
-User-agent: ChatGPT-User
-Allow: /
-Allow: /llms.txt
-
-# Common Crawl (used by many AI models)
-User-agent: CCBot
-Allow: /
-Allow: /llms.txt
-
-# Anthropic Claude
-User-agent: anthropic-ai
-Allow: /
-Allow: /llms.txt
-
-User-agent: Claude-Web
-Allow: /
-Allow: /llms.txt
-
-# Perplexity AI
-User-agent: PerplexityBot
-Allow: /
-Allow: /llms.txt
-
-# Google Gemini/Bard
-User-agent: Google-Extended
-Allow: /
-Allow: /llms.txt
-
-# Meta AI
-User-agent: FacebookBot
-Allow: /
-Allow: /llms.txt
-
-# Bing AI
-User-agent: Bingbot
-Allow: /
-Allow: /llms.txt
-
-# Block only admin and internal areas
 Disallow: /api/
-Disallow: /admin/
-Disallow: /_next/
-Disallow: /dashboard/
-Disallow: /territories/
-Disallow: /prospects/
-Disallow: /campaigns/
-Disallow: /tasks/
-Disallow: /invoices/
-Disallow: /reports/
-Disallow: /team/
-Disallow: /clients/
+Disallow: /dashboard
+Disallow: /territories
+Disallow: /prospects
+Disallow: /activities
+Disallow: /campaigns
+Disallow: /calendar
+Disallow: /tasks
+Disallow: /reminders
+Disallow: /invoices
+Disallow: /reports
+Disallow: /templates
+Disallow: /email
+Disallow: /team
+Disallow: /clients
+Disallow: /import
+Disallow: /eddm
+Disallow: /coopspots
+Disallow: /proofs
+Disallow: /offers
+Disallow: /portal
+Disallow: /sales-desk
+Disallow: /launch
+Disallow: /economics
+Disallow: /proof-workflow
+Disallow: /tracking
+Disallow: /crm
+Disallow: /interest-inbox
+Disallow: /refunds
+Disallow: /shared-mailer-calculator
+Disallow: /business-portals
+Disallow: /business-login
+Disallow: /business-login/
+Disallow: /coupons
+Disallow: /go/
+Disallow: /local-deals/unsubscribe
+Disallow: /owner-login
+Disallow: /reservation/
+Disallow: /approve/
+Disallow: /track/
+Disallow: /offer/
+Disallow: /redeem/
+Disallow: /payment-success
+Disallow: /payment-cancelled
+
+Sitemap: https://californiamailer.com/sitemap.xml

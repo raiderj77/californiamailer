@@ -12,6 +12,10 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Legacy collection interfaces still accept provider-specific timestamp values.
+// New campaign/payment paths use explicit server types in campaignTypes.ts.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Types
 export interface Territory {
   id?: string;
@@ -66,8 +70,57 @@ export interface Prospect {
   city: string;
   territoryId: string;
   territoryName: string;
-  status: 'new' | 'contacted' | 'interested' | 'proposal' | 'closed' | 'lost';
+  status:
+    | 'new'
+    | 'researching'
+    | 'ready_to_contact'
+    | 'contacted'
+    | 'follow_up_needed'
+    | 'interested'
+    | 'reservation_sent'
+    | 'reserved'
+    | 'awaiting_payment'
+    | 'paid'
+    | 'not_interested'
+    | 'no_response'
+    | 'poor_fit'
+    | 'do_not_contact'
+    | 'renewal_opportunity'
+    // Legacy values remain readable until existing records are migrated.
+    | 'proposal'
+    | 'closed'
+    | 'lost';
   notes: string;
+  businessCategory?: string;
+  website?: string;
+  contactRole?: string;
+  serviceArea?: string;
+  mailingTerritoryFit?: string;
+  currentAdvertisedOffer?: string;
+  estimatedCustomerValue?: number;
+  activeAdvertisingEvidence?: string;
+  officialSource?: string;
+  officialSourceCheckedAt?: string;
+  leadSource?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  qualificationStatus?: 'verify' | 'qualified' | 'disqualified';
+  qualificationReason?: string;
+  lastContactDate?: string;
+  nextFollowUpDate?: string;
+  contactAttempts?: number;
+  campaignId?: string;
+  offeredPlacement?: 'standard';
+  quotedPrice?: number;
+  categoryReservationStatus?: 'none' | 'interest' | 'hold' | 'sold' | 'released';
+  paymentStatus?: 'none' | 'pending' | 'cleared' | 'failed' | 'refunded' | 'disputed';
+  proofStatus?: string;
+  renewalStatus?: string;
+  renewalDate?: string;
+  doNotContact?: boolean;
+  normalizedBusinessName?: string;
+  normalizedEmail?: string;
+  normalizedWebsite?: string;
+  normalizedPhone?: string;
   userId: string;
   createdAt?: any;
   updatedAt?: any;
@@ -77,6 +130,10 @@ export interface Prospect {
 export async function addProspect(prospect: Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'>) {
   const docRef = await addDoc(collection(db, 'prospects'), {
     ...prospect,
+    normalizedBusinessName: prospect.businessName.trim().toLowerCase(),
+    normalizedEmail: prospect.email.trim().toLowerCase(),
+    normalizedWebsite: (prospect.website || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, ''),
+    normalizedPhone: prospect.phone.replace(/\D/g, ''),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -95,7 +152,13 @@ export async function getProspects(userId: string) {
 
 export async function updateProspect(id: string, data: Partial<Prospect>) {
   const docRef = doc(db, 'prospects', id);
-  await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+  const normalized = {
+    ...(data.businessName ? { normalizedBusinessName: data.businessName.trim().toLowerCase() } : {}),
+    ...(data.email ? { normalizedEmail: data.email.trim().toLowerCase() } : {}),
+    ...(data.website !== undefined ? { normalizedWebsite: data.website.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '') } : {}),
+    ...(data.phone !== undefined ? { normalizedPhone: data.phone.replace(/\D/g, '') } : {}),
+  };
+  await updateDoc(docRef, { ...data, ...normalized, updatedAt: serverTimestamp() });
 }
 
 export async function deleteProspect(id: string) {

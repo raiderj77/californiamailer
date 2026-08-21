@@ -1,284 +1,269 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { PublicShell } from '@/components/public/PublicShell';
+import { FOUNDING_CATEGORIES } from '@/config/foundingCampaign';
+import {
+  EDDM_MAIL_PIECES,
+  EDDM_QUANTITY_TIERS,
+  MINI_COOP_MAIL_PIECES,
+  SERVICE_OPTIONS,
+  TARGETED_MAIL_PIECES,
+  type QuoteServiceType,
+} from '@/config/eddmOfferings';
+import { SHARED_MAILER_MODELS } from '@/config/sharedMailerModels';
+
+interface QuoteFormState {
+  name: string;
+  email: string;
+  phone: string;
+  contactPreference: 'email_only' | 'email_or_phone';
+  business: string;
+  category: string;
+  serviceType: QuoteServiceType;
+  sharedModelId: string;
+  mailerSpecId: string;
+  quantity: string;
+  city: string;
+  targeting: string;
+  fulfillment: 'print_only' | 'turnkey';
+  message: string;
+  website: string;
+}
+
+interface QuoteIntakeResponse {
+  success?: boolean;
+  reference?: string;
+  intakeStatus?: string;
+  reviewQueueStatus?: string;
+  notificationStatus?: string;
+  outboundMessageStatus?: string;
+}
+
+const INITIAL_FORM: QuoteFormState = {
+  name: '',
+  email: '',
+  phone: '',
+  contactPreference: 'email_only',
+  business: '',
+  category: '',
+  serviceType: 'coop',
+  sharedModelId: '',
+  mailerSpecId: '',
+  quantity: '',
+  city: 'Monterey Peninsula',
+  targeting: '',
+  fulfillment: 'turnkey',
+  message: '',
+  website: '',
+};
+
+function mailPiecesFor(serviceType: QuoteServiceType) {
+  if (serviceType === 'eddm') return EDDM_MAIL_PIECES;
+  if (serviceType === 'solo') return TARGETED_MAIL_PIECES;
+  if (serviceType === 'mini_coop') return MINI_COOP_MAIL_PIECES;
+  return [];
+}
 
 export default function QuotePage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    business: '',
-    serviceType: 'coop',
-    city: '',
-    quantity: '5000',
-    message: '',
-  });
-  const [submitted, setSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [form, setForm] = useState<QuoteFormState>(INITIAL_FORM);
+  const [state, setState] = useState<'idle' | 'submitting' | 'accepted' | 'error'>('idle');
+  const [reference, setReference] = useState('');
+  const submissionAttempt = useRef<{ id: string; payload: string } | null>(null);
+  const mailPieces = mailPiecesFor(form.serviceType);
+  const selectedService = SERVICE_OPTIONS.find((option) => option.id === form.serviceType);
+  const needsSharedModel = form.serviceType === 'shared_model';
+  const needsMailerSpec = !['coop', 'shared_model'].includes(form.serviceType);
+  const needsQuantity = !['coop', 'shared_model'].includes(form.serviceType);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const submittedForm = new FormData(e.currentTarget);
-    setSending(true);
-    setErrorMessage('');
-
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setState('submitting');
     try {
+      const quotePayload = {
+        kind: 'quote' as const,
+        ...form,
+        quantity: needsQuantity ? form.quantity : 'one placement inquiry',
+        mailerSpecId: needsMailerSpec ? form.mailerSpecId : '',
+        sharedModelId: needsSharedModel ? form.sharedModelId : '',
+        targeting: form.serviceType === 'solo' ? form.targeting : '',
+        fulfillment: form.serviceType === 'eddm' ? form.fulfillment : '',
+      };
+      const serializedPayload = JSON.stringify(quotePayload);
+      if (!submissionAttempt.current || submissionAttempt.current.payload !== serializedPayload) {
+        submissionAttempt.current = { id: crypto.randomUUID(), payload: serializedPayload };
+      }
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kind: 'quote',
-          ...formData,
-          website: submittedForm.get('website'),
+          ...quotePayload,
+          submissionId: submissionAttempt.current.id,
         }),
       });
-      if (!response.ok) throw new Error('delivery');
-      setSubmitted(true);
+      const result = await response.json().catch(() => ({})) as QuoteIntakeResponse;
+      const accepted = response.ok
+        && result.success === true
+        && result.intakeStatus === 'accepted'
+        && result.reviewQueueStatus === 'queued'
+        && result.notificationStatus === 'not_queued_disabled'
+        && result.outboundMessageStatus === 'not_sent'
+        && typeof result.reference === 'string'
+        && result.reference.length > 0;
+      if (!accepted) throw new Error('Quote intake was not confirmed.');
+      setReference(result.reference || '');
+      setState('accepted');
     } catch {
-      setErrorMessage('We could not deliver your request. Please email hello@californiamailer.com.');
-    } finally {
-      setSending(false);
+      setState('error');
     }
   }
 
-  if (submitted) {
+  const set = <Key extends keyof QuoteFormState>(key: Key, value: QuoteFormState[Key]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const changeService = (serviceType: QuoteServiceType) => {
+    setForm((current) => ({
+      ...current,
+      serviceType,
+      sharedModelId: '',
+      mailerSpecId: '',
+      quantity: '',
+      targeting: '',
+      fulfillment: 'turnkey',
+    }));
+  };
+
+  if (state === 'accepted') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white border-b">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <Link href="/home" className="text-2xl font-bold text-blue-600">CaliforniaMailer</Link>
-          </div>
-        </nav>
-        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">✓</span>
-          </div>
-          <h1 className="text-3xl font-bold mb-4">Quote Request Received!</h1>
-          <p className="text-gray-600 mb-8">
-            Thanks {formData.name}! Your request was delivered for review. We will respond using the contact information you provided.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link href="/home" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
-              Back to Home
-            </Link>
-            <Link href="/coop-board" className="border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50">
-              View Co-op Board
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PublicShell>
+        <section role="status" aria-live="polite" aria-atomic="true" className="mx-auto max-w-2xl px-5 py-24 text-center">
+          <h1 className="text-4xl font-black">Request accepted for manual review</h1>
+          <p className="mt-5 leading-8 text-slate-600">Your request is stored in the owner-only CRM review queue. No email, text, call, or notification was queued or sent by this submission. Nothing was reserved, sold, ordered, or charged. The owner can manually verify the route and supplier inputs before replying with a written quote.</p>
+          <p className="mt-4 text-sm font-bold text-slate-700">Reference: {reference}</p>
+          <Link href="/pricing" className="mt-8 inline-block rounded-full bg-blue-700 px-6 py-3 font-black text-white">Review mailer options</Link>
+        </section>
+      </PublicShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/home" className="text-2xl font-bold text-blue-600">CaliforniaMailer</Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/services" className="text-gray-600 hover:text-gray-900">Services</Link>
-            <Link href="/coop-board" className="text-gray-600 hover:text-gray-900">Co-op Board</Link>
-            <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">Client Login</Link>
-          </div>
-        </div>
-      </nav>
+    <PublicShell>
+      <div className="mx-auto max-w-6xl px-5 py-16">
+        <div className="grid gap-10 lg:grid-cols-[1fr_380px]">
+          <section>
+            <p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Written planning request</p>
+            <h1 className="mt-2 text-4xl font-black md:text-6xl">Choose the mailer before asking for a quote.</h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">CaliforniaMailer can plan the founding card, larger and smaller shared formats, M6/M3 variants, community, new-mover, and directory concepts, single-business EDDM, or an addressed solo postcard. Every option stays quote-only until its actual layout, audience, quantity, current supplier price, postage, and fulfillment are verified. You can <Link href="/mailing-areas" className="font-bold text-blue-700 underline underline-offset-4">review public mailing-area status</Link> first, then describe your geography in your own words.</p>
 
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-2 gap-12">
-          {/* Form */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Get Your Free Quote</h1>
-            <p className="text-gray-600 mb-8">
-              Tell us about your project and we will review the details before sending a written quote.
-            </p>
+            <form onSubmit={submit} className="mt-8 grid gap-5 rounded-2xl border bg-white p-6 shadow-sm md:grid-cols-2">
+              <label className="block text-sm font-bold md:col-span-2">Mailer model *
+                <select required value={form.serviceType} onChange={(event) => changeService(event.target.value as QuoteServiceType)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  {SERVICE_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                </select>
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">{selectedService?.description}</span>
+              </label>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Your Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                    placeholder="John Smith"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Business Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.business}
-                    onChange={(e) => setFormData({ ...formData, business: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                    placeholder="Acme Plumbing"
-                  />
-                </div>
-              </div>
+              {needsSharedModel && <label className="block text-sm font-bold md:col-span-2">Shared-mailer concept *
+                <select required value={form.sharedModelId} onChange={(event) => set('sharedModelId', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="">Select a model…</option>
+                  {SHARED_MAILER_MODELS.map((model) => <option key={model.id} value={model.id}>{model.name}</option>)}
+                </select>
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">The model controls layout and mailing-method assumptions only. It does not submit a customer or supplier price.</span>
+              </label>}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email *</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                    placeholder="john@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                    placeholder="Optional phone number"
-                  />
-                </div>
-              </div>
+              {needsMailerSpec && <label className="block text-sm font-bold md:col-span-2">Mail-piece size *
+                <select required value={form.mailerSpecId} onChange={(event) => set('mailerSpecId', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="">Select a supplier-verified or quote-only size…</option>
+                  {mailPieces.map((piece) => <option key={piece.id} value={piece.id}>{piece.label}</option>)}
+                </select>
+              </label>}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Service Type *</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { value: 'coop', label: 'Co-op Spot', desc: '$299-$500' },
-                    { value: 'eddm', label: 'EDDM', desc: 'Written quote' },
-                    { value: 'solo', label: 'Solo Mailer', desc: 'Custom' },
-                  ].map((option) => (
-                    <label
-                      key={option.value}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        formData.serviceType === option.value
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'hover:border-gray-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="serviceType"
-                        value={option.value}
-                        checked={formData.serviceType === option.value}
-                        onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                        className="sr-only"
-                      />
-                      <div className="font-medium">{option.label}</div>
-                      <div className="text-sm text-gray-500">{option.desc}</div>
-                    </label>
-                  ))}
-                </div>
-              </div>
+              {needsQuantity && <label className="block text-sm font-bold">Planned quantity *
+                <select required value={form.quantity} onChange={(event) => set('quantity', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="">Select a print tier…</option>
+                  {EDDM_QUANTITY_TIERS.map((quantity) => <option key={quantity} value={String(quantity)}>{quantity.toLocaleString()} pieces</option>)}
+                </select>
+              </label>}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Target City/Area *</label>
-                  <select
-                    required
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                  >
-                    <option value="">Select an area...</option>
-                    <option value="salinas">Salinas</option>
-                    <option value="monterey">Monterey</option>
-                    <option value="carmel">Carmel / Carmel Valley</option>
-                    <option value="pacific-grove">Pacific Grove</option>
-                    <option value="seaside">Seaside</option>
-                    <option value="marina">Marina</option>
-                    <option value="other">Other (specify below)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    {formData.serviceType === 'coop' ? 'Spots Needed' : 'Quantity'}
-                  </label>
-                  <select
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    className="w-full border rounded-lg px-4 py-3"
-                  >
-                    {formData.serviceType === 'coop' ? (
-                      <>
-                        <option value="1">1 spot</option>
-                        <option value="2">2 spots</option>
-                        <option value="3">3+ spots</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="2500">2,500 pieces</option>
-                        <option value="5000">5,000 pieces</option>
-                        <option value="10000">10,000 pieces</option>
-                        <option value="15000">15,000 pieces</option>
-                        <option value="20000">20,000+ pieces</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-              </div>
+              {form.serviceType === 'eddm' && <label className="block text-sm font-bold">Fulfillment preference *
+                <select required value={form.fulfillment} onChange={(event) => set('fulfillment', event.target.value as QuoteFormState['fulfillment'])} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="turnkey">Turnkey supplier preparation and postal delivery</option>
+                  <option value="print_only">Print only; owner handles postal preparation</option>
+                </select>
+              </label>}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Additional Details</label>
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="w-full border rounded-lg px-4 py-3"
-                  rows={4}
-                  placeholder="Tell us more about your goals, timeline, or any specific neighborhoods you want to target..."
-                />
-              </div>
+              {form.serviceType === 'solo' && <label className="block text-sm font-bold">Target audience *
+                <select required value={form.targeting} onChange={(event) => set('targeting', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="">Select the addressed audience…</option>
+                  <option value="radius">Radius around a location or recent job</option>
+                  <option value="new_movers">New movers or new homeowners</option>
+                  <option value="real_estate_farm">Real-estate farm or recently sold area</option>
+                  <option value="customer_list">Customer or prospect list</option>
+                  <option value="other">Another owner-verified list</option>
+                </select>
+              </label>}
 
-              <div className="hidden" aria-hidden="true">
-                <label htmlFor="quote-website">Website</label>
-                <input id="quote-website" name="website" tabIndex={-1} autoComplete="off" />
-              </div>
-
-              <button
-                type="submit"
-                disabled={sending}
-                className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {sending ? 'Sending...' : 'Get My Free Quote'}
-              </button>
-
-              {errorMessage && <p className="text-center text-sm text-red-700" role="alert">{errorMessage}</p>}
-
-              <p className="text-center text-sm text-gray-500">
-                No obligation. By submitting, you ask us to use these details to respond to your quote request. See our{' '}
-                <Link href="/privacy" className="text-blue-600 underline">privacy policy</Link>.
-              </p>
+              <label className="block text-sm font-bold">Target city, ZIP, or mailing area *
+                <input value={form.city} onChange={(event) => set('city', event.target.value)} required className="mt-1 w-full rounded-lg border px-3 py-3 font-normal" />
+                <span className="mt-2 block text-xs font-normal leading-5 text-slate-500">Keep this free-form. Candidate areas do not reserve a route or category. <Link href="/mailing-areas" className="font-bold text-blue-700 underline">Open the mailing-area explorer</Link>.</span>
+              </label>
+              <Input label="Your name *" value={form.name} onChange={(event) => set('name', event.target.value)} required />
+              <Input label="Business name *" value={form.business} onChange={(event) => set('business', event.target.value)} required />
+              <Input label="Email *" type="email" value={form.email} onChange={(event) => set('email', event.target.value)} required />
+              <Input label="Phone (optional)" value={form.phone} onChange={(event) => set('phone', event.target.value)} />
+              <label className="block text-sm font-bold">Contact preference *
+                <select required value={form.contactPreference} onChange={(event) => set('contactPreference', event.target.value as QuoteFormState['contactPreference'])} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="email_only">Email only — no sales call</option>
+                  <option value="email_or_phone">Email or phone</option>
+                </select>
+              </label>
+              <label className="block text-sm font-bold">Business category *
+                <select required value={form.category} onChange={(event) => set('category', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal">
+                  <option value="">Select for owner review…</option>
+                  {FOUNDING_CATEGORIES.map((item) => <option key={item.slug} value={item.name}>{item.name}</option>)}
+                  <option value="other">Another category</option>
+                </select>
+              </label>
+              <div className="hidden" aria-hidden="true"><label>Website<input tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => set('website', event.target.value)} /></label></div>
+              <label className="block text-sm font-bold md:col-span-2">Campaign details or question *
+                <textarea required minLength={10} maxLength={2_000} rows={5} value={form.message} onChange={(event) => set('message', event.target.value)} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal" />
+              </label>
+              <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{state === 'submitting' ? 'Saving the planning request for manual owner review.' : ''}</p>
+              <button disabled={state === 'submitting'} className="rounded-lg bg-blue-700 px-5 py-3 font-black text-white disabled:opacity-50 md:col-span-2">{state === 'submitting' ? 'Saving request…' : 'Submit request for owner review'}</button>
+              {state === 'error' && <p role="alert" aria-live="assertive" aria-atomic="true" className="text-sm font-bold text-rose-800 md:col-span-2">The request could not be confirmed as recorded. Nothing was queued or sent. Please review the fields and try again.</p>}
+              <p className="text-xs leading-5 text-slate-500 md:col-span-2">Submitting stores this request for manual owner review and permits CaliforniaMailer to respond to this inquiry only. It does not send an automated message, enroll you in marketing, reserve inventory, approve a route, place a print order, or authorize a charge. See the <Link href="/privacy" className="underline">privacy policy</Link>.</p>
             </form>
-          </div>
+          </section>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <div className="bg-white rounded-xl border p-6">
-              <h3 className="font-bold mb-4">What the written quote covers</h3>
-              <p className="text-sm leading-6 text-gray-600">
-                The quote will identify the requested service, estimated quantity, included work,
-                postage assumptions, schedule, and payment terms. Nothing is charged through this form.
-              </p>
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+              <h2 className="font-black">Start with the mailing area</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Search candidate places and ZIP Codes, then check whether a current verified route snapshot is public. Exact counts are still rechecked before a written quote or order.</p>
+              <Link href="/mailing-areas" className="mt-4 inline-block font-black text-blue-800 underline underline-offset-4">Explore mailing areas</Link>
             </div>
-
-            {/* Contact Info */}
-            <div className="bg-blue-50 rounded-xl border border-blue-100 p-6">
-              <h3 className="font-bold mb-4">Prefer to Talk?</h3>
-              <p className="text-gray-600 mb-4">
-                Have questions? We&apos;re happy to help you figure out the best option for your business.
-              </p>
-              <div className="text-sm">📧 hello@californiamailer.com</div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+              <h2 className="font-black">No instant price or checkout</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Supplier prices are dated snapshots. Tax, design, list data, postal method, route counts, bundling, and delivery can change the total. The owner must issue a written quote before payment.</p>
             </div>
-
-          </div>
+            <div className="rounded-2xl border bg-slate-50 p-6">
+              <h2 className="font-black">EDDM is not every postcard</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">EDDM saturates selected carrier routes and uses USPS flat-mail rules. Smaller targeted postcards use an addressed list and a separate postage quote.</p>
+            </div>
+            <div className="rounded-2xl border bg-slate-50 p-6">
+              <h2 className="font-black">Founding category interest</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">The protected-category shared campaign still has its own acknowledgments and interest workflow.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">The current workflow accepts one paid slot-unit per advertiser. Multi-unit advertiser purchasing is future work and is not implemented.</p>
+              <Link href="/reserve" className="mt-4 inline-block font-black text-blue-700 underline">Review reservation interest</Link>
+            </div>
+          </aside>
         </div>
       </div>
-    </div>
+    </PublicShell>
   );
+}
+
+function Input({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+  return <label className="block text-sm font-bold">{label}<input {...props} className="mt-1 w-full rounded-lg border px-3 py-3 font-normal" /></label>;
 }
