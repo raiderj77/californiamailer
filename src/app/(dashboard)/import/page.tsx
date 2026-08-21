@@ -1,229 +1,106 @@
 'use client';
 
-import { useAuth } from '@/lib/AuthContext';
 import Sidebar from '@/components/Sidebar';
-import { useState } from 'react';
+import { useAuth } from '@/lib/AuthContext';
+import { addProspect, getProspects, type Prospect } from '@/lib/firestore';
 import { parseCSV } from '@/lib/csv';
-import { addProspect, addTerritory } from '@/lib/firestore';
+import { contactGate, contactQueueStatuses, duplicateReasons, isCurrentProspectStatus } from '@/lib/prospectRules';
+import Link from 'next/link';
+import { useState } from 'react';
+import { FOUNDING_CAMPAIGN } from '@/config/foundingCampaign';
 
-type ImportType = 'prospects' | 'territories';
+type ImportRow = { row: number; data: Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'>; errors: string[] };
+const maxFileBytes = 1_000_000;
+const maxRows = 500;
+const value = (row: Record<string, string>, ...keys: string[]) => keys.map((key) => row[key]).find((item) => item !== undefined)?.trim() || '';
+const numberValue = (input: string) => input && Number.isFinite(Number(input)) ? Number(input) : undefined;
+const yes = (input: string) => ['yes', 'true', '1', 'y'].includes(input.trim().toLowerCase());
 
 export default function ImportPage() {
   const { user, loading, logout } = useAuth();
-  const [importType, setImportType] = useState<ImportType>('prospects');
-  const [csvData, setCsvData] = useState<Record<string, string>[]>([]);
+  const [rows, setRows] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [results, setResults] = useState<{ success: number; failed: number } | null>(null);
   const [error, setError] = useState('');
+  const [result, setResult] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    setError('');
-    setResults(null);
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const data = parseCSV(text);
-      if (data.length === 0) {
-        setError('No data found in CSV file');
-        return;
-      }
-      setCsvData(data);
-    };
-    reader.readAsText(file);
+  async function inspectFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    setRows([]); setResult(''); setError(''); setFileName(file?.name || '');
+    if (!file || !user) return;
+    if (!file.name.toLowerCase().endsWith('.csv')) { setError('Select a .csv file.'); return; }
+    if (file.size > maxFileBytes) { setError('The CSV exceeds the 1 MB review limit. Split it into smaller files.'); return; }
+    const parsed = parseCSV(await file.text());
+    if (!parsed.length) { setError('No data rows were found.'); return; }
+    if (parsed.length > maxRows) { setError(`The CSV has ${parsed.length} rows; the owner review limit is ${maxRows}.`); return; }
+    let existing: Prospect[];
+    try { existing = await getProspects(user.uid); } catch { setError('Existing prospects could not be checked, so import is blocked.'); return; }
+    const staged: Prospect[] = [...existing];
+    const reviewed = parsed.map((raw, index) => {
+      const rawStatus = value(raw, 'Contact Status', 'Status') || 'researching';
+      const status: Prospect['status'] = isCurrentProspectStatus(rawStatus) ? rawStatus : 'researching';
+      const rawQualification = value(raw, 'Qualification Status', 'Qualification').toLowerCase() || 'verify';
+      const qualificationStatus: Prospect['qualificationStatus'] = ['verify', 'qualified', 'disqualified'].includes(rawQualification)
+        ? rawQualification as Prospect['qualificationStatus'] : 'verify';
+      const rawPriority = value(raw, 'Priority').toLowerCase() || 'medium';
+      const priority: Prospect['priority'] = ['urgent', 'high', 'medium', 'low'].includes(rawPriority) ? rawPriority as Prospect['priority'] : 'medium';
+      const doNotContact = yes(value(raw, 'Do Not Contact')) || value(raw, 'Status').trim().toLowerCase() === 'do_not_contact';
+      const item: Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'> = {
+        businessName: value(raw, 'Business Name'), businessCategory: value(raw, 'Business Category'), website: value(raw, 'Website'),
+        contactName: value(raw, 'Contact Name'), contactRole: value(raw, 'Contact Role'), email: value(raw, 'Email'), phone: value(raw, 'Phone'),
+        address: value(raw, 'Address'), city: value(raw, 'City'), serviceArea: value(raw, 'Service Area'), territoryId: value(raw, 'Territory ID'),
+        territoryName: value(raw, 'Territory') || 'Monterey Peninsula', mailingTerritoryFit: value(raw, 'Mailing Territory Fit'),
+        currentAdvertisedOffer: value(raw, 'Current Advertised Offer'), estimatedCustomerValue: numberValue(value(raw, 'Estimated Customer Value')),
+        activeAdvertisingEvidence: value(raw, 'Active Advertising Evidence'), officialSource: value(raw, 'Official Source'),
+        officialSourceCheckedAt: value(raw, 'Official Source Checked At'), leadSource: value(raw, 'Lead Source'), priority,
+        qualificationStatus, qualificationReason: value(raw, 'Qualification Reason'), status: doNotContact ? 'do_not_contact' : status,
+        lastContactDate: value(raw, 'Last Contact Date'), nextFollowUpDate: value(raw, 'Next Follow-Up Date', 'Next Follow Up Date'),
+        contactAttempts: numberValue(value(raw, 'Contact Attempts')) || 0, notes: value(raw, 'Notes'),
+        campaignId: value(raw, 'Campaign ID') || FOUNDING_CAMPAIGN.id,
+        offeredPlacement: 'standard', quotedPrice: numberValue(value(raw, 'Quoted Price')),
+        categoryReservationStatus: 'none', paymentStatus: 'none', proofStatus: value(raw, 'Proof Status') || 'not_started',
+        renewalStatus: value(raw, 'Renewal Status') || 'none', renewalDate: value(raw, 'Renewal Date'), doNotContact, userId: user.uid,
+      };
+      const errors: string[] = [];
+      if (!item.businessName) errors.push('business name required');
+      if (rawStatus && !isCurrentProspectStatus(rawStatus)) errors.push(`invalid status: ${rawStatus}`);
+      if (!['verify', 'qualified', 'disqualified'].includes(rawQualification)) errors.push(`invalid qualification: ${rawQualification}`);
+      if (!['urgent', 'high', 'medium', 'low'].includes(rawPriority)) errors.push(`invalid priority: ${rawPriority}`);
+      const duplicates = duplicateReasons(staged, item);
+      if (duplicates.length) errors.push(`duplicate ${duplicates.join('/')}`);
+      if (contactQueueStatuses.has(item.status) && !contactGate(item).allowed) errors.push(`contact gate: ${contactGate(item).missing.join('/')}`);
+      if (!errors.length) staged.push({ ...item, id: `staged-${index}` });
+      return { row: index + 2, data: item, errors };
+    });
+    setRows(reviewed);
   }
 
-  async function handleImport() {
-    if (!user || csvData.length === 0) return;
-
-    setImporting(true);
-    setResults(null);
-    let success = 0;
-    let failed = 0;
-
-    for (const row of csvData) {
-      try {
-        if (importType === 'prospects') {
-          await addProspect({
-            businessName: row['Business Name'] || row['businessName'] || row['business_name'] || '',
-            contactName: row['Contact Name'] || row['contactName'] || row['contact_name'] || '',
-            email: row['Email'] || row['email'] || '',
-            phone: row['Phone'] || row['phone'] || '',
-            address: row['Address'] || row['address'] || '',
-            city: row['City'] || row['city'] || '',
-            territoryId: row['Territory ID'] || row['territoryId'] || '',
-            territoryName: row['Territory'] || row['territoryName'] || '',
-            status: (row['Status'] || row['status'] || 'new') as any,
-            notes: row['Notes'] || row['notes'] || '',
-            userId: user.uid,
-          });
-          success++;
-        } else {
-          await addTerritory({
-            name: row['Name'] || row['name'] || '',
-            county: row['County'] || row['county'] || '',
-            cities: row['Cities'] || row['cities'] || '',
-            households: parseInt(row['Households'] || row['households'] || '0') || 0,
-            avgIncome: parseInt(row['Avg Income'] || row['avgIncome'] || row['avg_income'] || '0') || 0,
-            status: (row['Status'] || row['status'] || 'research') as any,
-            notes: row['Notes'] || row['notes'] || '',
-            userId: user.uid,
-          });
-          success++;
-        }
-      } catch (err) {
-        failed++;
-        console.error('Import error:', err);
-      }
-    }
-
-    setResults({ success, failed });
-    setImporting(false);
-    setCsvData([]);
-    setFileName('');
+  async function importValidRows() {
+    if (!user) return;
+    const valid = rows.filter((row) => row.errors.length === 0);
+    if (!valid.length) { setError('There are no valid rows to import.'); return; }
+    setBusy(true); setError(''); setResult('');
+    let imported = 0;
+    try {
+      for (const row of valid) { await addProspect(row.data); imported += 1; }
+      setResult(`${imported} reviewed prospect record(s) imported. No outreach was sent.`); setRows([]); setFileName('');
+    } catch { setError(`Import stopped after ${imported} record(s). Re-open the prospect list and reconcile before retrying.`); }
+    finally { setBusy(false); }
   }
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Loading...</p></div>;
-  }
+  if (loading) return <Centered>Loading owner access…</Centered>;
+  if (!user) return <Centered>Sign in with the owner account to import prospects.</Centered>;
+  const validCount = rows.filter((row) => row.errors.length === 0).length;
 
-  if (!user) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Please sign in</p></div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1">
-        <header className="bg-white shadow-sm">
-          <div className="px-6 py-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold text-gray-900">CaliforniaMailer</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600">{user.email}</span>
-              <button onClick={logout} className="text-gray-500 hover:text-gray-700">Sign out</button>
-            </div>
-          </div>
-        </header>
-        <main className="p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Import Data</h2>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-medium mb-4">1. Select Import Type</h3>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setImportType('prospects')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  importType === 'prospects' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Prospects
-              </button>
-              <button
-                onClick={() => setImportType('territories')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  importType === 'territories' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Territories
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-medium mb-4">2. Required CSV Columns</h3>
-            {importType === 'prospects' ? (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <code className="text-sm">
-                  Business Name, Contact Name, Email, Phone, Address, City, Territory, Status, Notes
-                </code>
-                <p className="text-sm text-gray-500 mt-2">
-                  Status values: new, contacted, interested, proposal, closed, lost
-                </p>
-              </div>
-            ) : (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <code className="text-sm">
-                  Name, County, Cities, Households, Avg Income, Status, Notes
-                </code>
-                <p className="text-sm text-gray-500 mt-2">
-                  Status values: active, research, inactive
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-            <h3 className="text-lg font-medium mb-4">3. Upload CSV File</h3>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {fileName && (
-              <p className="mt-2 text-sm text-gray-600">Selected: {fileName}</p>
-            )}
-            {error && (
-              <p className="mt-2 text-sm text-red-600">{error}</p>
-            )}
-          </div>
-
-          {csvData.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-              <h3 className="text-lg font-medium mb-4">4. Preview ({csvData.length} rows)</h3>
-              <div className="overflow-x-auto max-h-64 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      {Object.keys(csvData[0]).map((key) => (
-                        <th key={key} className="text-left px-3 py-2 font-medium text-gray-700">
-                          {key}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {csvData.slice(0, 10).map((row, i) => (
-                      <tr key={i}>
-                        {Object.values(row).map((val, j) => (
-                          <td key={j} className="px-3 py-2 truncate max-w-xs">
-                            {val}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {csvData.length > 10 && (
-                <p className="text-sm text-gray-500 mt-2">Showing first 10 of {csvData.length} rows</p>
-              )}
-              <button
-                onClick={handleImport}
-                disabled={importing}
-                className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-              >
-                {importing ? 'Importing...' : `Import ${csvData.length} ${importType}`}
-              </button>
-            </div>
-          )}
-
-          {results && (
-            <div className={`rounded-lg p-6 ${results.failed > 0 ? 'bg-yellow-50 border border-yellow-200' : 'bg-green-50 border border-green-200'}`}>
-              <h3 className="text-lg font-medium mb-2">Import Complete</h3>
-              <p className="text-green-700">✓ {results.success} {importType} imported successfully</p>
-              {results.failed > 0 && (
-                <p className="text-red-700">✗ {results.failed} failed to import</p>
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen bg-slate-50 md:flex"><Sidebar /><main className="min-w-0 flex-1 p-4 md:p-8">
+    <header className="mb-7 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-blue-700">Owner workspace</p><h1 className="text-3xl font-black">Review-first prospect import</h1></div><button onClick={logout} className="rounded-lg border px-3 py-2 text-sm">Sign out</button></header>
+    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">Import is for individually researched businesses, not purchased or scraped lists. Every row is checked for duplicates and qualification-gate errors before it can be saved. Import never sends a message.</div>
+    {error && <div className="mb-4 rounded-lg bg-rose-100 p-3 text-sm text-rose-900">{error}</div>}{result && <div className="mb-4 rounded-lg bg-emerald-100 p-3 text-sm text-emerald-900">{result}</div>}
+    <section className="rounded-xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">1. Use the controlled template</h2><p className="mt-2 text-sm text-slate-600">Unknown values should remain blank or VERIFY. Do not guess decision makers or contact details.</p><Link href="/templates/californiamailer-prospects.csv" className="mt-4 inline-flex rounded-lg border px-4 py-2 text-sm font-bold text-blue-700 underline">Download clean CSV template</Link>
+      <h2 className="mt-8 text-xl font-black">2. Select and inspect</h2><input aria-label="Prospect CSV" type="file" accept=".csv,text/csv" onChange={(event) => void inspectFile(event)} className="mt-4 block w-full text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:font-bold file:text-blue-800" />{fileName && <p className="mt-2 text-sm text-slate-500">Selected: {fileName}</p>}
+    </section>
+    {rows.length > 0 && <section className="mt-6 overflow-hidden rounded-xl border bg-white shadow-sm"><div className="flex flex-wrap items-center justify-between gap-3 p-5"><div><h2 className="text-xl font-black">3. Review every exception</h2><p className="text-sm text-slate-500">{validCount} valid · {rows.length - validCount} blocked · {rows.length} total</p></div><button disabled={busy || validCount === 0} onClick={() => void importValidRows()} className="rounded-lg bg-blue-700 px-5 py-3 font-bold text-white disabled:opacity-40">{busy ? 'Importing…' : `Import ${validCount} valid row(s)`}</button></div><div className="max-h-[520px] overflow-auto"><table className="w-full min-w-[900px] text-left text-sm"><thead className="sticky top-0 bg-slate-100 text-xs uppercase text-slate-600"><tr><th className="p-3">CSV row</th><th className="p-3">Business</th><th className="p-3">Category</th><th className="p-3">Qualification</th><th className="p-3">Status</th><th className="p-3">Review result</th></tr></thead><tbody className="divide-y">{rows.map((row) => <tr key={row.row} className={row.errors.length ? 'bg-rose-50' : ''}><td className="p-3">{row.row}</td><td className="p-3 font-bold">{row.data.businessName || 'Missing'}</td><td className="p-3">{row.data.businessCategory || 'Unverified'}</td><td className="p-3">{row.data.qualificationStatus}</td><td className="p-3">{row.data.status}</td><td className={`p-3 ${row.errors.length ? 'font-bold text-rose-800' : 'text-emerald-800'}`}>{row.errors.length ? row.errors.join('; ') : 'Ready to import'}</td></tr>)}</tbody></table></div></section>}
+  </main></div>;
 }
+
+function Centered({ children }: { children: React.ReactNode }) { return <div className="flex min-h-screen items-center justify-center p-8 text-center text-slate-600">{children}</div>; }

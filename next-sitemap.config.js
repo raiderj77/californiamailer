@@ -1,10 +1,46 @@
+const requestTimePublicPaths = [
+  '/advertisers',
+  '/coop-board',
+  '/founding-mailer',
+  '/funding-policy',
+  '/home',
+  '/pricing',
+  '/reserve',
+  '/sample-card',
+];
+
+const statewideServicePaths = [
+  '/california-postcard-mailing',
+  '/pizza-box-advertising',
+];
+
+const publicTransform = async (config, path) => ({
+  loc: path,
+  changefreq: path === '/coop-board' || path === '/founding-mailer'
+    ? 'daily'
+    : path === '/mailing-areas'
+      ? 'weekly'
+      : 'monthly',
+  priority: path === '/home'
+    ? 1
+    : path === '/founding-mailer'
+      ? 0.9
+      : path === '/mailing-areas'
+        ? 0.8
+        : statewideServicePaths.includes(path)
+          ? 0.8
+        : 0.7,
+  alternateRefs: config.alternateRefs ?? [],
+});
+
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: 'https://californiamailer.com',
-  generateRobotsTxt: false, // We have a custom robots.txt
+  generateRobotsTxt: false,
+  autoLastmod: false,
   exclude: [
+    '/',
     '/api/*',
-    '/admin/*', 
     '/dashboard',
     '/territories',
     '/prospects',
@@ -19,97 +55,46 @@ module.exports = {
     '/email',
     '/team',
     '/clients',
-    '/pricing', // Internal pricing calculator
     '/import',
-    '/eddm', // Internal EDDM lookup
-    '/coopspots', // Internal co-op management
-    '/proofs', // Internal proof approval
-    '/blog/*', // Retired until pricing and comparison claims are source-verified
-    '/offers', // Internal offers management
-    '/portal', // Client portal with access codes
+    '/eddm',
+    '/coopspots',
+    '/proofs',
+    '/offers',
+    '/portal',
+    '/sales-desk',
+    '/launch',
+    '/economics',
+    '/proof-workflow',
+    '/tracking',
+    '/crm',
+    '/interest-inbox',
+    '/refunds',
+    '/shared-mailer-calculator',
+    '/business-portals',
+    '/business-login',
+    '/business-login/*',
+    '/coupons',
+    '/coupon/*',
+    '/go/*',
+    '/local-deals/unsubscribe',
+    '/owner-login',
+    '/reservation/*',
+    '/approve/*',
+    '/track/*',
+    '/offer/*',
+    '/redeem/*',
+    '/payment-success',
+    '/payment-cancelled',
+    '/current-mailers',
+    '/services',
+    '/blog/*',
+    '/areas/*',
   ],
-  
-  // Priority pages for SEO
-  additionalPaths: async (config) => {
-    const result = [];
-
-    // Homepage - highest priority
-    result.push({
-      loc: '/home',
-      changefreq: 'weekly',
-      priority: 1.0,
-      lastmod: new Date().toISOString(),
-    });
-
-    // Core service pages
-    result.push({
-      loc: '/services',
-      changefreq: 'monthly',
-      priority: 0.9,
-      lastmod: new Date().toISOString(),
-    });
-
-    result.push({
-      loc: '/coop-board',
-      changefreq: 'daily', // Updates frequently with new spots
-      priority: 0.9,
-      lastmod: new Date().toISOString(),
-    });
-
-    result.push({
-      loc: '/quote',
-      changefreq: 'monthly',
-      priority: 0.8,
-      lastmod: new Date().toISOString(),
-    });
-
-    result.push({
-      loc: '/privacy',
-      changefreq: 'yearly',
-      priority: 0.4,
-      lastmod: new Date().toISOString(),
-    });
-
-    // City/Area pages
-    const cities = [
-      'salinas',
-      'monterey',
-      'carmel',
-      'carmel-valley',
-      'pacific-grove',
-      'seaside',
-      'marina',
-    ];
-
-    cities.forEach(city => {
-      result.push({
-        loc: `/areas/${city}`,
-        changefreq: 'monthly',
-        priority: 0.8,
-        lastmod: new Date().toISOString(),
-      });
-    });
-
-    // Special AI discoverability file
-    result.push({
-      loc: '/llms.txt',
-      changefreq: 'monthly',
-      priority: 0.7,
-      lastmod: new Date().toISOString(),
-    });
-
-    return result;
-  },
-
-  robotsTxtOptions: {
-    policies: [
-      {
-        userAgent: '*',
-        allow: '/',
-      },
-    ],
-    additionalSitemaps: [
-      'https://californiamailer.com/sitemap.xml',
-    ],
-  },
+  // Next 16 omits request-time App Router pages from the generated static
+  // manifest. Keep the explicitly public, canonical pages in the sitemap even
+  // though their dated price visibility is evaluated per request.
+  additionalPaths: async (config) => Promise.all(
+    requestTimePublicPaths.map((path) => publicTransform(config, path)),
+  ),
+  transform: publicTransform,
 };

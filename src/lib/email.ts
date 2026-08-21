@@ -21,13 +21,14 @@ export async function sendEmail({
   try {
     const mailgun = new Mailgun(formData);
     const client = mailgun.client({ username: 'api', key });
-    const result = await client.messages.create(domain, {
+    const message = {
       from: from || `CaliforniaMailer <noreply@${domain}>`,
       to: [to],
       subject,
       text: text || '',
-      html: html || text || '',
-    });
+      ...(html ? { html } : {}),
+    };
+    const result = await client.messages.create(domain, message);
     return { success: true, id: result.id };
   } catch {
     console.error('Mailgun delivery failed');
