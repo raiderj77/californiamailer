@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from './firebase';
+import { clientFirebaseConfigured, getFirebaseAuth, getGoogleProvider } from './firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -15,22 +15,38 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(clientFirebaseConfigured());
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    let unsubscribe: () => void = () => undefined;
+    try {
+      unsubscribe = onAuthStateChanged(getFirebaseAuth(), (currentUser) => {
+        setUser(currentUser);
+        setLoading(false);
+      });
+    } catch { /* The initial state is already false when browser Firebase is absent. */ }
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    const auth = getFirebaseAuth();
+    const result = await signInWithPopup(auth, getGoogleProvider());
+    const idToken = await result.user.getIdToken(true);
+    const response = await fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!response.ok) {
+      await signOut(auth);
+      throw new Error('This Google account is not authorized for the owner workspace.');
+    }
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => undefined);
+    await signOut(getFirebaseAuth());
+    window.location.assign('/owner-login');
   };
 
   return (

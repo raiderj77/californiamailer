@@ -1,63 +1,80 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { PublicShell } from '@/components/public/PublicShell';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | CaliforniaMailer',
-  description: 'How CaliforniaMailer handles quote requests, account data, payments, and analytics.',
+  description: 'How CaliforniaMailer handles inquiries, campaign records, payments, tracking, and optional email consent.',
+  alternates: { canonical: 'https://californiamailer.com/privacy' },
 };
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-gray-50 py-16">
-      <article className="mx-auto max-w-3xl rounded-2xl bg-white p-8 shadow-sm sm:p-12">
-        <Link href="/home" className="text-sm font-medium text-blue-700">← CaliforniaMailer</Link>
-        <h1 className="mt-6 text-4xl font-bold text-gray-950">Privacy Policy</h1>
-        <p className="mt-2 text-sm text-gray-500">Last updated July 14, 2026</p>
-
-        <div className="mt-10 space-y-8 leading-7 text-gray-700">
-          <section>
-            <h2 className="text-xl font-bold text-gray-950">Quote requests</h2>
-            <p className="mt-2">
-              The quote form collects the name, business name, email address, optional phone number,
-              requested service, target area, quantity, and message you choose to provide. CaliforniaMailer
-              uses those details to review and respond to the request. Do not submit payment-card numbers,
-              account passwords, or other sensitive information in the message field.
-            </p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-gray-950">Service providers</h2>
-            <p className="mt-2">
-              Quote emails are delivered through Mailgun. Account and operational records may be stored in
-              Firebase for authenticated business workflows. Those providers process data under their own
-              terms and privacy notices. CaliforniaMailer does not sell quote-request information.
-            </p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-gray-950">Payments</h2>
-            <p className="mt-2">
-              Public online checkout is currently disabled. A verified written quote must precede any
-              payment request. If Stripe payment processing is enabled later, this notice and the checkout
-              disclosure will be updated before collecting payment information.
-            </p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-gray-950">Analytics and cookies</h2>
-            <p className="mt-2">
-              Google Analytics is currently disabled. CaliforniaMailer does not intentionally load optional
-              advertising or analytics cookies on the public site. An appropriate notice and consent control
-              will be added before optional tracking is enabled where required.
-            </p>
-          </section>
-          <section>
-            <h2 className="text-xl font-bold text-gray-950">Questions and requests</h2>
-            <p className="mt-2">
-              To ask about information submitted through the site or request deletion where applicable,
-              email hello@californiamailer.com. Some records may need to be retained for security, accounting,
-              dispute, or legal obligations.
-            </p>
-          </section>
-        </div>
+    <PublicShell>
+      <article className="mx-auto max-w-4xl px-5 py-20">
+        <h1 className="text-4xl font-black tracking-tight md:text-6xl">Privacy policy</h1>
+        <p className="mt-3 text-sm text-slate-500">Last updated August 19, 2026</p>
+        <Section title="Information you choose to submit">
+          The inquiry form collects a name, business name, email address, optional phone number, contact preference, requested service,
+          area, quantity, and message. The reservation-interest and private fulfillment flows may also collect business category, website,
+          advertised offer, brand details, ad materials, content, terms acceptances, and proof decisions. Do not submit card numbers,
+          account passwords, government identifiers, health information, or other sensitive personal information in a free-text field.
+        </Section>
+        <Section title="How the information is used">
+          CaliforniaMailer uses submitted information to qualify and respond to inquiries, prevent category conflicts,
+          administer reservations and payments, create and approve advertising, document delivery, provide campaign reporting,
+          manage refunds or disputes, prevent abuse, and maintain required business records.
+        </Section>
+        <Section title="Service providers">
+          Firebase records valid quote inquiries in the private owner CRM for manual review. The current form does not queue or send a quote-request notification email.
+          Vercel hosts the application. If activated, Stripe will provide hosted checkout and process payment data under its own notice.
+          CaliforniaMailer does not store full card details.
+        </Section>
+        <Section title="Consumer deals email">
+          The optional consumer email list remains inactive unless the owner configures its postal address, sender identity, and activation flag. When active it uses affirmative consent, email verification,
+          a stated frequency, an unsubscribe confirmation, and a suppression list. Advertisers buy placement in communications;
+          they do not receive the subscriber database. A quote or advertiser inquiry never enrolls a person in consumer marketing.
+        </Section>
+        <Section title="Tracking and reported outcomes">
+          Google Analytics and advertising cookies are currently disabled. Activated campaign redirect links may record a timestamp,
+          a limited device/browser description, a privacy-protected network identifier, and the linked advertiser.
+          These records measure redirect HTTP requests, not people, scans, customers, or sales; bot and unknown traffic are separated where possible.
+          Coupon redemptions, calls, leads, appointments, and sales are advertiser-reported unless a later system explicitly says otherwise.
+        </Section>
+        <Section title="Private business portal access">
+          A business may receive a manually delivered, one-time link for one reservation and placement. CaliforniaMailer stores hashed
+          invite and session identifiers rather than the raw secret, and uses an expiring, revocable HttpOnly browser cookie after the
+          link is accepted. Portal access is scoped to that reservation; it is not a shared business-wide account. The application does
+          not automatically email or text portal links.
+        </Section>
+        <Section title="Coupon pages and optional AI drafting">
+          An owner-published coupon page may show the advertiser&apos;s business name, approved offer, redemption instructions, terms,
+          expiration date, and tracked business link. It does not publish consumer identity or prove that a coupon was redeemed. Manual
+          coupon drafting works without an AI provider. If the owner separately enables AI drafting, CaliforniaMailer sends only the
+          advertiser-supplied business facts and the requested coupon field to OpenAI from the server, requests that the API not store
+          the response, and returns an editable draft. AI output is never published automatically and still requires owner review.
+        </Section>
+        <Section title="Sale or sharing">
+          CaliforniaMailer does not sell quote, advertiser, prospect, or subscriber contact information and does not give
+          the consumer subscriber list to advertisers. This statement does not describe necessary processing by contracted providers.
+        </Section>
+        <Section title="Retention and security">
+          Records are retained only as needed for the campaign, accounting, consent, suppression, security, dispute,
+          or legal purposes. Private notes, payment references, uploads, and contact details are not intended for public campaign records.
+          No transmission or storage system can be guaranteed completely secure.
+        </Section>
+        <Section title="Questions and requests">
+          Email hello@californiamailer.com to ask what information you submitted or to request correction or deletion where applicable.
+          CaliforniaMailer may need to verify the request and may retain records required for accounting, suppression, disputes, security, or law.
+        </Section>
+        <p className="mt-12 text-sm leading-6 text-slate-500">
+          This notice describes the current application design and is not a legal opinion about whether a particular privacy law applies.
+          The owner should obtain California counsel review before production payment or consumer-email activation.
+        </p>
       </article>
-    </main>
+    </PublicShell>
   );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return <section className="mt-10"><h2 className="text-2xl font-black">{title}</h2><p className="mt-3 leading-8 text-slate-700">{children}</p></section>;
 }

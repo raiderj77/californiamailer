@@ -1,264 +1,69 @@
 'use client';
 
-import { useAuth } from '@/lib/AuthContext';
 import Sidebar from '@/components/Sidebar';
-import { useState, useEffect } from 'react';
-import { getTerritories, getProspects, getCampaigns, getVATasks, Territory, Prospect, Campaign, VATask } from '@/lib/firestore';
+import { useAuth } from '@/lib/AuthContext';
+import { getProspects, type Prospect } from '@/lib/firestore';
+import { contactGate } from '@/lib/prospectRules';
+import { isRecordSuppressed } from '@/lib/suppression';
+import { getProspectContactBarrier } from '@/lib/prospectSuppressionClient';
+import { formatCurrency } from '@/config/foundingCampaign';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+interface OwnerCampaign {
+  campaign: { status: string; published: boolean; paymentActivation: boolean; economicsVerified: boolean; routesConfirmed: boolean; artworkPreflightApproved: boolean; ownerPrintApproved: boolean; clearedFundingCents: number; fundingGoalCents: number; placements: Record<string, { available: number; held: number; sold: number }>; categories: Array<{ status: string }> };
+  paidAdvertiserCount: number; paidReservationCount: number; outstandingPaymentCount: number; recentFormSubmissionCount: number; refundObligationCents: number;
+  proofStatusCounts: Record<string, number>; recentPayments: Array<{ id: string; status: string; amountCents: number; updatedAt: string | null }>;
+  readiness: { ready: boolean; checks: Array<{ key: string; label: string; passed: boolean; detail: string }> };
+}
 
 export default function DashboardPage() {
-  const { user, loading, signInWithGoogle, logout } = useAuth();
-  const [territories, setTerritories] = useState<Territory[]>([]);
+  const { user, loading, logout } = useAuth();
   const [prospects, setProspects] = useState<Prospect[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [tasks, setTasks] = useState<VATask[]>([]);
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  async function loadData() {
+  const [campaign, setCampaign] = useState<OwnerCampaign | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [contactGloballyBlocked, setContactGloballyBlocked] = useState(true);
+  const load = useCallback(async () => {
     if (!user) return;
-    const [t, p, c, v] = await Promise.all([
-      getTerritories(user.uid),
-      getProspects(user.uid),
-      getCampaigns(user.uid),
-      getVATasks(user.uid),
-    ]);
-    setTerritories(t);
-    setProspects(p);
-    setCampaigns(c);
-    setTasks(v);
-  }
-
-  // Calculate stats
-  const activeTerritories = territories.filter(t => t.status === 'active').length;
-  const totalHouseholds = territories.reduce((sum, t) => sum + t.households, 0);
-  
-  const prospectsByStatus = {
-    new: prospects.filter(p => p.status === 'new').length,
-    contacted: prospects.filter(p => p.status === 'contacted').length,
-    interested: prospects.filter(p => p.status === 'interested').length,
-    proposal: prospects.filter(p => p.status === 'proposal').length,
-    closed: prospects.filter(p => p.status === 'closed').length,
-    lost: prospects.filter(p => p.status === 'lost').length,
-  };
-
-  const activeCampaigns = campaigns.filter(c => c.status !== 'completed').length;
-  const totalMailPieces = campaigns.reduce((sum, c) => sum + c.quantity, 0);
-  const totalCampaignCost = campaigns.reduce((sum, c) => sum + c.cost, 0);
-
-  const pendingTasks = tasks.filter(t => t.status === 'pending').length;
-  const inProgressTasks = tasks.filter(t => t.status === 'in-progress').length;
-  const highPriorityTasks = tasks.filter(t => t.priority === 'high' && t.status !== 'completed').length;
-
-  // Recent items
-  const recentProspects = prospects.slice(0, 5);
-  const upcomingCampaigns = campaigns
-    .filter(c => c.status === 'scheduled' && c.mailDate)
-    .sort((a, b) => a.mailDate.localeCompare(b.mailDate))
-    .slice(0, 5);
-  const urgentTasks = tasks
-    .filter(t => t.status !== 'completed')
-    .sort((a, b) => {
-      if (a.priority === 'high' && b.priority !== 'high') return -1;
-      if (b.priority === 'high' && a.priority !== 'high') return 1;
-      return 0;
-    })
-    .slice(0, 5);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">CaliforniaMailer</h1>
-          <p className="text-gray-600 mb-8">Direct mail management for California territories</p>
-          <button
-            onClick={signInWithGoogle}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700"
-          >
-            Sign in with Google
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1">
-        <header className="bg-white shadow-sm">
-          <div className="px-6 py-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold text-gray-900">CaliforniaMailer</h1>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600">{user.email}</span>
-              <button onClick={logout} className="text-gray-500 hover:text-gray-700">Sign out</button>
-            </div>
-          </div>
-        </header>
-        <main className="p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
-          
-          {/* Main Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-lg shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500">Active Territories</h3>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{activeTerritories}</p>
-              <p className="text-xs text-gray-400 mt-1">{totalHouseholds.toLocaleString()} households</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500">Total Prospects</h3>
-              <p className="text-2xl font-bold text-green-600 mt-1">{prospects.length}</p>
-              <p className="text-xs text-gray-400 mt-1">{prospectsByStatus.closed} closed</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500">Active Campaigns</h3>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{activeCampaigns}</p>
-              <p className="text-xs text-gray-400 mt-1">{totalMailPieces.toLocaleString()} pieces</p>
-            </div>
-            <div className="bg-white p-5 rounded-lg shadow-sm border">
-              <h3 className="text-sm font-medium text-gray-500">Pending Tasks</h3>
-              <p className="text-2xl font-bold text-orange-600 mt-1">{pendingTasks + inProgressTasks}</p>
-              <p className="text-xs text-gray-400 mt-1">{highPriorityTasks} high priority</p>
-            </div>
-          </div>
-
-          {/* Prospect Pipeline */}
-          <div className="bg-white rounded-lg shadow-sm border p-5 mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Prospect Pipeline</h3>
-            <div className="flex gap-2">
-              {Object.entries(prospectsByStatus).map(([status, count]) => (
-                <div key={status} className="flex-1 text-center">
-                  <div className="text-2xl font-bold text-gray-900">{count}</div>
-                  <div className="text-xs text-gray-500 capitalize">{status}</div>
-                  <div 
-                    className={`h-2 mt-2 rounded ${
-                      status === 'new' ? 'bg-blue-400' :
-                      status === 'contacted' ? 'bg-yellow-400' :
-                      status === 'interested' ? 'bg-purple-400' :
-                      status === 'proposal' ? 'bg-orange-400' :
-                      status === 'closed' ? 'bg-green-400' :
-                      'bg-gray-300'
-                    }`}
-                    style={{ width: `${Math.max(10, (count / Math.max(prospects.length, 1)) * 100)}%`, margin: '0 auto' }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Recent Prospects */}
-            <div className="bg-white rounded-lg shadow-sm border p-5">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Prospects</h3>
-              {recentProspects.length === 0 ? (
-                <p className="text-gray-500 text-sm">No prospects yet</p>
-              ) : (
-                <ul className="space-y-3">
-                  {recentProspects.map(p => (
-                    <li key={p.id} className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-sm">{p.businessName}</div>
-                        <div className="text-xs text-gray-500">{p.territoryName}</div>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        p.status === 'new' ? 'bg-blue-100 text-blue-700' :
-                        p.status === 'closed' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {p.status}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Upcoming Campaigns */}
-            <div className="bg-white rounded-lg shadow-sm border p-5">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Upcoming Campaigns</h3>
-              {upcomingCampaigns.length === 0 ? (
-                <p className="text-gray-500 text-sm">No scheduled campaigns</p>
-              ) : (
-                <ul className="space-y-3">
-                  {upcomingCampaigns.map(c => (
-                    <li key={c.id} className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-sm">{c.name}</div>
-                        <div className="text-xs text-gray-500">{c.quantity.toLocaleString()} pieces</div>
-                      </div>
-                      <span className="text-xs text-gray-600">{c.mailDate}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Urgent Tasks */}
-            <div className="bg-white rounded-lg shadow-sm border p-5">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Priority Tasks</h3>
-              {urgentTasks.length === 0 ? (
-                <p className="text-gray-500 text-sm">No pending tasks</p>
-              ) : (
-                <ul className="space-y-3">
-                  {urgentTasks.map(t => (
-                    <li key={t.id} className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-sm">{t.title}</div>
-                        <div className="text-xs text-gray-500">{t.assignee || 'Unassigned'}</div>
-                      </div>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        t.priority === 'high' ? 'bg-red-100 text-red-700' :
-                        t.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {t.priority}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-
-          {/* Campaign Stats */}
-          {campaigns.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm border p-5 mt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Campaign Summary</h3>
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">{campaigns.length}</div>
-                  <div className="text-xs text-gray-500">Total Campaigns</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">{totalMailPieces.toLocaleString()}</div>
-                  <div className="text-xs text-gray-500">Mail Pieces</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">${totalCampaignCost.toLocaleString()}</div>
-                  <div className="text-xs text-gray-500">Total Cost</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    ${totalMailPieces > 0 ? (totalCampaignCost / totalMailPieces).toFixed(3) : '0'}
-                  </div>
-                  <div className="text-xs text-gray-500">Avg Cost/Piece</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
+    const nextErrors: string[] = [];
+    try {
+      const [records, barrier] = await Promise.all([
+        getProspects(user.uid),
+        getProspectContactBarrier(await user.getIdToken()),
+      ]);
+      setProspects(records);
+      setContactGloballyBlocked(barrier.contactBlocked);
+    } catch {
+      setContactGloballyBlocked(true);
+      nextErrors.push('Prospect database or suppression state could not be read; contact queues remain blocked.');
+    }
+    try {
+      const response = await fetch('/api/admin/campaigns/founding/economics', { headers: { Authorization: `Bearer ${await user.getIdToken()}` } });
+      const data = await response.json(); if (!response.ok) throw new Error(data.error); setCampaign(data);
+    } catch (caught) { nextErrors.push(caught instanceof Error ? caught.message : 'Campaign operations could not be read.'); }
+    setErrors(nextErrors);
+  }, [user]);
+  useEffect(() => { void load(); }, [load]);
+  const today = new Date().toISOString().slice(0, 10);
+  const followUps = useMemo(() => contactGloballyBlocked ? [] : prospects.filter((item) => item.nextFollowUpDate && item.nextFollowUpDate <= today && !isRecordSuppressed(item))
+    .sort((a, b) => String(a.nextFollowUpDate).localeCompare(String(b.nextFollowUpDate))).slice(0, 8), [contactGloballyBlocked, prospects, today]);
+  const ready = contactGloballyBlocked ? 0 : prospects.filter((item) => item.status === 'ready_to_contact' && contactGate(item).allowed).length;
+  const activeCategories = campaign?.campaign.categories.filter((item) => ['held', 'sold'].includes(item.status)).length;
+  const availablePlacements = Object.values(campaign?.campaign.placements || {}).reduce((total, item) => total + Number(item.available || 0), 0);
+  if (loading) return <Centered>Loading owner access…</Centered>;
+  if (!user) return <Centered>Sign in with the owner account.</Centered>;
+  return <div className="min-h-screen bg-slate-50 md:flex"><Sidebar /><main className="min-w-0 flex-1 p-4 md:p-8"><header className="mb-7 flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.2em] text-blue-700">Single-owner control room</p><h1 className="text-3xl font-black">Founding campaign dashboard</h1></div><div className="flex gap-2"><button onClick={() => void load()} className="rounded-lg border px-3 py-2 text-sm font-bold">Refresh verified state</button><button onClick={logout} className="rounded-lg border px-3 py-2 text-sm">Sign out</button></div></header>
+    {errors.length > 0 && <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"><strong>System attention required</strong><ul className="mt-2 list-disc pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul><p className="mt-2">Missing data is unknown—not zero and not a pass.</p></div>}
+    {contactGloballyBlocked && <div role="alert" className="mb-5 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-bold text-rose-900">Sales follow-ups and ready-to-contact counts are hidden because unresolved suppression propagation globally blocks contact.</div>}
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"><Stat label="Campaign status" value={campaign?.campaign.status?.replaceAll('_', ' ') || 'Unknown'} /><Stat label="Cleared / goal" value={campaign ? `${formatCurrency(campaign.campaign.clearedFundingCents)} / ${formatCurrency(campaign.campaign.fundingGoalCents)}` : 'Unknown'} /><Stat label="Paid slot-units" value={String(campaign?.paidReservationCount ?? 'Unknown')} /><Stat label="Available slot-units" value={campaign ? String(availablePlacements) : 'Unknown'} /><Stat label="Refund obligations" value={campaign ? formatCurrency(campaign.refundObligationCents) : 'Unknown'} /></div>
+    <section className="mt-7 grid gap-6 xl:grid-cols-[1fr_380px]"><div className="rounded-xl border bg-white p-6 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-xl font-black">Today’s faceless sales queue</h2><Link href="/sales-desk" className="text-sm font-bold text-blue-700 underline">Open copy desk</Link></div><div className="mt-5 grid gap-3 sm:grid-cols-3"><Mini label="Qualified and ready" value={ready} /><Mini label="Follow-ups due" value={followUps.length} /><Mini label="Interest submissions" value={campaign ? campaign.recentFormSubmissionCount : 'Unknown'} /></div>{followUps.length ? <ul className="mt-5 divide-y">{followUps.map((item) => <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 py-3"><div><strong>{item.businessName}</strong><div className="text-sm text-slate-500">{item.status.replaceAll('_', ' ')} · {item.businessCategory || 'category unverified'}</div></div><div className="text-sm"><span className="mr-3 text-slate-500">Due {item.nextFollowUpDate}</span><Link href="/prospects" className="font-bold text-blue-700 underline">Review</Link></div></li>)}</ul> : <p className="mt-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-500">{prospects.length ? 'No due follow-ups in the readable prospect records.' : 'Prospect state is empty or unavailable.'} This does not mean outreach should start; first add and qualify real businesses.</p>}</div>
+      <aside className="rounded-xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">Operational truth</h2><Truth label="Owner session" pass text="Verified server-side for this page" /><Truth label="Public campaign record" pass={Boolean(campaign?.campaign.published)} text={campaign?.campaign.published ? 'Published from sanitized database state' : 'Not published'} /><Truth label="Online checkout" pass={false} text={campaign?.campaign.paymentActivation ? 'Activation flag on—review immediately' : 'Off'} /><Truth label="Economics" pass={Boolean(campaign?.campaign.economicsVerified)} text={campaign?.campaign.economicsVerified ? 'Current costs, margin, and owner-surplus target pass' : 'Not verified'} /><Truth label="Routes" pass={Boolean(campaign?.campaign.routesConfirmed)} text={campaign?.campaign.routesConfirmed ? 'Marked confirmed with source inputs' : 'Not confirmed'} /><Truth label="Print readiness" pass={Boolean(campaign?.campaign.ownerPrintApproved && campaign?.readiness.ready)} text={campaign?.readiness.ready ? 'All gates pass' : 'Blocked'} /><Truth label="Outreach sender" pass text="Copy-only; this app sent 0 messages" /></aside></section>
+    <section className="mt-7 grid gap-6 lg:grid-cols-3"><Panel title="Inventory and payment"><Row label="Active held/sold categories" value={activeCategories === undefined ? 'Unknown' : String(activeCategories)} /><Row label="Outstanding holds/payments" value={String(campaign?.outstandingPaymentCount ?? 'Unknown')} /><Row label="Recent ledger entries" value={String(campaign?.recentPayments.length ?? 'Unknown')} /><Link href="/launch" className="mt-4 inline-block font-bold text-blue-700 underline">Campaign launch controls</Link></Panel><Panel title="Proof state">{!campaign ? <p className="text-sm text-slate-500">Proof state is unknown because campaign operations could not be read.</p> : Object.keys(campaign.proofStatusCounts).length ? Object.entries(campaign.proofStatusCounts).map(([key, value]) => <Row key={key} label={key.replaceAll('_', ' ')} value={String(value)} />) : <p className="text-sm text-slate-500">No proof records exist. Every paid slot-unit requires versioned materials and approval before print readiness.</p>}<Link href="/economics" className="mt-4 inline-block font-bold text-blue-700 underline">View every print gate</Link></Panel><Panel title="Owner next actions"><ol className="list-decimal space-y-2 pl-5 text-sm leading-6"><li>Compare fill and cost scenarios in the mailer calculator.</li><li>Enter route evidence and a current signed-in vendor quote.</li><li>Build a small manually verified advertiser list.</li><li>Obtain legal review and a business postal address.</li><li>Activate payments only after a separate owner decision.</li></ol></Panel></section>
+  </main></div>;
 }
+function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border bg-white p-4 shadow-sm"><div className="text-xl font-black capitalize">{value}</div><div className="text-xs text-slate-500">{label}</div></div>; }
+function Mini({ label, value }: { label: string; value: number | string }) { return <div className="rounded-lg bg-slate-50 p-4"><div className="text-2xl font-black">{value}</div><div className="text-xs text-slate-500">{label}</div></div>; }
+function Truth({ label, text, pass }: { label: string; text: string; pass: boolean }) { return <div className="mt-4 flex gap-3 text-sm"><span className={`mt-1 h-3 w-3 shrink-0 rounded-full ${pass ? 'bg-emerald-500' : 'bg-amber-500'}`} /><div><strong>{label}</strong><p className="text-slate-500">{text}</p></div></div>; }
+function Panel({ title, children }: { title: string; children: React.ReactNode }) { return <div className="rounded-xl border bg-white p-6"><h2 className="text-lg font-black">{title}</h2><div className="mt-4">{children}</div></div>; }
+function Row({ label, value }: { label: string; value: string }) { return <div className="flex justify-between gap-3 border-b py-2 text-sm"><span className="capitalize text-slate-500">{label}</span><strong>{value}</strong></div>; }
+function Centered({ children }: { children: React.ReactNode }) { return <div className="flex min-h-screen items-center justify-center p-8 text-center text-slate-600">{children}</div>; }

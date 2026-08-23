@@ -1,4 +1,4 @@
-export function downloadCSV(data: Record<string, any>[], filename: string) {
+export function downloadCSV(data: Record<string, unknown>[], filename: string) {
   if (data.length === 0) return;
 
   const headers = Object.keys(data[0]);
@@ -7,13 +7,16 @@ export function downloadCSV(data: Record<string, any>[], filename: string) {
     ...data.map(row => 
       headers.map(header => {
         const value = row[header] ?? '';
-        const escaped = String(value).replace(/"/g, '""');
+        const raw = String(value);
+        // Spreadsheet programs may execute formula-looking CSV cells. Keep exports inert.
+        const safe = /^[=+\-@]/.test(raw.trimStart()) ? `'${raw}` : raw;
+        const escaped = safe.replace(/"/g, '""');
         return `"${escaped}"`;
       }).join(',')
     )
   ];
 
-  const csvString = csvRows.join('\n');
+  const csvString = `\uFEFF${csvRows.join('\r\n')}`;
   const blob = new Blob([csvString], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   
