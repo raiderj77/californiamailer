@@ -4,12 +4,12 @@ import { PublicShell } from '@/components/public/PublicShell';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
 
 export const metadata: Metadata = {
-  title: 'Pizza Box Advertising in California | Quote-Only Placements',
-  description: 'Request a California pizza box coupon or flyer placement built around a documented restaurant partner, verified box volume, and evidence-gated pricing.',
+  title: 'California Pizza Box Advertising Planning | Quote Only',
+  description: 'Request planning for a proposed California pizza-box coupon or flyer concept. A verified restaurant partner, box volume, agreement, and complete economics are required before availability.',
   alternates: { canonical: 'https://californiamailer.com/pizza-box-advertising' },
   openGraph: {
-    title: 'Pizza Box Advertising in California',
-    description: 'Quote-only pizza box coupon and flyer placement planning with documented California restaurant partners.',
+    title: 'California Pizza Box Advertising Planning',
+    description: 'Quote-only planning for a proposed California market; no restaurant partner, placement, or inventory is represented as available.',
     url: 'https://californiamailer.com/pizza-box-advertising',
     type: 'website',
   },
@@ -18,11 +18,11 @@ export const metadata: Metadata = {
 const pizzaBoxFaqs = [
   {
     question: 'Is pizza box advertising a USPS mailing?',
-    answer: 'No. Printing4SuperCheap prints the approved coupon or flyer, and a restaurant partner distributes it with pizza orders under a written agreement. USPS and EDDM are not used for this placement.',
+    answer: 'No. In a future approved project, Printing4SuperCheap would print the approved coupon or flyer and a verified restaurant partner would distribute it under a written agreement. USPS and EDDM would not be used.',
   },
   {
-    question: 'Are pizza box placements available everywhere in California?',
-    answer: 'Not instantly. Businesses and restaurants throughout California may request a plan, but each market requires a documented restaurant partner, a signed distribution agreement, verified box volume, and a workable delivery period before availability can be stated.',
+    question: 'Can an inquiry name a California market?',
+    answer: 'Yes, but candidate geography does not establish a restaurant partner, placement, inventory, or statewide service. Each project requires a verified partner, signed distribution agreement, verified box volume, and workable delivery period before availability can be stated.',
   },
   {
     question: 'Can advertisers receive category exclusivity?',
@@ -60,13 +60,13 @@ export default function PizzaBoxAdvertisingPage() {
       <section className="bg-red-950 px-5 py-16 text-white">
         <div className="mx-auto max-w-6xl">
           <div className="text-sm font-black uppercase tracking-[0.18em] text-amber-300">California pizza box advertising · quote only</div>
-          <h1 className="mt-3 max-w-5xl text-4xl font-black tracking-tight text-white md:text-6xl">Pizza box coupon and flyer placements across California</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-red-100">Place an original local coupon sheet or community flyer with the orders of a documented California restaurant partner. Every project starts with partner evidence and a written distribution plan—not assumed reach.</p>
+          <h1 className="mt-3 max-w-5xl text-4xl font-black tracking-tight text-white md:text-6xl">Request a pizza-box coupon or flyer plan for a California market</h1>
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-red-100">Explore a concept that would place an original local coupon sheet or community flyer with the orders of a future verified restaurant partner. Every project starts with partner evidence and a written distribution plan—not assumed reach.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/quote" className="inline-flex min-h-12 items-center rounded-full bg-amber-400 px-6 py-3 font-black text-red-950 hover:bg-amber-300">Request a placement plan</Link>
             <Link href="/sample-card" className="inline-flex min-h-12 items-center rounded-full border border-red-400 px-6 py-3 font-black text-white hover:border-amber-300 hover:text-amber-200">Review original layout studies</Link>
           </div>
-          <p className="mt-5 max-w-3xl text-sm font-bold leading-6 text-red-200">This is partner-distributed advertising, not USPS mail or EDDM. California-wide intake does not claim that a restaurant partner or placement is already available in every market.</p>
+          <p className="mt-5 max-w-3xl text-sm font-bold leading-6 text-red-200">This would be partner-distributed advertising, not USPS mail or EDDM. Intake does not establish a restaurant network, partner, placement, quantity, inventory, or availability.</p>
         </div>
       </section>
 
@@ -74,8 +74,8 @@ export default function PizzaBoxAdvertisingPage() {
         <div className="grid gap-10 lg:grid-cols-[1fr_0.85fr] lg:items-start">
           <div>
             <div className="text-xs font-black uppercase tracking-[0.16em] text-red-800">A documented local distribution channel</div>
-            <h2 id="pizza-box-placement-model" className="mt-2 text-3xl font-black text-slate-950">How a California pizza box placement works</h2>
-            <p className="mt-4 leading-7 text-slate-600">A participating restaurant agrees to place the approved printed piece with a defined number of pizza orders during a defined period. CaliforniaMailer coordinates the project record; it does not turn a restaurant estimate into guaranteed distribution.</p>
+            <h2 id="pizza-box-placement-model" className="mt-2 text-3xl font-black text-slate-950">How a proposed pizza-box placement would work</h2>
+            <p className="mt-4 leading-7 text-slate-600">If a restaurant partner is verified and signs a project agreement, it would place the approved printed piece with a defined number of pizza orders during a defined period. CaliforniaMailer would coordinate the project record; a restaurant estimate would never become guaranteed distribution.</p>
             <ol className="mt-7 space-y-4">
               <PlacementStep number="01" title="Qualify the restaurant partner" text="Verify the restaurant identity, participating location, weekly box volume, expected distribution period, and the person authorized to sign." />
               <PlacementStep number="02" title="Define the placement" text="Document the flyer or coupon format, quantity, advertiser categories, placement method, handoff, completion evidence, and any written category protection." />
@@ -113,7 +113,7 @@ export default function PizzaBoxAdvertisingPage() {
           </div>
           <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-7">
             <h3 className="text-xl font-black text-amber-950">Who does what?</h3>
-            <p className="mt-3 leading-7 text-slate-700"><strong>{PRINTING4SUPERCHEAP.name}</strong> prints the approved coupon or flyer. <strong>The documented restaurant partner</strong> distributes the agreed quantity with its pizza orders. <strong>CaliforniaMailer</strong> coordinates the evidence, approvals, and gated project record. USPS does not distribute pizza box placements.</p>
+            <p className="mt-3 leading-7 text-slate-700">For an approved future project, <strong>{PRINTING4SUPERCHEAP.name}</strong> would print the approved coupon or flyer, <strong>the verified restaurant partner</strong> would distribute the agreed quantity with its pizza orders, and <strong>CaliforniaMailer</strong> would coordinate the evidence, approvals, and gated project record. USPS would not distribute it.</p>
           </div>
         </div>
       </section>
@@ -121,9 +121,9 @@ export default function PizzaBoxAdvertisingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16" aria-labelledby="california-pizza-box-markets">
         <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
           <div className="max-w-3xl">
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-red-800">California-wide requests</div>
+            <div className="text-xs font-black uppercase tracking-[0.16em] text-red-800">Candidate California market</div>
             <h2 id="california-pizza-box-markets" className="mt-2 text-3xl font-black text-slate-950">Start with the restaurant relationship and local market</h2>
-            <p className="mt-4 leading-7 text-slate-600">A California business may request a pizza box advertising plan, and a California restaurant may propose its location as a distribution partner. Statewide service means the inquiry is open across California; it does not create an undisclosed restaurant network or promise immediate inventory.</p>
+            <p className="mt-4 leading-7 text-slate-600">A California business may request a pizza-box advertising plan, and a California restaurant may propose its location as a distribution partner. An inquiry may name a California market; this does not establish statewide service, a restaurant network, or inventory.</p>
             <p className="mt-4 leading-7 text-slate-600">In the request, name the city, restaurant relationship if one exists, advertiser categories, expected quantity, offer type, and desired period. Category exclusivity exists only when a later written agreement defines it for that placement.</p>
           </div>
           <div className="flex flex-col gap-3">

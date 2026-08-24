@@ -273,7 +273,7 @@ export default function QuotePage() {
             </div>
             <div className="rounded-2xl border bg-slate-50 p-6">
               <h2 className="font-black">Founding category interest</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">The protected-category shared campaign still has its own acknowledgments and interest workflow.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">The category-review shared campaign still has its own acknowledgments and interest workflow. An inquiry creates no hold or exclusivity.</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">The current workflow accepts one paid slot-unit per advertiser. Multi-unit advertiser purchasing is future work and is not implemented.</p>
               <Link href="/reserve" className="mt-4 inline-block font-black text-blue-700 underline">Review reservation interest</Link>
             </div>

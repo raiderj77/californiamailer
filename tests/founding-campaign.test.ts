@@ -12,6 +12,7 @@ import {
   compatibleNonSensitiveCategorySlugs,
   getApprovedCampaignContractVersions,
   isAllowedContractVersion,
+  submittedContractAcceptanceMatches,
 } from '../src/config/foundingCampaign';
 import {
   ACTIVE_SHARED_MODEL_VERSION,
@@ -88,6 +89,29 @@ test('contract approval requires an exact nonempty allowlisted version', () => {
     termsVersion: FOUNDING_CAMPAIGN.termsVersion,
     fundingPolicyVersion: FOUNDING_CAMPAIGN.fundingPolicyVersion,
   }), null);
+});
+
+test('approved contract acceptance binds both exact submitted versions', () => {
+  const approved = {
+    termsVersion: '2026-08-reviewed-v1',
+    fundingPolicyVersion: '2026-08-funding-reviewed-v1',
+  };
+  assert.equal(submittedContractAcceptanceMatches({
+    acceptedTermsVersion: approved.termsVersion,
+    acceptedFundingPolicyVersion: approved.fundingPolicyVersion,
+  }, approved), true);
+  assert.equal(submittedContractAcceptanceMatches({
+    acceptedTermsVersion: '2026-08-draft',
+    acceptedFundingPolicyVersion: approved.fundingPolicyVersion,
+  }, approved), false);
+  assert.equal(submittedContractAcceptanceMatches({
+    acceptedTermsVersion: approved.termsVersion,
+    acceptedFundingPolicyVersion: '',
+  }, approved), false);
+  assert.equal(submittedContractAcceptanceMatches({
+    acceptedTermsVersion: approved.termsVersion,
+    acceptedFundingPolicyVersion: approved.fundingPolicyVersion,
+  }, null), false);
 });
 
 test('initialization data carries the active plan and creates only equal standard inventory', () => {

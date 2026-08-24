@@ -38,6 +38,29 @@ test('public quote intake stores only validated requests for manual owner review
   assert.doesNotMatch(quote, /dangerouslySetInnerHTML|Delivering|form could not be delivered/);
 });
 
+test('reservation interest and owner notification semantics fail closed', () => {
+  const route = read('src/app/api/reservations/route.ts');
+  const baseSubmission = route.slice(route.indexOf('function baseSubmission'), route.indexOf('export async function POST'));
+  const interestBranch = route.slice(route.indexOf('if (!canCreatePaidHold)'), route.indexOf('const reservationRef'));
+  assert.match(route, /process\.env\.OWNER_EMAIL\?\.trim\(\)/);
+  assert.match(route, /'not_configured'/);
+  assert.match(route, /'provider_accepted_unverified'/);
+  assert.doesNotMatch(route, /hello@californiamailer\.com|delivered_to_provider/);
+  assert.match(baseSubmission, /draftTermsReviewedAt/);
+  assert.match(baseSubmission, /draftFundingPolicyReviewedAt/);
+  assert.doesNotMatch(baseSubmission, /termsAcceptedAt|refundPolicyAcceptedAt/);
+  assert.match(interestBranch, /\.\.\.submission/);
+  assert.doesNotMatch(interestBranch, /termsAcceptedAt|refundPolicyAcceptedAt/);
+  assert.match(route, /acceptedTermsVersion: z\.string\(\)/);
+  assert.match(route, /acceptedFundingPolicyVersion: z\.string\(\)/);
+  assert.match(route, /submittedContractAcceptanceMatches\([\s\S]*?approvedContractVersions/);
+  assert.match(route, /submittedContractAcceptanceMatches\([\s\S]*?currentContractVersions/);
+  assert.match(route, /termsAcceptedAt: contractAcceptedAt/);
+  assert.match(route, /refundPolicyAcceptedAt: contractAcceptedAt/);
+  assert.doesNotMatch(route, /termsAcceptedAt: submission\.draftTermsReviewedAt/);
+  assert.doesNotMatch(route, /refundPolicyAcceptedAt: submission\.draftFundingPolicyReviewedAt/);
+});
+
 test('analytics is disabled until a documented consent implementation exists', () => {
   const layout = read('src/app/layout.tsx');
   assert.doesNotMatch(layout, /googletagmanager|google-analytics|gtag\(/i);

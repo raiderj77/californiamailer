@@ -10,7 +10,7 @@ export function SiteFooter() {
             Owner-managed California direct-mail and partner-placement planning: one Monterey Peninsula founding shared mailer plus
             quote-only single-business postcards and documented partner-distributed placements. No campaign result or advertiser response is promised.
           </p>
-          <p className="mt-3 text-sm">Email: hello@californiamailer.com</p>
+          <p className="mt-3 text-sm">Public reply mailbox pending identity and delivery verification. Use the contact page for the current inquiry boundary.</p>
         </div>
         <div>
           <div className="font-bold text-white">Campaign</div>

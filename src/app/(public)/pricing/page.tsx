@@ -243,6 +243,7 @@ function SharedModelCard({ model, active, priceVisibility }: { model: SharedMail
       </dl>
       <div className="mt-6 border-t border-slate-200 pt-4 text-xs leading-5 text-slate-600">
         <strong className="text-slate-900">Layout status:</strong> {model.layoutEvidence.note}
+        <span className="mt-2 block"><strong className="text-slate-900">Layout-source observation:</strong> {model.layoutEvidence.sourceObservedAt}. First-party guidance is not a postal, engineering, or production approval.</span>
       </div>
     </article>
   );

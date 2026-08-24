@@ -9,11 +9,11 @@ import { getPublicPlanningPriceVisibility } from '@/lib/publicPlanningPriceVisib
 export const metadata: Metadata = {
   title: 'California Postcard Mailing & Local Advertising | CaliforniaMailer',
   description:
-    'Plan single-business postcards, shared mailers, and partner-distributed pizza-box advertising across California with current printer, route, partner, and margin evidence.',
+    'Submit a quote-only planning inquiry for single-business postcards, shared mailers, or a proposed partner-distributed concept. Project-specific evidence is required before availability.',
   alternates: { canonical: 'https://californiamailer.com/home' },
   openGraph: {
     title: 'California postcard mailing and local advertising',
-    description: 'Statewide quote-only postcard and partner-placement planning, plus an experimental Monterey Peninsula shared-mailer campaign.',
+    description: 'Quote-only California-market inquiries plus an experimental shared-mailer planning scenario for candidate Monterey Peninsula geography.',
     url: 'https://californiamailer.com/home',
     type: 'website',
   },
@@ -55,9 +55,9 @@ const mailingPaths = [
     href: '/quote',
   },
   {
-    title: 'Pizza-box advertising',
-    fit: 'For noncompeting local advertisers placed with the orders of a documented California restaurant partner.',
-    examples: 'Printing4SuperCheap production · signed partner agreement · verified box volume',
+    title: 'Pizza-box placement planning',
+    fit: 'For a proposed local concept that would require a verified restaurant partner and written distribution plan before availability.',
+    examples: 'No partner, placement, or box volume is represented as available at inquiry',
     href: '/pizza-box-advertising',
   },
 ];
@@ -70,14 +70,14 @@ export default async function HomePage() {
         <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 md:grid-cols-[1.2fr_0.8fr] md:py-28">
           <div>
             <div className="inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-sm font-bold text-amber-100">
-              California postcard and partner advertising · quote only
+              California-market postcard and partner inquiries · quote only
             </div>
             <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[1.03] tracking-tight text-white md:text-7xl">
-              Local postcard and partner placements, proven before they are sold or printed.
+              Local postcard and partner concepts must be proven before they can be sold or printed.
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
-              CaliforniaMailer accepts statewide requests for single-business postcards and documented pizza-box placements while validating a 9 × 12 shared mailer for approximately{' '}
-              {FOUNDING_CAMPAIGN.targetHouseholds.toLocaleString()} selected Monterey Peninsula residences.
+              CaliforniaMailer accepts inquiries for single-business postcards and pizza-box concepts that would require a documented restaurant partner.
+              The shared-mailer experiment uses a {FOUNDING_CAMPAIGN.targetHouseholds.toLocaleString()}-piece planning target for candidate Monterey Peninsula geography; no routes or residential address count are selected.
               Every path stays behind current printer, route or partner, rights, cost, margin, payment, and production gates.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">

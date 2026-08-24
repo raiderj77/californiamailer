@@ -145,7 +145,8 @@ test('browser contact surfaces fetch the barrier fail closed and keep DNC availa
   assert.match(prospects, /contactQueueStatuses\.has\(draft\.status\) && contactGloballyBlocked/);
   assert.match(prospects, /contactQueueStatuses\.has\(bulkStatus\)[\s\S]*contactGloballyBlocked/);
   assert.match(salesDesk, /contactGloballyBlocked \? \[\] : prospects\.filter/);
-  assert.match(salesDesk, /disabled=\{contactGloballyBlocked\}[\s\S]*Copy for manual review/);
+  assert.match(salesDesk, /outreachDraftCopyBlockReasons/);
+  assert.match(salesDesk, /disabled=\{contactGloballyBlocked \|\| copyBlockReasons\.length > 0\}[\s\S]*Copy for manual review/);
   assert.match(activities, /contactGloballyBlocked && \['email', 'call', 'proposal', 'meeting'\]\.includes\(type\)/);
   assert.match(inbox, /contactBlocked = suppressed \|\| item\.linkedProspectSafetyBlocked \|\| contactGloballyBlocked/);
   assert.match(inbox, /disabled=\{busyId === item\.id \|\| suppressed\}[\s\S]*Do not contact/);

@@ -18,7 +18,7 @@ export default async function FoundingMailerPage() {
           <div className="text-sm font-black uppercase tracking-[0.18em] text-blue-700">First validation campaign</div>
           <h1 className="mt-3 max-w-4xl text-4xl font-black tracking-tight md:text-6xl">Monterey Peninsula founding mailer</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">
-            One compact territory, approximately 5,000 target residences, and no print spending before the campaign clears every funding and production gate.
+            A 5,000-piece planning target for candidate Monterey Peninsula geography; no carrier routes, residential address count, or mailing is selected. No print spending occurs before every funding and production gate clears.
           </p>
         </div>
       </section>

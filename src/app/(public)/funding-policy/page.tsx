@@ -1,23 +1,21 @@
 import type { Metadata } from 'next';
 import { PublicShell } from '@/components/public/PublicShell';
 import { FOUNDING_CAMPAIGN } from '@/config/foundingCampaign';
-import { getPublicPlanningPriceVisibility } from '@/lib/publicPlanningPriceVisibility';
 
-export const metadata: Metadata = { title: 'Campaign Funding and Refund Policy | CaliforniaMailer', description: 'How cleared funding, cancellation, refunds, and print authorization work.', alternates: { canonical: 'https://californiamailer.com/funding-policy' } };
+export const metadata: Metadata = { title: 'Draft Campaign Funding and Refund Policy | CaliforniaMailer', description: 'Proposed funding, cancellation, refund, and print-authorization rules for owner and legal review.', alternates: { canonical: 'https://californiamailer.com/funding-policy' }, robots: { index: false, follow: false } };
 
-export default async function FundingPolicyPage() {
-  const publicPrices = await getPublicPlanningPriceVisibility();
+export default function FundingPolicyPage() {
   return (
     <PublicShell>
       <article className="mx-auto max-w-4xl px-5 py-20">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-950">Draft policy version {FOUNDING_CAMPAIGN.fundingPolicyVersion}. Checkout remains disabled until the owner reviews and publishes final campaign terms.</div>
-        <h1 className="mt-8 text-4xl font-black tracking-tight md:text-6xl">Campaign funding and refunds</h1>
-        <PolicySection title="1. Cleared-funding goal">The proposed founding goal is {publicPrices.active.derivedFundingGoalLabel}. {!publicPrices.active.supported && 'A current written quote must establish a new goal before checkout can activate. '}Only payment marked cleared by the payment provider, net of recorded refunds, contributes. Interest, reservations, holds, invoices, pending transfers, failures, cancellations, and disputes do not.</PolicySection>
-        <PolicySection title="2. No print spending before authorization">Reaching the funding goal does not itself authorize print. Every paid advertiser proof, selected routes, vendor inputs, contribution margin, artwork preflight, and explicit owner approval must also pass.</PolicySection>
-        <PolicySection title="3. Funding-goal cancellation">If the campaign deadline passes below the cleared-funding goal, CaliforniaMailer cancels the campaign and owes each eligible paid advertiser a full refund of the placement payment received for that campaign. The owner reviews and initiates each refund so the amount and provider reference are recorded; that manual step does not reduce the refund obligation.</PolicySection>
-        <PolicySection title="4. Processing time">After CaliforniaMailer submits a refund, the payment provider and advertiser&apos;s financial institution control when the credit appears. CaliforniaMailer will provide the recorded refund status and provider reference when available.</PolicySection>
-        <PolicySection title="5. Advertiser withdrawal and rejected content">Withdrawal, content rejection, missed materials deadlines, chargebacks, and campaign changes require final checkout terms before payments can activate. No public page currently represents a rule that has not been approved.</PolicySection>
-        <PolicySection title="6. No automatic refund API">The application does not issue refunds automatically. It creates an owner-review obligation and requires a recorded approval before any provider refund action.</PolicySection>
+        <h1 className="mt-8 text-4xl font-black tracking-tight md:text-6xl">Draft campaign funding and refund terms</h1>
+        <PolicySection title="1. No approved funding goal">No customer funding goal is published here as an approved checkout term. Any future goal must come from an owner-approved campaign contract using current inventory, price, route, supplier, fee, reserve, and complete-cost evidence. Interest, inquiries, holds, invoices, pending transfers, failures, cancellations, and disputes would not count as cleared funding.</PolicySection>
+        <PolicySection title="2. Proposed print-authorization boundary">Under any future approved contract, reaching a cleared-funding goal would not itself authorize print. Every paid-advertiser proof, selected route, vendor input, economic safeguard, artwork preflight, and explicit owner authorization would also have to pass.</PolicySection>
+        <PolicySection title="3. Proposed funding-goal cancellation rule">The intended rule is cancellation and a full placement-payment refund to each eligible paid advertiser if an approved campaign deadline passes below its cleared-funding goal. Eligibility, exceptions, exact timing, and remedies are not final, so this draft does not create that obligation or authorize payment.</PolicySection>
+        <PolicySection title="4. Proposed processing disclosure">If a future approved refund is submitted, the payment provider and advertiser&apos;s financial institution would control when the credit appears. CaliforniaMailer would provide a recorded status and provider reference when available without claiming bank completion early.</PolicySection>
+        <PolicySection title="5. Unresolved outcomes">Advertiser withdrawal, content rejection, missed materials deadlines, chargebacks, campaign changes, production errors, postal or printer delays, delivery shortfalls, and reprint responsibility require final checkout terms. These outcomes remain unresolved; this draft does not establish a payment, refund, or remedy rule for them.</PolicySection>
+        <PolicySection title="6. No automatic refund API">The application does not issue refunds automatically. Any future provider refund would require an approved policy, owner review, and recorded authorization.</PolicySection>
         <p className="mt-12 text-sm leading-6 text-slate-500">This operational policy is not legal advice. The owner should obtain California counsel review before accepting production payments.</p>
       </article>
     </PublicShell>

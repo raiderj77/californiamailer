@@ -49,7 +49,8 @@ export interface SharedMailerSlotPlan {
 
 export interface SharedMailerLayoutEvidence {
   status: SharedMailerLayoutStatus;
-  sourceKind: 'official_hrm_material' | 'owner_requested_experiment';
+  sourceKind: 'first_party_hrm_guidance' | 'owner_requested_experiment';
+  sourceObservedAt: string;
   documentedComfortableUnits: SharedMailerUnitRange | null;
   documentedMaximumUnits: number | null;
   note: string;
@@ -98,14 +99,15 @@ export interface SharedMailerModel {
   productionReadiness: SharedMailerProductionReadiness;
 }
 
-const HRM_MASTERY_URL = 'https://bobross.lpages.co/9x12-mastery-all-installments/';
-const HRM_QUICKSTART_URL = 'https://highresponsemarketing.com/courses/quickstart-lessons/';
-const HRM_COURSES_URL = 'https://highresponsemarketing.com/courses/';
+const HRM_LAYOUT_CAPACITY_URL = 'https://highresponsemarketing.com/part-iv-cheaper-design/';
 const HRM_COMMUNITY_URL = 'https://highresponsemarketing.com/community/';
 const HRM_NEW_MOVER_URL = 'https://highresponsemarketing.com/new-mover-marketer/';
 const HRM_M6_URL = 'https://highresponsemarketing.com/samples/m6/';
 const HRM_FORMATS_URL = 'https://highresponsemarketing.com/newbie-guide/what-i-sell/';
-const HRM_AFFORDABILITY_URL = 'https://highresponsemarketing.com/part-v-affordability/';
+const HRM_M3_PRODUCT_URL = 'https://highresponsemarketing.com/products/';
+const HRM_SHARED_POSTCARD_URL = 'https://highresponsemarketing.com/ep-61-the-magical-2-part-combo-for-winning-eddm-mailings/';
+const HRM_DIRECTORY_URL = 'https://highresponsemarketing.com/grant/';
+const HRM_SOURCE_OBSERVED_AT = '2026-08-23';
 
 function turnkeyCostBasis(specificationId: string, quantity: number): SharedMailerCostBasis {
   const estimate = calculateEddmEstimate({
@@ -164,37 +166,41 @@ function customCostBasis(note: string): SharedMailerCostBasis {
 const NINE_BY_TWELVE_EXPERIMENT_EVIDENCE: SharedMailerLayoutEvidence = {
   status: 'experimental_preflight_required',
   sourceKind: 'owner_requested_experiment',
+  sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
   documentedComfortableUnits: { min: 16, max: 18 },
-  documentedMaximumUnits: null,
+  documentedMaximumUnits: 18,
   note: 'HRM guidance describes roughly 16–18 ads as comfortable on a 9 × 12. The requested 24-unit layout exceeds that guidance and is experimental; postal indicia, address area, branding, disclosures, legibility, and the combined artwork must pass manual preflight. The catalog can never make it production-ready.',
-  sourceUrls: [HRM_MASTERY_URL],
+  sourceUrls: [HRM_LAYOUT_CAPACITY_URL],
 };
 
 const TWELVE_BY_FIFTEEN_EVIDENCE: SharedMailerLayoutEvidence = {
   status: 'documented_capacity_preflight_required',
-  sourceKind: 'official_hrm_material',
+  sourceKind: 'first_party_hrm_guidance',
+  sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
   documentedComfortableUnits: null,
   documentedMaximumUnits: 25,
   note: 'HRM material describes the larger 12 × 15 family as supporting up to 25 ads. A 24-unit plan is within that stated ceiling but still requires an actual template, postal clear zones, legibility review, and combined-artwork preflight.',
-  sourceUrls: [HRM_AFFORDABILITY_URL, HRM_FORMATS_URL],
+  sourceUrls: [HRM_LAYOUT_CAPACITY_URL],
 };
 
 const M6_EVIDENCE: SharedMailerLayoutEvidence = {
   status: 'adjustable_family_preflight_required',
-  sourceKind: 'official_hrm_material',
-  documentedComfortableUnits: { min: 6, max: 9 },
+  sourceKind: 'first_party_hrm_guidance',
+  sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
+  documentedComfortableUnits: { min: 6, max: 6 },
   documentedMaximumUnits: 9,
   note: 'M6 is modeled as six equal paid units. HRM also shows M7–M9 split-layout variants, but those are not evidence that 7–9 placements have equal size, value, or price; each variant requires a custom layout and price mix.',
-  sourceUrls: [HRM_M6_URL, HRM_QUICKSTART_URL],
+  sourceUrls: [HRM_FORMATS_URL, HRM_M6_URL],
 };
 
 const M3_EVIDENCE: SharedMailerLayoutEvidence = {
   status: 'targeted_panel_preflight_required',
-  sourceKind: 'official_hrm_material',
-  documentedComfortableUnits: { min: 3, max: 3 },
-  documentedMaximumUnits: 3,
-  note: 'The M3 planning pattern uses three panels, typically two paid complementary partners plus one house or organizer panel. Audience, list, postage, panel boundaries, and final artwork remain project-specific.',
-  sourceUrls: [HRM_QUICKSTART_URL],
+  sourceKind: 'owner_requested_experiment',
+  sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
+  documentedComfortableUnits: null,
+  documentedMaximumUnits: null,
+  note: 'HRM first-party material identifies M3 as a shared-postcard family, but it does not publicly verify the configured two-paid-plus-one-house panel mix. That mix is an owner planning assumption; audience, list, postage, panel boundaries, economics, and final artwork remain project-specific.',
+  sourceUrls: [HRM_M3_PRODUCT_URL, HRM_SHARED_POSTCARD_URL],
 };
 
 const EQUAL_24_SLOT_PLAN: SharedMailerSlotPlan = {
@@ -349,7 +355,7 @@ export const SHARED_MAILER_MODELS = [
     version: ACTIVE_SHARED_MODEL_VERSION,
     family: 'm3',
     name: 'M3 targeted · 6 × 11',
-    summary: 'Three-panel addressed format, usually two complementary paying partners and one house panel. It is not costed as EDDM.',
+    summary: 'Owner-configured three-panel addressed planning format with two paid partners and one house panel. Public first-party material does not verify that exact mix, and it is not costed as EDDM.',
     widthInches: 6,
     heightInches: 11,
     quantity: null,
@@ -374,7 +380,7 @@ export const SHARED_MAILER_MODELS = [
     version: ACTIVE_SHARED_MODEL_VERSION,
     family: 'm3',
     name: 'M3 targeted · 6.5 × 12',
-    summary: 'Three-panel addressed format, usually two complementary paying partners and one house panel. It is not costed as EDDM.',
+    summary: 'Owner-configured three-panel addressed planning format with two paid partners and one house panel. Public first-party material does not verify that exact mix, and it is not costed as EDDM.',
     widthInches: 6.5,
     heightInches: 12,
     quantity: null,
@@ -417,11 +423,12 @@ export const SHARED_MAILER_MODELS = [
     suggestedPriceStatus: 'custom_quote_required',
     layoutEvidence: {
       status: 'custom_layout_required',
-      sourceKind: 'official_hrm_material',
+      sourceKind: 'first_party_hrm_guidance',
+      sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
       documentedComfortableUnits: null,
       documentedMaximumUnits: null,
       note: 'The community-card concept does not establish one production size or inventory. Define and preflight the actual project rather than borrowing another model’s slots.',
-      sourceUrls: [HRM_COMMUNITY_URL, HRM_QUICKSTART_URL],
+      sourceUrls: [HRM_COMMUNITY_URL],
     },
     costBasis: customCostBasis('Layout, print quantity, audience, postage, preparation, and delivery must be quoted for the specific community project.'),
     productionReadiness: 'owner_preflight_and_current_costs_required',
@@ -449,11 +456,12 @@ export const SHARED_MAILER_MODELS = [
     suggestedPriceStatus: 'custom_quote_required',
     layoutEvidence: {
       status: 'custom_layout_required',
-      sourceKind: 'official_hrm_material',
+      sourceKind: 'first_party_hrm_guidance',
+      sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
       documentedComfortableUnits: null,
       documentedMaximumUnits: null,
       note: 'Audience freshness, lawful list use, layout, advertiser mix, and mailing method must be verified for every run.',
-      sourceUrls: [HRM_NEW_MOVER_URL, HRM_QUICKSTART_URL],
+      sourceUrls: [HRM_NEW_MOVER_URL],
     },
     costBasis: externalCostBasis('A current list count and price, addressed printing, postage, preparation, and fulfillment quote are required.'),
     productionReadiness: 'owner_preflight_and_current_costs_required',
@@ -481,11 +489,12 @@ export const SHARED_MAILER_MODELS = [
     suggestedPriceStatus: 'custom_quote_required',
     layoutEvidence: {
       status: 'custom_layout_required',
-      sourceKind: 'official_hrm_material',
+      sourceKind: 'first_party_hrm_guidance',
+      sourceObservedAt: HRM_SOURCE_OBSERVED_AT,
       documentedComfortableUnits: null,
       documentedMaximumUnits: 72,
       note: 'The cited ceiling refers to directory listings with a custom size and price mix. It must not be represented as 72 equal display-ad slots, and an actual directory template must pass preflight.',
-      sourceUrls: [HRM_QUICKSTART_URL, HRM_COURSES_URL],
+      sourceUrls: [HRM_DIRECTORY_URL],
     },
     costBasis: customCostBasis('Select the print quantity, mailing method, listing mix, design workload, and fulfillment before calculating prices.'),
     productionReadiness: 'owner_preflight_and_current_costs_required',

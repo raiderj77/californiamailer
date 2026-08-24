@@ -61,11 +61,11 @@ const layoutStudies = [
   {
     id: 'm3',
     family: 'M3 partner mailer',
-    inventory: '2 paid partners + 1 house panel',
-    status: 'Targeted partner model · list and cost evidence required',
+    inventory: 'Owner planning mix: 2 paid partners + 1 house panel',
+    status: 'Unverified panel mix · template, list, and cost evidence required',
     columns: 'grid-cols-1',
     cells: 3,
-    note: 'Two complementary businesses can fund a focused mailing while the organizer uses the third panel. The house panel is never counted as paid funding.',
+    note: 'This configured mix is a planning study, not a publicly verified HRM layout. If used, the house panel is never counted as paid funding.',
   },
 ] as const;
 

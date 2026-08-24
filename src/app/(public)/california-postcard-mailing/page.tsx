@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://californiamailer.com/california-postcard-mailing' },
   openGraph: {
     title: 'California Postcard Mailing | EDDM & Addressed Mail',
-    description: 'Quote-only postcard planning for one California business, with Printing4SuperCheap production and USPS delivery.',
+    description: 'Quote-only postcard planning for a proposed California market. Production and USPS delivery remain conditional on a verified project plan.',
     url: 'https://californiamailer.com/california-postcard-mailing',
     type: 'website',
   },
@@ -21,8 +21,8 @@ const postcardFaqs = [
     answer: 'Yes. A single-business postcard gives one advertiser the full marketing side or full piece, subject to postal layout, content, artwork-rights, and production review.',
   },
   {
-    question: 'Do you offer EDDM and addressed postcard mailing in California?',
-    answer: 'California businesses may request either method. EDDM uses verified USPS carrier routes for saturation coverage. Addressed mail uses a defined recipient list or audience. Exact geography, quantity, eligibility, and availability must be verified for each project.',
+    question: 'May a California business submit an EDDM or addressed-postcard inquiry?',
+    answer: 'Yes. The named market remains candidate geography until verified. EDDM would use current USPS carrier-route evidence; addressed mail would use a defined, rights-reviewed recipient list or audience. Exact geography, quantity, eligibility, and availability must be verified for each project.',
   },
   {
     question: 'Who prints and delivers the postcards?',
@@ -60,7 +60,7 @@ export default function CaliforniaPostcardMailingPage() {
       <section className="bg-slate-950 px-5 py-16 text-white">
         <div className="mx-auto max-w-6xl">
           <div className="text-sm font-black uppercase tracking-[0.18em] text-blue-300">California postcard mailing · quote only</div>
-          <h1 className="mt-3 max-w-5xl text-4xl font-black tracking-tight text-white md:text-6xl">Single-business postcard mailing across California</h1>
+          <h1 className="mt-3 max-w-5xl text-4xl font-black tracking-tight text-white md:text-6xl">Request a California single-business postcard plan</h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
             Put one California business on the whole postcard. Choose saturation planning with USPS Every Door Direct Mail (EDDM) or an addressed audience, then verify the exact market, format, quantity, and complete economics before a written price exists.
           </p>
@@ -68,7 +68,7 @@ export default function CaliforniaPostcardMailingPage() {
             <Link href="/quote" className="inline-flex min-h-12 items-center rounded-full bg-blue-600 px-6 py-3 font-black text-white hover:bg-blue-500">Request a postcard plan</Link>
             <Link href="/sample-card" className="inline-flex min-h-12 items-center rounded-full border border-slate-600 px-6 py-3 font-black text-white hover:border-blue-300 hover:text-blue-200">Review format studies</Link>
           </div>
-          <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-400">Statewide intake does not mean every route, list, size, quantity, or production date is instantly available. A request does not authorize payment, printing, postage, or mailing.</p>
+          <p className="mt-5 max-w-3xl text-sm leading-6 text-slate-400">This intake accepts a proposed California market; it does not establish statewide fulfillment capacity, route availability, payment, printing, postage, or mailing authorization.</p>
         </div>
       </section>
 
@@ -127,9 +127,9 @@ export default function CaliforniaPostcardMailingPage() {
       <section className="mx-auto max-w-6xl px-5 py-16" aria-labelledby="california-postcard-markets">
         <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-start">
           <div>
-            <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">California-wide requests</div>
+            <div className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Candidate California market</div>
             <h2 id="california-postcard-markets" className="mt-2 text-3xl font-black text-slate-950">Plan around a real local market</h2>
-            <p className="mt-4 leading-7 text-slate-600">Businesses may request postcard mailing plans for communities throughout California. The actual service area for a campaign comes from dated route or audience evidence—not a copied statewide estimate or an implied exclusive territory.</p>
+            <p className="mt-4 leading-7 text-slate-600">An inquiry may name a California community. CaliforniaMailer does not represent any market as serviceable until dated route or audience evidence and a project-specific production plan establish it.</p>
             <p className="mt-4 leading-7 text-slate-600">Use the inquiry to name the city, ZIP Codes, customer geography, quantity range, and desired format. The owner can then compare the available methods without treating a request as a reservation.</p>
           </div>
           <aside className="rounded-3xl border border-blue-200 bg-blue-50 p-7">

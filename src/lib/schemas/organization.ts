@@ -5,7 +5,6 @@ export const californiaMailerOrg: WithContext<Organization> = {
   '@type': 'Organization',
   name: 'CaliforniaMailer',
   url: 'https://californiamailer.com',
-  email: 'hello@californiamailer.com',
   description:
     'An owner-managed shared-mailer service preparing one pre-funded Monterey Peninsula founding campaign.',
   areaServed: {

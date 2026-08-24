@@ -1,6 +1,9 @@
 import { Timestamp, type DocumentData } from 'firebase-admin/firestore';
 import { PRINTING4SUPERCHEAP } from '@/config/eddmOfferings';
-import { FOUNDING_CAMPAIGN } from '@/config/foundingCampaign';
+import {
+  FOUNDING_CAMPAIGN,
+  getApprovedCampaignContractVersions,
+} from '@/config/foundingCampaign';
 import type { PlacementSize, PublicCampaign } from '@/lib/campaignTypes';
 import { routeEvidenceFreshness, routeEvidenceValidThrough } from '@/lib/routePlans';
 
@@ -92,6 +95,7 @@ export function createFoundingCampaignRecord(ownerUid: string) {
 }
 
 export function toPublicCampaign(record: DocumentData, published: boolean): PublicCampaign {
+  const approvedContractVersions = getApprovedCampaignContractVersions(record);
   const effectiveRouteCheckedAt = typeof record.routePlanSourceRecheckedAt === 'string'
     && /^\d{4}-\d{2}-\d{2}$/.test(record.routePlanSourceRecheckedAt)
     ? record.routePlanSourceRecheckedAt
@@ -161,7 +165,7 @@ export function toPublicCampaign(record: DocumentData, published: boolean): Publ
     minimumPaidPlacements: Number(record.minimumPaidPlacements || record.minimumAdvertisers),
     currentAdvertiserCount: Number(record.currentAdvertiserCount || 0),
     currentPaidPlacementCount: Number(record.currentPaidPlacementCount || 0),
-    refundSummary: String(record.refundSummary),
+    refundSummary: approvedContractVersions ? String(record.refundSummary || '') : '',
     inclusions: Array.isArray(record.inclusions) ? record.inclusions.map(String) : [],
     campaignNotes: Array.isArray(record.campaignNotes) ? record.campaignNotes.map(String) : [],
     published,

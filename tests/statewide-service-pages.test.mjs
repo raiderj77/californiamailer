@@ -6,14 +6,16 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
 
 const postcard = read('src/app/(public)/california-postcard-mailing/page.tsx');
 const pizzaBox = read('src/app/(public)/pizza-box-advertising/page.tsx');
+const offerings = read('src/config/eddmOfferings.ts');
 
 test('statewide postcard page distinguishes EDDM and addressed USPS mail', () => {
-  assert.match(postcard, /Single-business postcard mailing across California/);
+  assert.match(postcard, /Request a California single-business postcard plan/);
   assert.match(postcard, /Every Door Direct Mail \(EDDM\)/);
   assert.match(postcard, /Addressed business postcards/);
   assert.match(postcard, /USPS delivers/);
   assert.match(postcard, /Printing4SuperCheap/);
-  assert.match(postcard, /Statewide intake does not mean every route, list, size, quantity, or production date is instantly available/);
+  assert.match(postcard, /does not establish statewide fulfillment capacity, route availability/);
+  assert.doesNotMatch(postcard, /Single-business postcard mailing across California|California-wide requests/);
 });
 
 test('statewide postcard pricing stays behind current evidence and both economic gates', () => {
@@ -26,13 +28,15 @@ test('statewide postcard pricing stays behind current evidence and both economic
 });
 
 test('pizza box page identifies a quote-only partner placement rather than USPS mail', () => {
-  assert.match(pizzaBox, /Pizza box coupon and flyer placements across California/);
-  assert.match(pizzaBox, /This is partner-distributed advertising, not USPS mail or EDDM/);
+  assert.match(pizzaBox, /Request a pizza-box coupon or flyer plan for a California market/);
+  assert.match(pizzaBox, /This would be partner-distributed advertising, not USPS mail or EDDM/);
   assert.match(pizzaBox, /signed distribution agreement/);
   assert.match(pizzaBox, /verified box volume/);
   assert.match(pizzaBox, /Rights-attested/);
   assert.match(pizzaBox, /Exact handoff and delivery-evidence responsibilities/);
   assert.match(pizzaBox, /Printing4SuperCheap/);
+  assert.match(pizzaBox, /does not establish statewide service, a restaurant network, or inventory/);
+  assert.doesNotMatch(pizzaBox, /placements across California|California-wide requests|Statewide service means/);
 });
 
 test('pizza box price, payment, and production remain behind complete economics', () => {
@@ -40,7 +44,15 @@ test('pizza box price, payment, and production remain behind complete economics'
   assert.match(pizzaBox, /\$2,500 pre-income-tax economic-surplus floor/);
   assert.match(pizzaBox, /2,000 bps \(20%\) minimum margin/);
   assert.match(pizzaBox, /No written customer price, payment path, or production authorization/);
-  assert.match(pizzaBox, /does not claim that a restaurant partner or placement is already available in every market/);
+  assert.match(pizzaBox, /does not establish a restaurant network, partner, placement, quantity, inventory, or availability/);
+});
+
+test('homepage and intake options keep unverified partner placement conditional', () => {
+  const home = read('src/app/(public)/home/page.tsx');
+  assert.match(home, /No partner, placement, or box volume is represented as available at inquiry/);
+  assert.match(offerings, /verified California restaurant partner/);
+  assert.match(offerings, /before it can be offered/);
+  assert.match(offerings, /no inquiry creates a hold or exclusivity/);
 });
 
 test('both statewide pages provide canonical metadata, visible FAQs, safe JSON-LD, and useful internal links', () => {

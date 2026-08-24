@@ -22,7 +22,6 @@ test('every public founding-price surface consumes the shared runtime visibility
     'src/app/(public)/home/page.tsx',
     'src/app/(public)/advertisers/page.tsx',
     'src/app/(public)/sample-card/page.tsx',
-    'src/app/(public)/funding-policy/page.tsx',
     'src/app/(public)/reserve/page.tsx',
     'src/app/(public)/founding-mailer/page.tsx',
     'src/app/(public)/coop-board/page.tsx',
@@ -57,7 +56,6 @@ test('every request-time public price surface remains explicitly discoverable', 
     '/advertisers',
     '/coop-board',
     '/founding-mailer',
-    '/funding-policy',
     '/home',
     '/pricing',
     '/reserve',
@@ -67,6 +65,67 @@ test('every request-time public price surface remains explicitly discoverable', 
   }
   assert.match(sitemap, /additionalPaths/);
   assert.match(sitemap, /requestTimePublicPaths\.map/);
+});
+
+test('static machine-readable copy never publishes expiring customer prices or selected reach', () => {
+  const llms = read('public/llms.txt');
+  assert.match(llms, /withheld in this static document/i);
+  assert.match(llms, /No carrier routes or residential delivery counts are selected/);
+  assert.match(llms, /request-time `\/pricing` page/);
+  assert.doesNotMatch(llms, /\$(?:349|479|8,376|11,496)\b/);
+  assert.doesNotMatch(llms, /Current verified posture|selected Monterey Peninsula carrier routes/);
+});
+
+test('unverified public mailbox is not published as a working contact method', () => {
+  const publicIdentitySurfaces = [
+    'public/llms.txt',
+    'src/app/layout.tsx',
+    'src/lib/schemas/organization.ts',
+    'src/components/public/SiteFooter.tsx',
+    'src/app/(public)/contact/page.tsx',
+    'src/app/(public)/privacy/page.tsx',
+    'src/app/(public)/terms/page.tsx',
+    'src/app/(public)/local-deals/unsubscribe/page.tsx',
+  ].map(read).join('\n');
+  assert.doesNotMatch(publicIdentitySurfaces, /hello@californiamailer\.com|mailto:/i);
+  assert.match(read('src/app/(public)/contact/page.tsx'), /no public mailbox is represented as verified/i);
+});
+
+test('draft policies are conditional, noindex, and absent from the sitemap', () => {
+  const terms = read('src/app/(public)/terms/page.tsx');
+  const funding = read('src/app/(public)/funding-policy/page.tsx');
+  const privacy = read('src/app/(public)/privacy/page.tsx');
+  const faq = read('src/app/(public)/faq/page.tsx');
+  const campaign = read('src/config/foundingCampaign.ts');
+  const projection = read('src/lib/campaignRecords.ts');
+  const sitemap = read('next-sitemap.config.js');
+  for (const source of [terms, funding]) {
+    assert.match(source, /robots: \{ index: false, follow: false \}/);
+  }
+  assert.match(terms, /No campaign contract is approved for checkout/);
+  assert.match(terms, /FOUNDING_CAMPAIGN\.termsVersion/);
+  assert.match(funding, /No customer funding goal is published here as an approved checkout term/);
+  assert.match(funding, /FOUNDING_CAMPAIGN\.fundingPolicyVersion/);
+  assert.match(funding, /These outcomes remain unresolved/);
+  assert.match(campaign, /termsVersion: '2026-08-23-draft-2'/);
+  assert.match(campaign, /fundingPolicyVersion: '2026-08-23-draft-2'/);
+  assert.match(privacy, /Last updated August 23, 2026/);
+  assert.match(faq, /No cancellation or refund rule is active today/);
+  assert.doesNotMatch(faq, /initiates full refunds|records the obligation/);
+  assert.match(campaign, /no refund rule is approved/i);
+  assert.match(projection, /refundSummary: approvedContractVersions \?/);
+  assert.doesNotMatch(funding, /derivedFundingGoalLabel|No public page currently represents a rule that has not been approved/);
+  assert.match(sitemap, /'\/funding-policy'/);
+  assert.match(sitemap, /'\/terms'/);
+  assert.doesNotMatch(sitemap.slice(0, sitemap.indexOf('const statewideServicePaths')), /'\/funding-policy'|'\/terms'/);
+});
+
+test('founding campaign copy uses a piece target without implying selected residences', () => {
+  const home = read('src/app/(public)/home/page.tsx');
+  const founding = read('src/app/(public)/founding-mailer/page.tsx');
+  assert.match(home, /no routes or residential address count are selected/i);
+  assert.match(founding, /no carrier routes, residential address count, or mailing is selected/i);
+  assert.doesNotMatch(`${home}\n${founding}`, /selected Monterey Peninsula residences|target residences/i);
 });
 
 test('browser-readable campaign projections never persist expiring customer prices', () => {
@@ -158,7 +217,7 @@ test('quote page offers a bounded faceless fit preview without guarantees or sil
   assert.match(quote, /Partner-distributed—not mailed/);
   assert.match(quote, /Printing4SuperCheap is the required printer/);
   assert.match(offerings, /pizza_box/);
-  assert.match(offerings, /Printing4SuperCheap prints the piece/);
+  assert.match(offerings, /A concept requiring a current Printing4SuperCheap quote/);
   assert.match(intake, /PIZZA_BOX_QUANTITY_LABEL/);
   assert.match(intake, /serviceType === 'pizza_box'/);
 });

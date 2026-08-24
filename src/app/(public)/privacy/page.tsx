@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <PublicShell>
       <article className="mx-auto max-w-4xl px-5 py-20">
         <h1 className="text-4xl font-black tracking-tight md:text-6xl">Privacy policy</h1>
-        <p className="mt-3 text-sm text-slate-500">Last updated August 19, 2026</p>
+        <p className="mt-3 text-sm text-slate-500">Last updated August 23, 2026</p>
         <Section title="Information you choose to submit">
           The inquiry form collects a name, business name, email address, optional phone number, contact preference, requested service,
           area, quantity, and message. The reservation-interest and private fulfillment flows may also collect business category, website,
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           manage refunds or disputes, prevent abuse, and maintain required business records.
         </Section>
         <Section title="Service providers">
-          Firebase records valid quote inquiries in the private owner CRM for manual review. The current form does not queue or send a quote-request notification email.
+          When the server database is configured, Firebase records valid quote inquiries in the private owner CRM for manual review. If storage is unavailable, the form reports that the request could not be confirmed as recorded. The current form does not queue or send a quote-request notification email.
           Vercel hosts the application. If activated, Stripe will provide hosted checkout and process payment data under its own notice.
           CaliforniaMailer does not store full card details.
         </Section>
@@ -58,13 +58,11 @@ export default function PrivacyPage() {
           the consumer subscriber list to advertisers. This statement does not describe necessary processing by contracted providers.
         </Section>
         <Section title="Retention and security">
-          Records are retained only as needed for the campaign, accounting, consent, suppression, security, dispute,
-          or legal purposes. Private notes, payment references, uploads, and contact details are not intended for public campaign records.
+          The application does not automatically delete business records on a fixed schedule. Before activation, the owner must approve a retention and deletion procedure for campaign, accounting, consent, suppression, security, dispute, and legal records. Private notes, payment references, uploads, and contact details are not intended for public campaign records.
           No transmission or storage system can be guaranteed completely secure.
         </Section>
         <Section title="Questions and requests">
-          Email hello@californiamailer.com to ask what information you submitted or to request correction or deletion where applicable.
-          CaliforniaMailer may need to verify the request and may retain records required for accounting, suppression, disputes, security, or law.
+          Use the contact page to submit a request about information you provided. A verified public privacy-request mailbox is not yet published, so do not submit sensitive information. CaliforniaMailer may need to verify a request and may retain records required for accounting, suppression, disputes, security, or law.
         </Section>
         <p className="mt-12 text-sm leading-6 text-slate-500">
           This notice describes the current application design and is not a legal opinion about whether a particular privacy law applies.

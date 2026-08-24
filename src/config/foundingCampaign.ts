@@ -27,6 +27,11 @@ export interface ApprovedCampaignContractVersions {
   fundingPolicyVersion: string;
 }
 
+export interface SubmittedCampaignContractAcceptance {
+  acceptedTermsVersion?: unknown;
+  acceptedFundingPolicyVersion?: unknown;
+}
+
 // Keep this allowlist empty until both corresponding reviewed documents are
 // actually published. A label that merely omits the word "draft" is not an
 // approved contract version, and terms/policy versions are approved as a pair.
@@ -51,6 +56,18 @@ export function getApprovedCampaignContractVersions(record: {
     && isAllowedContractVersion(record.fundingPolicyVersion, [candidate.fundingPolicyVersion]),
   );
   return approved ? { ...approved } : null;
+}
+
+export function submittedContractAcceptanceMatches(
+  submission: SubmittedCampaignContractAcceptance,
+  approved: ApprovedCampaignContractVersions | null,
+): boolean {
+  return approved !== null
+    && isAllowedContractVersion(submission.acceptedTermsVersion, [approved.termsVersion])
+    && isAllowedContractVersion(
+      submission.acceptedFundingPolicyVersion,
+      [approved.fundingPolicyVersion],
+    );
 }
 
 export const FOUNDING_CATEGORIES = [
@@ -174,10 +191,10 @@ export const FOUNDING_CAMPAIGN = {
   routesConfirmed: false,
   artworkPreflightApproved: false,
   ownerPrintApproved: false,
-  termsVersion: '2026-08-draft',
-  fundingPolicyVersion: '2026-08-draft',
+  termsVersion: '2026-08-23-draft-2',
+  fundingPolicyVersion: '2026-08-23-draft-2',
   refundSummary:
-    'If the campaign is cancelled because the cleared funding goal is not reached, eligible campaign payments are refunded under the written funding policy. Refunds are reviewed and recorded by the owner; they are not triggered by this website automatically.',
+    'Draft planning note only: no refund rule is approved. A future versioned campaign contract must define cancellation, eligibility, timing, exceptions, and remedies before any payment is accepted.',
   inclusions: [
     'Ad layout included',
     'Direct communication with the owner',

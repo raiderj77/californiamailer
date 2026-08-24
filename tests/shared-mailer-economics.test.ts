@@ -58,6 +58,9 @@ test('24 units on 9x12 remain experimental beyond the HRM comfortable range', ()
     assert.deepEqual(model.slots.paidUnitsRange, { min: 16, max: 24 });
     assert.deepEqual(sharedMailerFillSensitivityUnits(model), [16, 18, 24]);
     assert.deepEqual(model.layoutEvidence.documentedComfortableUnits, { min: 16, max: 18 });
+    assert.equal(model.layoutEvidence.documentedMaximumUnits, 18);
+    assert.equal(model.layoutEvidence.sourceObservedAt, '2026-08-23');
+    assert.deepEqual(model.layoutEvidence.sourceUrls, ['https://highresponsemarketing.com/part-iv-cheaper-design/']);
     assert.equal(model.layoutEvidence.status, 'experimental_preflight_required');
     assert.equal(model.productionReadiness, 'never_from_catalog_preflight_required');
     assert.match(model.layoutEvidence.note, /catalog can never make it production-ready/i);
@@ -105,18 +108,30 @@ test('production planning floors derive fees and reserves from the active gross 
 test('12x15, M6, M3, custom, targeted, and directory evidence stays distinct', () => {
   const twelveByFifteen = getSharedMailerModel('shared-12x15-5000');
   assert.equal(twelveByFifteen?.layoutEvidence.documentedMaximumUnits, 25);
+  assert.equal(twelveByFifteen?.layoutEvidence.sourceKind, 'first_party_hrm_guidance');
+  assert.deepEqual(twelveByFifteen?.layoutEvidence.sourceUrls, ['https://highresponsemarketing.com/part-iv-cheaper-design/']);
   assert.equal(twelveByFifteen?.slots.totalUnitsDefault, 24);
 
   const m6 = getSharedMailerModel('m6-6x11-2500');
   assert.equal(m6?.slots.paidUnitsDefault, 6);
   assert.deepEqual(m6?.slots.paidUnitsRange, { min: 6, max: 6 });
+  assert.deepEqual(m6?.layoutEvidence.documentedComfortableUnits, { min: 6, max: 6 });
+  assert.equal(m6?.layoutEvidence.documentedMaximumUnits, 9);
   assert.match(m6?.layoutEvidence.note ?? '', /M7–M9 split-layout variants/i);
+  assert.deepEqual(m6?.layoutEvidence.sourceUrls, [
+    'https://highresponsemarketing.com/newbie-guide/what-i-sell/',
+    'https://highresponsemarketing.com/samples/m6/',
+  ]);
 
   const m3 = getSharedMailerModel('m3-6x11-targeted');
   assert.equal(m3?.mailingMethod, 'addressed_targeted');
   assert.equal(m3?.slots.totalUnitsDefault, 3);
   assert.equal(m3?.slots.paidUnitsDefault, 2);
   assert.equal(m3?.slots.houseUnitsDefault, 1);
+  assert.equal(m3?.layoutEvidence.sourceKind, 'owner_requested_experiment');
+  assert.equal(m3?.layoutEvidence.documentedComfortableUnits, null);
+  assert.equal(m3?.layoutEvidence.documentedMaximumUnits, null);
+  assert.match(m3?.layoutEvidence.note ?? '', /owner planning assumption/i);
   assert.equal(m3?.costBasis.status, 'external_mailing_cost_required');
   assert.equal(m3?.costBasis.supplierSubtotalCents, null);
 
@@ -126,6 +141,8 @@ test('12x15, M6, M3, custom, targeted, and directory evidence stays distinct', (
   assert.deepEqual(directory?.slots.totalUnitsRange, { min: 1, max: 72 });
   assert.equal(directory?.slots.pricingMode, 'custom_price_mix');
   assert.match(directory?.layoutEvidence.note ?? '', /not be represented as 72 equal/i);
+  assert.deepEqual(directory?.layoutEvidence.sourceUrls, ['https://highresponsemarketing.com/grant/']);
+  assert.ok(SHARED_MAILER_MODELS.every((model) => model.layoutEvidence.sourceObservedAt === '2026-08-23'));
   assert.ok(SHARED_MAILER_MODELS.every((model) => model.costBasis.supplierId === 'printing4supercheap'));
 });
 

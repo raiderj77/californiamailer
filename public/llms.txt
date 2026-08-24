@@ -1,31 +1,31 @@
 # CaliforniaMailer
 
-CaliforniaMailer is an owner-managed direct-mail project preparing an experimental, pre-funded shared-mailer campaign for selected Monterey Peninsula carrier routes.
+CaliforniaMailer is an owner-managed direct-mail project evaluating an experimental shared-mailer planning scenario for candidate Monterey Peninsula geography. No carrier routes or residential delivery counts are selected.
 
-## Current verified posture
+## Current pre-launch posture
 
 - Campaign state: pre-launch unless the database-backed campaign board publishes a later state
 - Active plan: `shared-9x12-5000`, offer model version `shared-mailers-v2`
 - Proposed format: experimental 9 × 12 on 14 pt stock
-- Mailing target: approximately 5,000 pieces; exact carrier routes and delivery count are not yet selected
+- Planning quantity: 5,000 pieces; this is not a selected-route address count or delivery promise
 - Mailing areas: public candidate geography is searchable at `/mailing-areas`; exact route counts appear only when the public API returns a current verified route-plan snapshot
-- Proposed inventory: 24 equal paid slot-units at $349 each
-- Proposed full-funding goal: $8,376
+- Proposed inventory: experimental 24-unit layout concept; no unit is offered for purchase from this static document
+- Customer price and funding goal: withheld in this static document. The request-time `/pricing` page must evaluate current dated evidence and otherwise require a written quote
 - Checkout and payment: disabled until a 24-unit physical template passes indicia, address-space, branding, disclosure, bleed, safe-area, and legibility review, and until current supplier pricing, routes, complete economics, policies, and provider configuration are approved
 - Production status: no payment may be accepted and no print order may be placed from the catalog model alone
 - Results: no response, lead, appointment, sale, or ROI promise
 
-The $349 unit price and $8,376 funding goal are planning assumptions, not live availability or evidence of a completed mailing. HRM material describes roughly 16–18 ads as comfortable on a 9 × 12 and about 25 on a 12 × 15, so the requested 24-unit 9 × 12 is not production-proven.
+Customer amounts are deliberately absent because a static artifact cannot expire supplier evidence. HRM first-party guidance describes roughly 16–18 ads as comfortable on a 9 × 12 and about 25 on a 12 × 15, so the requested 24-unit 9 × 12 is not production-proven.
 
 ## Shared-mailer model catalog
 
-The catalog stores dated $349 and $479 equal-unit planning prices for experimental 9 × 12 scenarios at 5,000 and 10,000 pieces. The public pricing page shows either only while its Printing4SuperCheap snapshot remains inside the 30-day planning window and its complete safeguards clear the fixed $2,500 pre-income-tax surplus floor. The modeled margins differ; matching the active 5,000-piece economic margin is a separate, stricter calculator goal. Other shared-mailer examples—including 12 × 15, adjustable M6/M7–9, targeted M3, community, new-mover/Sparker, and directory formats—remain model-specific and quote-only. Custom price mixes use a required total revenue and average benchmark, not a uniform customer price.
+The catalog contains internal dated planning-price assumptions for experimental 9 × 12 scenarios at 5,000 and 10,000 pieces. This static document does not publish them. The request-time `/pricing` page may show a planning amount only while its supplier snapshot remains inside the configured evidence window and its safeguards clear the fixed $2,500 pre-income-tax surplus floor and 20% economic-margin floor. Other shared-mailer examples—including 12 × 15, adjustable M6/M7–9, targeted M3, community, new-mover/Sparker, and directory formats—remain model-specific and quote-only. Custom price mixes use a required total revenue and average benchmark, not a uniform customer price.
 
-Single-business EDDM, targeted-addressed mail, and small partner mailers are also available only through a written scope and current quote.
+Requests for single-business EDDM, targeted-addressed mail, and small partner-mailer planning may be submitted for project-specific review. An inquiry does not establish availability.
 
 ## Operating model
 
-The intended sequence is asynchronous interest review, category check, physical template and economics preflight, campaign publication, hosted checkout only if activated, materials intake, versioned proof approval, print-readiness checks, and delivery documentation. Direct contact with the owner remains available.
+The intended sequence is asynchronous interest review, category check, physical template and economics preflight, campaign publication, hosted checkout only if activated, materials intake, versioned proof approval, print-readiness checks, and delivery documentation. A public reply mailbox remains unpublished until its identity and delivery are verified.
 
 ## Important pages
 
@@ -42,4 +42,4 @@ The intended sequence is asynchronous interest review, category check, physical 
 - https://californiamailer.com/privacy
 - https://californiamailer.com/terms
 
-Contact: hello@californiamailer.com
+Contact status: use `/contact` for the current inquiry boundary; no public mailbox is represented as verified.

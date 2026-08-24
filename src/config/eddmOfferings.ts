@@ -95,12 +95,12 @@ export const MINI_COOP_MAIL_PIECES: readonly MailPieceOption[] = [
 export const EDDM_QUANTITY_TIERS = [250, 500, 750, 1_000, 1_500, 2_000, 2_500, 3_000, 4_000, 5_000, 7_500, 10_000, 15_000, 20_000] as const;
 
 export const SERVICE_OPTIONS: ReadonlyArray<{ id: QuoteServiceType; label: string; description: string }> = [
-  { id: 'coop', label: 'Founding 9 × 12 shared mailer', description: 'One protected category unit in the active experimental 24-unit, 5,000-piece planning model.' },
+  { id: 'coop', label: 'Founding 9 × 12 shared mailer', description: 'One category-interest request in the experimental 24-unit, 5,000-piece planning model; no inquiry creates a hold or exclusivity.' },
   { id: 'shared_model', label: 'Another shared-mailer model', description: 'Compare 9 × 12, 12 × 15, M6/M7–M9, M3, community, new-mover, and directory concepts without borrowing prices across formats.' },
   { id: 'mini_coop', label: 'Small partner mailer', description: 'A smaller shared piece for a few complementary, noncompeting businesses; quoted as a separate project.' },
   { id: 'eddm', label: 'Single-business EDDM mailer', description: 'One business owns the whole saturation mail piece; route, size, and fulfillment are quoted.' },
   { id: 'solo', label: 'Targeted solo postcard', description: 'One business mails to a defined addressed audience rather than every address on a route.' },
-  { id: 'pizza_box', label: 'Pizza-box coupon or community flyer', description: 'Printing4SuperCheap prints the piece; a documented California restaurant partner distributes it. This is not USPS mail.' },
+  { id: 'pizza_box', label: 'Pizza-box coupon or community flyer', description: 'A concept requiring a current Printing4SuperCheap quote, a verified California restaurant partner, and a written distribution plan before it can be offered. This is not USPS mail.' },
 ];
 
 export const DISCOUNT_PRINT_PRICES_CENTS: Readonly<Record<string, Readonly<Record<number, number>>>> = {

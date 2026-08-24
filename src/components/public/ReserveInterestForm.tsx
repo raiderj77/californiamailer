@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { PublicShell } from '@/components/public/PublicShell';
-import { FOUNDING_CAMPAIGN } from '@/config/foundingCampaign';
+import {
+  FOUNDING_CAMPAIGN,
+  type ApprovedCampaignContractVersions,
+} from '@/config/foundingCampaign';
 import type { PublicPlanningPriceVisibility } from '@/lib/publicPlanningPriceVisibility';
 
 interface FormState {
@@ -22,6 +25,8 @@ interface FormState {
   termsAccepted: boolean;
   refundPolicyAccepted: boolean;
   proofAcknowledged: boolean;
+  acceptedTermsVersion: string;
+  acceptedFundingPolicyVersion: string;
   companySite: string;
 }
 
@@ -41,15 +46,23 @@ const initialForm: FormState = {
   termsAccepted: false,
   refundPolicyAccepted: false,
   proofAcknowledged: false,
+  acceptedTermsVersion: '',
+  acceptedFundingPolicyVersion: '',
   companySite: '',
 };
 
 export function ReserveInterestForm({
   priceVisibility,
+  approvedContractVersions,
 }: {
   priceVisibility: PublicPlanningPriceVisibility;
+  approvedContractVersions: ApprovedCampaignContractVersions | null;
 }) {
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState<FormState>(() => ({
+    ...initialForm,
+    acceptedTermsVersion: approvedContractVersions?.termsVersion ?? '',
+    acceptedFundingPolicyVersion: approvedContractVersions?.fundingPolicyVersion ?? '',
+  }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ reference: string; message: string } | null>(null);
@@ -136,9 +149,9 @@ export function ReserveInterestForm({
           <fieldset className="rounded-3xl border border-slate-200 p-6 md:p-8">
             <legend className="px-2 text-xl font-black">Required acknowledgments</legend>
             <div className="mt-3 space-y-4">
-              <Check checked={form.termsAccepted} onChange={(value) => update('termsAccepted', value)}>I reviewed the <Link href="/terms" className="font-bold text-blue-700 underline" target="_blank">draft campaign terms</Link> and understand a pre-launch interest record is not a reservation.</Check>
-              <Check checked={form.refundPolicyAccepted} onChange={(value) => update('refundPolicyAccepted', value)}>I reviewed the <Link href="/funding-policy" className="font-bold text-blue-700 underline" target="_blank">funding and refund policy</Link>.</Check>
-              <Check checked={form.proofAcknowledged} onChange={(value) => update('proofAcknowledged', value)}>I understand final written proof approval is required and does not guarantee advertising results.</Check>
+              <Check checked={form.termsAccepted} onChange={(value) => update('termsAccepted', value)}>{approvedContractVersions ? <>I accept the <Link href="/terms" className="font-bold text-blue-700 underline" target="_blank">campaign terms version {approvedContractVersions.termsVersion}</Link> for this request.</> : <>I reviewed the <Link href="/terms" className="font-bold text-blue-700 underline" target="_blank">draft campaign terms</Link> and understand a pre-launch interest record is not a reservation.</>}</Check>
+              <Check checked={form.refundPolicyAccepted} onChange={(value) => update('refundPolicyAccepted', value)}>{approvedContractVersions ? <>I accept the <Link href="/funding-policy" className="font-bold text-blue-700 underline" target="_blank">funding and refund policy version {approvedContractVersions.fundingPolicyVersion}</Link> for this request.</> : <>I reviewed the <Link href="/funding-policy" className="font-bold text-blue-700 underline" target="_blank">draft funding and refund policy</Link> and understand it is not an active payment term.</>}</Check>
+              <Check checked={form.proofAcknowledged} onChange={(value) => update('proofAcknowledged', value)}>I reviewed the proposed proof requirement and understand it is not an approved campaign contract or a guarantee of advertising results.</Check>
             </div>
             <div className="hidden" aria-hidden="true"><label>Company site<input tabIndex={-1} autoComplete="off" value={form.companySite} onChange={(event) => update('companySite', event.target.value)} /></label></div>
           </fieldset>

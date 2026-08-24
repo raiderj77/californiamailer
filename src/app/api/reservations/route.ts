@@ -7,6 +7,7 @@ import {
   FOUNDING_CAMPAIGN,
   campaignMatchesActiveSharedModel,
   getApprovedCampaignContractVersions,
+  submittedContractAcceptanceMatches,
   type ApprovedCampaignContractVersions,
 } from '@/config/foundingCampaign';
 import { sendEmail } from '@/lib/email';
@@ -47,6 +48,8 @@ const reservationSchema = z.object({
   termsAccepted: z.literal(true),
   refundPolicyAccepted: z.literal(true),
   proofAcknowledged: z.literal(true),
+  acceptedTermsVersion: z.string().trim().max(100).optional().default(''),
+  acceptedFundingPolicyVersion: z.string().trim().max(100).optional().default(''),
   companySite: z.string().max(0).optional().default(''),
 }).strict();
 
@@ -62,12 +65,19 @@ function publicReference() {
   return `CM-${randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
+async function sendOwnerNotification(subject: string, text: string) {
+  const ownerEmail = process.env.OWNER_EMAIL?.trim();
+  if (!ownerEmail) return 'not_configured' as const;
+  const result = await sendEmail({ to: ownerEmail, subject, text });
+  return result.success ? 'provider_accepted_unverified' as const : 'provider_rejected' as const;
+}
+
 function baseSubmission(
   input: z.infer<typeof reservationSchema>,
   reference: string,
   campaign: DocumentData,
 ) {
-  const acceptedAt = new Date().toISOString();
+  const reviewedAt = new Date().toISOString();
   return {
     publicReference: reference,
     campaignId: input.campaignId,
@@ -91,9 +101,9 @@ function baseSubmission(
     fundingPolicyVersion: typeof campaign.fundingPolicyVersion === 'string'
       ? campaign.fundingPolicyVersion
       : null,
-    termsAcceptedAt: acceptedAt,
-    refundPolicyAcceptedAt: acceptedAt,
-    proofAcknowledgedAt: acceptedAt,
+    draftTermsReviewedAt: reviewedAt,
+    draftFundingPolicyReviewedAt: reviewedAt,
+    proofRequirementAcknowledgedAt: reviewedAt,
   };
 }
 
@@ -177,6 +187,10 @@ export async function POST(request: NextRequest) {
   }
   const deadlineMs = campaign.reservationDeadline ? Date.parse(String(campaign.reservationDeadline)) : Number.NaN;
   const approvedContractVersions = getApprovedCampaignContractVersions(campaign);
+  const approvedContractAcceptance = submittedContractAcceptanceMatches(
+    parsed.data,
+    approvedContractVersions,
+  );
 
   const canCreatePaidHold =
     RESERVATION_OPEN_STATUSES.has(String(campaign.status)) &&
@@ -192,6 +206,7 @@ export async function POST(request: NextRequest) {
     initialEvidenceBlockReason === null &&
     activeCampaignModel &&
     approvedContractVersions !== null &&
+    approvedContractAcceptance &&
     Number.isFinite(deadlineMs) &&
     deadlineMs > Date.now() &&
     category.status === 'available' &&
@@ -225,10 +240,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Interest could not be recorded.' }, { status: 500 });
     }
 
-    const notification = await sendEmail({
-      to: 'hello@californiamailer.com',
-      subject: `Founding mailer interest: ${parsed.data.businessName}`,
-      text: [
+    const ownerNotificationStatus = await sendOwnerNotification(
+      `Founding mailer interest: ${parsed.data.businessName}`,
+      [
         'A database interest record was created.',
         `Reference: ${reference}`,
         `Business: ${parsed.data.businessName}`,
@@ -239,9 +253,9 @@ export async function POST(request: NextRequest) {
         `Placement: ${parsed.data.placementSize}`,
         'No hold, payment, or funding was created.',
       ].join('\n'),
-    });
+    );
     await interestRef.set({
-      ownerNotificationStatus: notification.success ? 'delivered_to_provider' : 'delivery_failed',
+      ownerNotificationStatus,
       ownerNotificationUpdatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
 
@@ -297,6 +311,10 @@ export async function POST(request: NextRequest) {
         ? Date.parse(String(currentCampaign.reservationDeadline))
         : Number.NaN;
       const currentContractVersions = getApprovedCampaignContractVersions(currentCampaign);
+      const currentContractAcceptance = submittedContractAcceptanceMatches(
+        parsed.data,
+        currentContractVersions,
+      );
       if (
         !RESERVATION_OPEN_STATUSES.has(String(currentCampaign.status))
         || currentCampaign.paymentActivation !== true
@@ -311,6 +329,7 @@ export async function POST(request: NextRequest) {
           currentRoutePlanSnapshot?.data(),
         ) !== null
         || !currentContractVersions
+        || !currentContractAcceptance
         || !Number.isFinite(currentDeadlineMs)
         || currentDeadlineMs <= Date.now()
       ) {
@@ -419,10 +438,15 @@ export async function POST(request: NextRequest) {
         || suppressedQuoteLookup.collisions.length > 0
       ) throw new Error('invitation-required');
 
+      const contractAcceptedAt = new Date().toISOString();
+
       transaction.create(reservationRef, {
         ...submission,
         termsVersion: currentContractVersions.termsVersion,
         fundingPolicyVersion: currentContractVersions.fundingPolicyVersion,
+        termsAcceptedAt: contractAcceptedAt,
+        refundPolicyAcceptedAt: contractAcceptedAt,
+        proofAcknowledgedAt: contractAcceptedAt,
         accessTokenHash,
         portalAccessVersion: legacyAccessVersion,
         portalInviteVersion: 0,
@@ -649,10 +673,9 @@ export async function POST(request: NextRequest) {
   } catch {
     projectionStatus = 'sync_failed';
   }
-  const holdNotification = await sendEmail({
-    to: 'hello@californiamailer.com',
-    subject: `Founding mailer hold: ${parsed.data.businessName}`,
-    text: [
+  const ownerNotificationStatus = await sendOwnerNotification(
+    `Founding mailer hold: ${parsed.data.businessName}`,
+    [
       'A real owner-invited category hold was created.',
       `Reference: ${reference}`,
       `Business: ${parsed.data.businessName}`,
@@ -662,9 +685,9 @@ export async function POST(request: NextRequest) {
       `Checkout: ${checkoutUrl ? 'hosted link created' : 'unavailable; no payment'}`,
       `Public projection: ${projectionStatus}`,
     ].join('\n'),
-  });
+  );
   await reservationRef.set({
-    ownerNotificationStatus: holdNotification.success ? 'delivered_to_provider' : 'delivery_failed',
+    ownerNotificationStatus,
     projectionStatus,
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });

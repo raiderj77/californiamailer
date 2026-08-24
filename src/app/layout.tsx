@@ -9,7 +9,6 @@ const siteStructuredData = {
       '@id': 'https://californiamailer.com/#organization',
       name: 'CaliforniaMailer',
       url: 'https://californiamailer.com',
-      email: 'hello@californiamailer.com',
       description: 'Owner-managed California planning for shared mailers, single-business postcards, and documented partner-distributed advertising.',
     },
     {
