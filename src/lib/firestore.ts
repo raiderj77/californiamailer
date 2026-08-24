@@ -12,6 +12,10 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 
+// Legacy collection interfaces still accept provider-specific timestamp values.
+// New campaign/payment paths use explicit server types in campaignTypes.ts.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Types
 export interface Territory {
   id?: string;
@@ -66,21 +70,145 @@ export interface Prospect {
   city: string;
   territoryId: string;
   territoryName: string;
-  status: 'new' | 'contacted' | 'interested' | 'proposal' | 'closed' | 'lost';
+  status:
+    | 'new'
+    | 'researching'
+    | 'ready_to_contact'
+    | 'contacted'
+    | 'follow_up_needed'
+    | 'interested'
+    | 'reservation_sent'
+    | 'reserved'
+    | 'awaiting_payment'
+    | 'paid'
+    | 'not_interested'
+    | 'no_response'
+    | 'poor_fit'
+    | 'do_not_contact'
+    | 'renewal_opportunity'
+    // Legacy values remain readable until existing records are migrated.
+    | 'proposal'
+    | 'closed'
+    | 'lost';
   notes: string;
+  businessCategory?: string;
+  website?: string;
+  contactRole?: string;
+  serviceArea?: string;
+  mailingTerritoryFit?: string;
+  currentAdvertisedOffer?: string;
+  estimatedCustomerValue?: number;
+  activeAdvertisingEvidence?: string;
+  officialSource?: string;
+  officialSourceCheckedAt?: string;
+  leadSource?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  qualificationStatus?: 'verify' | 'qualified' | 'disqualified';
+  qualificationReason?: string;
+  lastContactDate?: string;
+  nextFollowUpDate?: string;
+  contactAttempts?: number;
+  campaignId?: string;
+  offeredPlacement?: 'standard';
+  quotedPrice?: number;
+  categoryReservationStatus?: 'none' | 'interest' | 'hold' | 'sold' | 'released';
+  paymentStatus?: 'none' | 'pending' | 'cleared' | 'failed' | 'refunded' | 'disputed';
+  proofStatus?: string;
+  renewalStatus?: string;
+  renewalDate?: string;
+  doNotContact?: boolean;
+  suppressed?: boolean;
+  suppressedAt?: any;
+  suppressedBy?: string;
+  suppressionSource?: string;
+  normalizedBusinessName?: string;
+  normalizedEmail?: string;
+  normalizedWebsite?: string;
+  normalizedPhone?: string;
   userId: string;
   createdAt?: any;
   updatedAt?: any;
 }
 
 // Prospects
-export async function addProspect(prospect: Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'>) {
-  const docRef = await addDoc(collection(db, 'prospects'), {
-    ...prospect,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+const PROSPECT_MUTABLE_FIELDS = [
+  'businessName',
+  'businessCategory',
+  'website',
+  'contactName',
+  'contactRole',
+  'email',
+  'phone',
+  'address',
+  'city',
+  'serviceArea',
+  'territoryId',
+  'territoryName',
+  'mailingTerritoryFit',
+  'currentAdvertisedOffer',
+  'estimatedCustomerValue',
+  'activeAdvertisingEvidence',
+  'officialSource',
+  'officialSourceCheckedAt',
+  'leadSource',
+  'priority',
+  'qualificationStatus',
+  'qualificationReason',
+  'status',
+  'lastContactDate',
+  'nextFollowUpDate',
+  'contactAttempts',
+  'notes',
+  'campaignId',
+  'offeredPlacement',
+  'quotedPrice',
+  'categoryReservationStatus',
+  'paymentStatus',
+  'proofStatus',
+  'renewalStatus',
+  'renewalDate',
+  'doNotContact',
+  'suppressed',
+] as const satisfies readonly (keyof Prospect)[];
+
+function prospectMutationPayload(data: Partial<Prospect>) {
+  const payload: Record<string, unknown> = {};
+  for (const field of PROSPECT_MUTABLE_FIELDS) {
+    if (data[field] !== undefined) payload[field] = data[field];
+  }
+  return payload;
+}
+
+async function mutateProspect(
+  body: Record<string, unknown>,
+  idToken: string,
+) {
+  const response = await fetch('/api/admin/prospects', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
   });
-  return docRef.id;
+  const result = await response.json().catch(() => ({})) as { error?: unknown; id?: unknown };
+  if (!response.ok) {
+    throw new Error(typeof result.error === 'string' ? result.error : 'Prospect mutation failed.');
+  }
+  if (typeof result.id !== 'string' || !result.id) {
+    throw new Error('Prospect mutation returned an invalid record identifier.');
+  }
+  return result.id;
+}
+
+export async function addProspect(
+  prospect: Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'>,
+  idToken: string,
+) {
+  return mutateProspect({
+    action: 'create',
+    prospect: prospectMutationPayload(prospect),
+  }, idToken);
 }
 
 export async function getProspects(userId: string) {
@@ -93,9 +221,12 @@ export async function getProspects(userId: string) {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Prospect));
 }
 
-export async function updateProspect(id: string, data: Partial<Prospect>) {
-  const docRef = doc(db, 'prospects', id);
-  await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+export async function updateProspect(id: string, data: Partial<Prospect>, idToken: string) {
+  await mutateProspect({
+    action: 'update',
+    prospectId: id,
+    changes: prospectMutationPayload(data),
+  }, idToken);
 }
 
 export async function deleteProspect(id: string) {

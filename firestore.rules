@@ -2,76 +2,415 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function ownsExisting() {
+      // Legacy browser CRM access remains scoped to the same Firebase UID, but
+      // only the provider-assigned owner admin claim may cross this boundary.
+      return isAdmin() && request.auth.uid == resource.data.userId;
+    }
+
+    function createsOwned() {
+      return isAdmin() && request.auth.uid == request.resource.data.userId;
+    }
+
+    function preservesOwner() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    function isManualProspectStatus(data) {
+      return data.get('status', '') in [
+        'new',
+        'researching',
+        'ready_to_contact',
+        'contacted',
+        'follow_up_needed',
+        'interested',
+        'not_interested',
+        'no_response',
+        'poor_fit',
+        'do_not_contact',
+        'renewal_opportunity'
+      ];
+    }
+
+    function isProspectContactState(data) {
+      return data.get('status', '') in [
+        'ready_to_contact',
+        'contacted',
+        'follow_up_needed',
+        'interested',
+        'no_response',
+        'renewal_opportunity'
+      ];
+    }
+
+    function ownerContactBarrierActive(ownerUid) {
+      return exists(/databases/$(database)/documents/prospectsuppressionstate/$(ownerUid))
+        && get(/databases/$(database)/documents/prospectsuppressionstate/$(ownerUid)).data.get('contactBlocked', false) == true;
+    }
+
+    function contactStateAllowed(ownerUid, data) {
+      return !isProspectContactState(data) || !ownerContactBarrierActive(ownerUid);
+    }
+
+    function createsSafeActivity() {
+      return !(request.resource.data.get('type', '') in ['email', 'call', 'proposal', 'meeting'])
+        || !ownerContactBarrierActive(request.resource.data.userId);
+    }
+
+    function isSuppressedProspect(data) {
+      return data.get('doNotContact', false) == true
+        || data.get('suppressed', false) == true
+        || data.get('status', '') in ['do_not_contact', 'suppressed'];
+    }
+
+    function hasConsistentProspectSuppression(data) {
+      return !isSuppressedProspect(data)
+        || (
+          data.get('doNotContact', false) == true
+          && data.get('status', '') == 'do_not_contact'
+        );
+    }
+
+    function preservesProspectSuppression() {
+      // Existing suppression can be preserved during factual browser edits,
+      // but it cannot be cleared or renamed into a contactable status.
+      return !isSuppressedProspect(resource.data)
+        || (
+          request.resource.data.get('doNotContact', false) == true
+          && request.resource.data.get('status', '') == 'do_not_contact'
+          && (
+            resource.data.get('suppressed', false) != true
+            || request.resource.data.get('suppressed', false) == true
+          )
+        );
+    }
+
+    function preventsClientProspectSuppressionTransition() {
+      // New DNC decisions must use the owner-authenticated server transaction
+      // so every same-identity prospect is suppressed together.
+      return isSuppressedProspect(resource.data)
+        || !isSuppressedProspect(request.resource.data);
+    }
+
+    function preservesProspectIdentity() {
+      // Every identity change uses the owner server transaction so it cannot
+      // race an identity-wide DNC or recreate a matching contactable record.
+      return request.resource.data.get('businessName', '') == resource.data.get('businessName', '')
+        && request.resource.data.get('email', '') == resource.data.get('email', '')
+        && request.resource.data.get('phone', '') == resource.data.get('phone', '')
+        && request.resource.data.get('website', '') == resource.data.get('website', '')
+        && request.resource.data.get('normalizedBusinessName', '') == resource.data.get('normalizedBusinessName', '')
+        && request.resource.data.get('normalizedEmail', '') == resource.data.get('normalizedEmail', '')
+        && request.resource.data.get('normalizedPhone', '') == resource.data.get('normalizedPhone', '')
+        && request.resource.data.get('normalizedWebsite', '') == resource.data.get('normalizedWebsite', '');
+    }
+
+    function onlyUpdatesSafeProspectFacts() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'businessCategory',
+        'contactName',
+        'contactRole',
+        'address',
+        'city',
+        'serviceArea',
+        'territoryId',
+        'territoryName',
+        'mailingTerritoryFit',
+        'currentAdvertisedOffer',
+        'estimatedCustomerValue',
+        'activeAdvertisingEvidence',
+        'officialSource',
+        'officialSourceCheckedAt',
+        'leadSource',
+        'priority',
+        'qualificationStatus',
+        'qualificationReason',
+        'status',
+        'lastContactDate',
+        'nextFollowUpDate',
+        'contactAttempts',
+        'notes',
+        'campaignId',
+        'offeredPlacement',
+        'quotedPrice',
+        'categoryReservationStatus',
+        'paymentStatus',
+        'proofStatus',
+        'renewalStatus',
+        'renewalDate',
+        'updatedAt'
+      ]);
+    }
+
+    function preservesOrClearsLegacyProspectState() {
+      // Existing browser-authored operational values remain readable as
+      // unverified notes. A client may preserve or clear them, but cannot
+      // create a new paid/reserved/sold/cleared claim.
+      return (
+          request.resource.data.get('status', '') == resource.data.get('status', '')
+          || isManualProspectStatus(request.resource.data)
+        )
+        && (
+          request.resource.data.get('categoryReservationStatus', 'none')
+            == resource.data.get('categoryReservationStatus', 'none')
+          || request.resource.data.get('categoryReservationStatus', 'none') == 'none'
+        )
+        && (
+          request.resource.data.get('paymentStatus', 'none')
+            == resource.data.get('paymentStatus', 'none')
+          || request.resource.data.get('paymentStatus', 'none') == 'none'
+        );
+    }
+
     match /territories/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      // Retired legacy browser-authoritative model. Its uncited household and
+      // income fields are not valid route evidence and its UI is no longer used.
+      allow read, write: if false;
     }
-    
+
+    // Mailing territories and immutable route-plan evidence are readable and
+    // writable only through owner-authorized server routes using the Admin SDK.
+    match /mailterritories/{docId} {
+      allow read, write: if false;
+    }
+
+    match /routeplans/{docId} {
+      allow read, write: if false;
+    }
+
     match /prospects/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read: if ownsExisting();
+      allow delete: if ownsExisting() && !isSuppressedProspect(resource.data);
+      allow create: if false;
+      allow update: if ownsExisting() && preservesOwner()
+        && preservesProspectIdentity()
+        && onlyUpdatesSafeProspectFacts()
+        && preservesOrClearsLegacyProspectState()
+        && hasConsistentProspectSuppression(request.resource.data)
+        && preventsClientProspectSuppressionTransition()
+        && contactStateAllowed(resource.data.userId, request.resource.data)
+        && preservesProspectSuppression();
     }
-    
+
     match /campaigns/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      // The founding campaign is created only by the owner-authorized Admin API.
+      // Denying browser writes prevents any Firebase user from squatting its fixed ID.
+      allow read: if isAdmin();
+      allow write: if false;
     }
-    
+
     match /vatasks/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned();
+      allow update: if ownsExisting() && preservesOwner();
     }
-    
+
     match /emailtemplates/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned();
+      allow update: if ownsExisting() && preservesOwner();
     }
-    
+
     match /activities/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned() && createsSafeActivity();
+      allow update: if false;
     }
-    
+
     match /reminders/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned();
+      allow update: if ownsExisting() && preservesOwner();
     }
-    
+
     match /invoices/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned();
+      allow update: if ownsExisting() && preservesOwner();
     }
-    
+
     match /clients/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId;
-      allow read: if resource.data.accessCode == request.query.accessCode;
+      allow read, delete: if ownsExisting();
+      allow create: if createsOwned();
+      allow update: if ownsExisting() && preservesOwner();
     }
-    
+
     match /teammembers/{docId} {
-      allow read, write: if request.auth != null 
-        && request.auth.uid == resource.data.ownerId;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.ownerId;
+      allow read, delete: if isAdmin() && request.auth.uid == resource.data.ownerId;
+      allow create: if isAdmin() && request.auth.uid == request.resource.data.ownerId;
+      allow update: if isAdmin()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.ownerId == resource.data.ownerId;
+    }
+
+    // Public pages can read only an explicitly published, sanitized projection.
+    // Client writes are denied; trusted server code publishes these records.
+    match /publiccampaigns/{campaignId} {
+      allow read: if resource.data.published == true;
+      allow write: if false;
+    }
+
+    // New campaign workflow records are private and written through server routes.
+    match /reservations/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reservationinterests/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reservationdedupe/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reservationinvites/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Passwordless portal invites and sessions contain bearer-token hashes and
+    // are available only through owner/public server routes using the Admin SDK.
+    match /advertiserportalinvites/{docId} {
+      allow read, write: if false;
+    }
+
+    match /advertiserportalsessions/{docId} {
+      allow read, write: if false;
+    }
+
+    match /categoryclaims/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /placementslots/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /payments/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /paymentevents/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /refunds/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /proofs/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /proofapprovals/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /materials/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Immutable advertiser creative-brief versions and reservation pointers are
+    // written only by reservation-scoped server routes using the Admin SDK.
+    match /creativebriefs/{docId} {
+      allow read, write: if false;
+    }
+
+    match /trackinglinks/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /trackingevents/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /trackingreports/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /trackingcouponclaims/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Coupon drafts, approved public snapshots, and AI usage counters are
+    // available only through reservation-scoped or owner server routes.
+    match /coupons/{docId} {
+      allow read, write: if false;
+    }
+
+    match /couponaiusage/{docId} {
+      allow read, write: if false;
+    }
+
+    match /deliveryreports/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /subscribers/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /suppressions/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /prospectsuppressionstate/{docId} {
+      allow read, write: if false;
+    }
+
+    match /consentrecords/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /auditlog/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Public quote intake and CRM settings are available only through signed
+    // server routes. Rate-limit guard documents are never browser data.
+    match /quoteinquiries/{docId} {
+      allow read, write: if false;
+    }
+
+    match /crmsettings/{docId} {
+      allow read, write: if false;
+    }
+
+    match /publicrequestguards/{docId} {
+      allow read, write: if false;
+    }
+
+    // Undeclared feature collections stay denied until a signed server flow exists.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
