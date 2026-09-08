@@ -1,36 +1,32 @@
-import Mailgun from 'mailgun.js';
-import formData from 'form-data';
+import nodemailer from 'nodemailer';
 
-export async function sendEmail({
-  to,
-  subject,
-  text,
-  html,
-  from,
-}: {
+export async function sendEmail({ to, subject, text, replyTo }: {
   to: string;
   subject: string;
-  text?: string;
-  html?: string;
-  from?: string;
+  text: string;
+  replyTo?: string;
 }) {
-  const key = process.env.MAILGUN_API_KEY;
-  const domain = process.env.MAILGUN_DOMAIN;
-  if (!key || !domain) return { success: false };
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASSWORD;
+  if (!user || !pass || to !== 'hello@californiamailer.com') return { success: false };
 
+  const transport = nodemailer.createTransport({
+    host: 'smtp.migadu.com', port: 465, secure: true,
+    auth: { user, pass },
+    connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000,
+    disableFileAccess: true, disableUrlAccess: true,
+  });
   try {
-    const mailgun = new Mailgun(formData);
-    const client = mailgun.client({ username: 'api', key });
-    const result = await client.messages.create(domain, {
-      from: from || `CaliforniaMailer <noreply@${domain}>`,
-      to: [to],
-      subject,
-      text: text || '',
-      ...(html ? { html } : {}),
+    const result = await transport.sendMail({
+      from: { name: 'CaliforniaMailer', address: user },
+      to, subject, text,
+      ...(replyTo ? { replyTo: { address: replyTo, name: '' } } : {}),
     });
-    return { success: true, id: result.id };
+    return { success: result.accepted.includes(to), id: result.messageId };
   } catch {
-    console.error('Mailgun delivery failed');
+    console.error('Quote email delivery failed');
     return { success: false };
+  } finally {
+    transport.close();
   }
 }

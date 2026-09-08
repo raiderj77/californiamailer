@@ -29,7 +29,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-bold text-gray-950">Service providers</h2>
             <p className="mt-2">
-              Quote emails are delivered through Mailgun. Account and operational records may be stored in
+              Quote emails are delivered through Migadu and forwarded to our business Gmail inbox. Account and operational records may be stored in
               Firebase for authenticated business workflows. Those providers process data under their own
               terms and privacy notices. CaliforniaMailer does not sell quote-request information.
             </p>

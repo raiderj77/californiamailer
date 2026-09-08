@@ -11,7 +11,7 @@ Competitor claims, testimonials, prices, logos, and success metrics were not cop
 ## Result
 Public navigation, homepage, services, area pages, quote form, co-op inquiry, and terms describe the actual inquiry flow. Removed unsupported population/income statistics, fixed-price offers, and implied live co-op inventory. Canonicals, main landmarks, mobile layout, contrast, form labels, and safe submission responses are verified by browser tests. Email input is sent as plain text, never unescaped HTML.
 
-## Operational limits
+## Initial operational findings (superseded by Migadu repair below)
 Production DNS has no root receiving MX, SPF, or DMARC records. Authoritative DNS is GoDaddy. Existing Mailgun credentials are present; read-only domain lookup returned 401. Do not equate that lookup result with tested sending failure or successful sending. Mailbox/provider repair and an explicitly authorized end-to-end delivery test are required before claiming live quote delivery. Never send a test to a customer.
 
 ## Validation
@@ -22,3 +22,10 @@ Run npm test, npm run build, start the production build, then npm run test:brows
 The owner selected 9 x 12 shared advertising as the lead offer. Homepage, navigation, service selection, and quote defaults follow that direction. The final concept uses the landscape coupon arrangement in the owner's Bob Ross blueprint page 26 as a structural reference. Source course pages remain private in ignored tmp/references and are not published. public/coop-postcard-9x12-reference-v2.png is original generated sample artwork, not live inventory, participating advertisers, or print-ready artwork. Built-in image generation was used. Prompt: create a landscape 12 by 9 co-op concept with eight compact sample coupon ads around a small CaliforniaMailer center panel, following the reference layout structure without copying advertiser content; use explicit sample labels and placeholder offers/contact details.
 
 Local validation passed: six safety tests, production build, targeted ESLint, and eight public routes at mobile and desktop widths with no serious/critical axe violations, no horizontal overflow, correct canonicals, one main landmark, mocked quote failure/success, invalid API rejection, and disabled checkout. External email delivery remains unverified.
+
+## Migadu delivery repair (2026-09-08)
+The owner selected Migadu with forwarding to their existing Gmail inbox. GoDaddy now publishes Migadu root MX, ownership verification, three DKIM CNAMEs, SPF and DMARC. Migadu diagnostics confirmed the domain active. hello routes through the admin mailbox to the owner's confirmed forwarding destination. Legacy mg subdomain records remain intact.
+A synthetic production quote returned 502 using the old Mailgun sender. The replacement uses a dedicated website mailbox over verified TLS SMTP, restricted at Migadu and in the application to the hello inbox. SMTP authentication passed. Reply-To uses the validated quote address. Credentials are encrypted Vercel environment variables and are never committed. Production delivery still requires the final synthetic quote check after deployment.
+
+
+Dependency validation: upgraded the installed dependency graph and pinned patched PostCSS plus Sharp; npm audit reports zero vulnerabilities (including development dependencies). The production build and targeted ESLint pass with Next 16.3.4.
