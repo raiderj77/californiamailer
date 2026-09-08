@@ -23,6 +23,9 @@ try {
         waitUntil: "networkidle",
       });
       assert.equal(response.status(), 200, route);
+      assert.equal(response.headers()["x-content-type-options"], "nosniff", route + " content type protection");
+      assert.equal(response.headers()["x-frame-options"], "SAMEORIGIN", route + " frame protection");
+      assert.equal(response.headers()["referrer-policy"], "strict-origin-when-cross-origin", route + " referrer policy");
       assert.equal(await page.locator("h1").count(), 1, route + " h1");
       assert.equal(await page.locator("main").count(), 1, route + " main");
       assert.equal(

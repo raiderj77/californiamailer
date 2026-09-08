@@ -39,7 +39,7 @@ test('privacy policy documents the live quote and analytics behavior', () => {
 });
 
 test('unverified comparison article redirects to the current service page', () => {
-  const config = read('next.config.ts');
+  const config = read('next.config.js');
   const sitemap = read('next-sitemap.config.js');
   assert.match(config, /source: '\/blog\/best-direct-mail-monterey-county'/);
   assert.match(config, /destination: '\/services'/);
