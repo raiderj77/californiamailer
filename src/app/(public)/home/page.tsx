@@ -1,387 +1,200 @@
-import { californiaMailerOrg } from '@/lib/schemas/organization';
-import { directMailService } from '@/lib/schemas/service';
-import Link from 'next/link';
-
+import Link from "next/link";
+import Image from "next/image";
+import PublicSiteShell from "@/components/PublicSiteShell";
+export const metadata = {
+  title: "9 × 12 Co-op Postcard Advertising | CaliforniaMailer",
+  description:
+    "Share a 9 × 12 postcard with local businesses in Monterey County and California. Ask about ad space, campaign areas, design, and mailing costs.",
+  alternates: { canonical: "/home" },
+};
+const steps = [
+  [
+    "01",
+    "Choose your community",
+    "Tell us your business category and the community you want to reach. We review the campaign area and available placement options.",
+  ],
+  [
+    "02",
+    "Plan your ad space",
+    "Share your offer and artwork needs. Your written quote confirms the ad size, shared campaign scope, and your cost.",
+  ],
+  [
+    "03",
+    "Review before anything prints",
+    "Review the final artwork, route selection, scope, and schedule. Production requires a separate written agreement and approval.",
+  ],
+];
 export default function HomePage() {
-  const cities = [
-    { name: 'Salinas', slug: 'salinas', households: '45,000+' },
-    { name: 'Monterey', slug: 'monterey', households: '28,000+' },
-    { name: 'Carmel', slug: 'carmel', households: '12,000+' },
-    { name: 'Pacific Grove', slug: 'pacific-grove', households: '15,000+' },
-    { name: 'Seaside', slug: 'seaside', households: '18,000+' },
-    { name: 'Marina', slug: 'marina', households: '14,000+' },
-  ];
-
   return (
-    <div className="min-h-screen bg-white">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(californiaMailerOrg)
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(directMailService)
-        }}
-      />
-      {/* Navigation */}
-      <nav className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/home" className="text-2xl font-bold text-blue-600">
-            CaliforniaMailer
+    <PublicSiteShell>
+      <section className="cm-hero">
+        <div>
+          <p className="cm-eyebrow">MONTEREY COUNTY & CALIFORNIA</p>
+          <h1>Share the postcard.<br /><span>Reach your neighborhood.</span></h1>
+          <p className="cm-lead">
+            Put your business on a 9 × 12 co-op postcard alongside other local
+            businesses. Share the printing and mailing costs while reaching
+            households in your selected California community.
+          </p>
+          <div className="cm-actions">
+            <Link className="cm-button" href="/quote?service=coop">
+              Ask about an ad space →
+            </Link>
+            <a className="cm-text-link" href="#how-it-works">
+              See how it works ↓
+            </a>
+          </div>
+          <p className="cm-fine">
+            No mailing list needed for EDDM. No payment to request a quote.
+          </p>
+        </div>
+        <figure className="cm-mail-preview">
+          <Image src="/coop-postcard-9x12-reference-v2.png" width={1448} height={1086} alt="Landscape 9 by 12 co-op postcard concept with eight sample coupon ads surrounding a small CaliforniaMailer panel" priority sizes="(max-width: 760px) 90vw, 600px" />
+          <figcaption>9 × 12 CO-OP POSTCARD <span>Concept layout · Sample ads</span></figcaption>
+        </figure>
+      </section>
+      <div className="cm-strip">
+        <span>One oversized postcard</span>
+        <span>Multiple local businesses</span>
+        <span>Shared printing & mailing costs</span>
+      </div>
+      <section className="cm-section" id="how-it-works">
+        <p className="cm-eyebrow">FROM AN IDEA TO A MAILING PLAN</p>
+        <h2>From your business to their mailbox.</h2>
+        <div className="cm-grid">
+          {steps.map(([n, title, body]) => (
+            <article className="cm-panel" key={n}>
+              <span className="cm-step">{n}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="cm-section cm-tinted">
+        <p className="cm-eyebrow">CHOOSE YOUR STARTING POINT</p>
+        <h2>Start with a shared postcard.</h2>
+        <div className="cm-grid">
+          {[
+            [
+              "coop",
+              "9 × 12 co-op advertising",
+              "Take an ad space alongside other local businesses and share the printing and mailing costs. Ask about your area and category.",
+            ],
+            [
+              "design",
+              "Design & print support",
+              "Have artwork already, or need help getting started? Include the size, quantity, and design support you need.",
+            ],
+            [
+              "solo",
+              "Custom direct mail",
+              "Planning something beyond a neighborhood mailing? Describe your audience and requirements for a custom review.",
+            ],
+          ].map(([id, title, body]) => (
+            <article className="cm-panel" key={id}>
+              <h3>{title}</h3>
+              <p>{body}</p>
+              <Link href={"/quote?service=" + id}>Request this service →</Link>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section className="cm-section cm-split" id="areas">
+        <div>
+          <p className="cm-eyebrow">START WITH THE RIGHT AREA</p>
+          <h2>
+            Think in neighborhoods,
+            <br />
+            not guesswork.
+          </h2>
+          <p>
+            Salinas, Monterey, Carmel, Pacific Grove, Seaside, Marina—or another
+            California community. Request an area review; route counts and
+            service availability are confirmed for your campaign.
+          </p>
+          <a
+            className="cm-text-link"
+            href="https://eddm.usps.com/eddm/select-routes.htm"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Explore routes on USPS (opens a new tab) ↗
+          </a>
+        </div>
+        <aside className="cm-panel">
+          <h3>What should I budget?</h3>
+          <p>
+            A mailing budget includes printing, postage, and any design or
+            preparation work. Quantity, format, selected routes, and timing
+            affect the total.
+          </p>
+          <p>
+            Your written quote breaks down the costs for your campaign.
+            Requesting a quote is free and does not place an order.
+          </p>
+          <Link className="cm-button" href="/quote">
+            Request a written quote ↗
           </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/services" className="text-gray-600 hover:text-gray-900">Services</Link>
-            <Link href="/home#areas" className="text-gray-600 hover:text-gray-900">Areas</Link>
-            <Link href="/home#pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
-            <Link href="/coop-board" className="text-gray-600 hover:text-gray-900">Co-op Board</Link>
-            <Link href="/quote" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-              Get a Quote
-            </Link>
-            <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
-              Client Login
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-20 md:py-28">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="max-w-3xl">
-            <div className="inline-block bg-blue-500/30 text-blue-100 px-4 py-1 rounded-full text-sm mb-6">
-              Direct mail planning for Monterey County businesses
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Reach Every Door in Your Target Neighborhood
-            </h1>
-            <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-              Plan an EDDM, co-op, or custom postcard campaign and request a written quote before
-              making any payment.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link 
-                href="/quote" 
-                className="bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50 shadow-lg"
-              >
-                Get Your Free Quote
-              </Link>
-              <Link 
-                href="/coop-board" 
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white/10"
-              >
-                View Available Spots
-              </Link>
-            </div>
-            <p className="mt-8 text-sm text-blue-200">
-              Scope, schedule, postage assumptions, and payment terms are confirmed in writing.
-            </p>
-          </div>
-        </div>
+        </aside>
       </section>
-
-      {/* Stats Bar */}
-      <section className="bg-gray-900 text-white py-8">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-xl md:text-2xl font-bold text-blue-400">Local planning</div>
-              <div className="text-gray-400 text-sm">Monterey County focus</div>
-            </div>
-            <div>
-              <div className="text-xl md:text-2xl font-bold text-blue-400">Written quotes</div>
-              <div className="text-gray-400 text-sm">Review before payment</div>
-            </div>
-            <div>
-              <div className="text-xl md:text-2xl font-bold text-blue-400">Clear scope</div>
-              <div className="text-gray-400 text-sm">Services and assumptions listed</div>
-            </div>
-            <div>
-              <div className="text-xl md:text-2xl font-bold text-blue-400">No browser pricing</div>
-              <div className="text-gray-400 text-sm">Checkout remains disabled</div>
-            </div>
-          </div>
-        </div>
+      <section className="cm-section cm-faq">
+        <p className="cm-eyebrow">BEFORE YOU START</p>
+        <h2>A few useful answers.</h2>
+        {[
+          [
+            "How does a co-op postcard work?",
+            "Several businesses share one oversized postcard and its printing and mailing costs. Your quote confirms the placement size, campaign area, quantity, funding requirements, and schedule before you commit.",
+          ],
+          [
+            "Is the sample showing available ad spaces?",
+            "The sample illustrates a layout. It does not show booked advertisers or live inventory. Ask about your business category and area for current placement options.",
+          ],
+          [
+            "Do I need a customer mailing list?",
+            "Not for EDDM. It reaches delivery points on the carrier routes you select, rather than a list of named customers.",
+          ],
+          [
+            "How many pieces can I send?",
+            "USPS describes EDDM Retail as 200–5,000 pieces per day per ZIP Code. Larger or different mailings need the appropriate mailing plan. Final route counts and eligibility are checked before a quote is accepted.",
+          ],
+          [
+            "Can I use my own design?",
+            "Yes. Say that you have artwork in your request. Final format, print specifications, and postal eligibility must be reviewed before production. Do not upload artwork or a customer list through the quote form.",
+          ],
+          [
+            "When will my mailing arrive?",
+            "The production schedule and postal-entry plan are confirmed in writing. Postal delivery dates and business results are not guaranteed.",
+          ],
+          [
+            "Do I pay on this website?",
+            "No. Checkout remains disabled. A quote request does not place an order, reserve a mailing, or authorize payment.",
+          ],
+        ].map(([q, a]) => (
+          <details key={q}>
+            <summary>{q}</summary>
+            <p>{a}</p>
+          </details>
+        ))}
+        <p className="cm-fine">
+          Postal guidance checked September 7, 2026.{" "}
+          <a href="https://www.usps.com/business/every-door-direct-mail.htm">
+            Check current USPS requirements
+          </a>
+          .
+        </p>
       </section>
-
-      {/* How It Works */}
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">How It Works</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Get your business in front of thousands of local homeowners in 3 simple steps
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📍</span>
-              </div>
-              <div className="text-blue-600 font-bold text-sm mb-2">STEP 1</div>
-              <h3 className="text-xl font-bold mb-2">Choose Your Area</h3>
-              <p className="text-gray-600">
-                Pick the neighborhoods you want to target. We&apos;ll show you exactly how many homes you&apos;ll reach.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🎨</span>
-              </div>
-              <div className="text-blue-600 font-bold text-sm mb-2">STEP 2</div>
-              <h3 className="text-xl font-bold mb-2">We Design Your Ad</h3>
-              <p className="text-gray-600">
-                Our designers create eye-catching postcards that get results. Unlimited revisions included.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">📬</span>
-              </div>
-              <div className="text-blue-600 font-bold text-sm mb-2">STEP 3</div>
-              <h3 className="text-xl font-bold mb-2">We Handle Everything</h3>
-              <p className="text-gray-600">
-                Print, postage, delivery — all done for you. Your postcard arrives in mailboxes within 2 weeks.
-              </p>
-            </div>
-          </div>
-        </div>
+      <section className="cm-final">
+        <p className="cm-eyebrow">LET’S START WITH YOUR NEIGHBORHOOD</p>
+        <h2>
+          Where do you want
+          <br />
+          your business to go?
+        </h2>
+        <Link className="cm-button" href="/quote?service=coop">
+          Ask about an ad space ↗
+        </Link>
       </section>
-
-      {/* Services */}
-      <section id="services" className="py-20 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Our Services</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Choose the option that fits your budget and goals
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Co-op Card */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border-2 border-blue-600 relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                MOST POPULAR
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <span className="text-2xl">🤝</span>
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Co-op Postcard</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">$299-$500</div>
-              <div className="text-gray-500 text-sm mb-4">per spot</div>
-              <p className="text-gray-600 mb-6">
-                Share a 9x12 postcard with 8-10 other local businesses. Maximum exposure at minimum cost.
-              </p>
-              <ul className="space-y-2 mb-6 text-sm">
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> 10,000+ homes reached</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Design included</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Print & postage included</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Category exclusivity</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> ~$0.03-$0.05 per home</li>
-              </ul>
-              <Link href="/coop-board" className="block text-center bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700">
-                View Available Spots
-              </Link>
-            </div>
-
-            {/* EDDM */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                <span className="text-2xl">📬</span>
-              </div>
-              <h3 className="text-2xl font-bold mb-2">EDDM Postcards</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">$0.247</div>
-              <div className="text-gray-500 text-sm mb-4">current USPS EDDM Retail postage per eligible flat</div>
-              <p className="text-gray-600 mb-6">
-                Your own postcard to every door on selected carrier routes. Full creative control.
-              </p>
-              <ul className="space-y-2 mb-6 text-sm">
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Your business only</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Choose exact routes</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> No mailing list needed</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Min 200 pieces</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Design available</li>
-              </ul>
-              <Link href="/quote" className="block text-center bg-gray-100 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-200">
-                Get EDDM Quote
-              </Link>
-            </div>
-
-            {/* Solo Mailer */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
-                <span className="text-2xl">🎯</span>
-              </div>
-              <h3 className="text-2xl font-bold mb-2">Solo Mailers</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">Custom</div>
-              <div className="text-gray-500 text-sm mb-4">based on quantity & targeting</div>
-              <p className="text-gray-600 mb-6">
-                Targeted mailings with custom lists. Perfect for specific demographics or past customers.
-              </p>
-              <ul className="space-y-2 mb-6 text-sm">
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Targeted mailing lists</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Multiple sizes available</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Variable data printing</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Address verification</li>
-                <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Response tracking</li>
-              </ul>
-              <Link href="/quote" className="block text-center bg-gray-100 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-200">
-                Get Custom Quote
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Service Areas */}
-      <section id="areas" className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Service Areas</h2>
-          <p className="text-center text-gray-600 mb-12">
-            Serving all of Monterey County and surrounding areas
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {cities.map((city) => (
-              <Link
-                key={city.slug}
-                href={`/areas/${city.slug}`}
-                className="bg-white border-2 border-gray-100 rounded-xl p-6 hover:border-blue-600 hover:shadow-lg transition-all group"
-              >
-                <h3 className="font-bold text-lg group-hover:text-blue-600">{city.name}</h3>
-                <p className="text-gray-500 text-sm">{city.households} households</p>
-                <span className="text-blue-600 text-sm mt-2 inline-block">View routes →</span>
-              </Link>
-            ))}
-          </div>
-          <p className="text-center text-gray-500 mt-8">
-            Don&apos;t see your area? <Link href="/quote" className="text-blue-600 hover:underline">Contact us</Link> — we cover all of California.
-          </p>
-        </div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section id="pricing" className="py-20 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Transparent Pricing</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            Review the written scope and know what you&apos;ll pay before you commit.
-          </p>
-          <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-6 py-4 font-medium text-gray-700">Service</th>
-                  <th className="text-left px-6 py-4 font-medium text-gray-700">Price</th>
-                  <th className="text-left px-6 py-4 font-medium text-gray-700">Includes</th>
-                  <th className="text-left px-6 py-4 font-medium text-gray-700 hidden md:table-cell">Best For</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                <tr>
-                  <td className="px-6 py-4 font-medium">Co-op Spot</td>
-                  <td className="px-6 py-4 text-blue-600 font-bold">$299-$500</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Design, print, postage</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">Budget-conscious, first timers</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 font-medium">EDDM Postage</td>
-                  <td className="px-6 py-4 text-blue-600 font-bold">$0.247/pc</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Postage only</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">Full control, larger campaigns</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">EDDM Full Service</td>
-                  <td className="px-6 py-4 text-blue-600 font-bold">$0.35-$0.45/pc</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Design, print, postage</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">Hands-off campaigns</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 font-medium">Design Only</td>
-                  <td className="px-6 py-4 text-blue-600 font-bold">$75-$200</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">Print-ready files</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 hidden md:table-cell">DIY mailers</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-4 text-center text-xs text-gray-500">
-            USPS rate checked July 14, 2026. Printing, design, preparation, and CaliforniaMailer service costs are separate unless a written quote says otherwise.{' '}
-            <a className="text-blue-600 underline" href="https://www.usps.com/business/prices.htm" rel="noopener noreferrer" target="_blank">Verify the current USPS price</a>.
-          </p>
-          <div className="text-center mt-8">
-            <Link href="/pricing" className="text-blue-600 hover:underline font-medium">
-              View full pricing calculator →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 bg-blue-600 text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Reach More Customers?</h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Tell us the audience, area, quantity, and service you want reviewed.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link 
-              href="/quote" 
-              className="bg-white text-blue-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-blue-50"
-            >
-              Get Your Free Quote
-            </Link>
-            <Link 
-              href="/coop-board" 
-              className="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white/10"
-            >
-              Browse Co-op Spots
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="text-white text-xl font-bold mb-4">CaliforniaMailer</div>
-              <p className="text-sm">
-                Professional direct mail services for Monterey County and all of California.
-              </p>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Services</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/services#coop" className="hover:text-white">Co-op Postcards</Link></li>
-                <li><Link href="/services#eddm" className="hover:text-white">EDDM Mailings</Link></li>
-                <li><Link href="/services#solo" className="hover:text-white">Solo Mailers</Link></li>
-                <li><Link href="/services#design" className="hover:text-white">Design Services</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Areas</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/areas/salinas" className="hover:text-white">Salinas</Link></li>
-                <li><Link href="/areas/monterey" className="hover:text-white">Monterey</Link></li>
-                <li><Link href="/areas/carmel" className="hover:text-white">Carmel</Link></li>
-                <li><Link href="/areas/pacific-grove" className="hover:text-white">Pacific Grove</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-white font-bold mb-4">Contact</h4>
-              <ul className="space-y-2 text-sm">
-                <li>hello@californiamailer.com</li>
-                <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
-                <li className="pt-2">
-                  <Link href="/" className="text-blue-400 hover:text-blue-300">Client Portal Login →</Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            © {new Date().getFullYear()} CaliforniaMailer. All rights reserved.
-          </div>
-        </div>
-      </footer>
-    </div>
+    </PublicSiteShell>
   );
 }

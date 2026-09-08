@@ -26,7 +26,7 @@ export async function sendEmail({
       to: [to],
       subject,
       text: text || '',
-      html: html || text || '',
+      ...(html ? { html } : {}),
     });
     return { success: true, id: result.id };
   } catch {
