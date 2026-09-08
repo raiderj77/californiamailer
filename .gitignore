@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 *.report.html
 *.report.html
+.env*.local
+/home-*.png
+/tmp/

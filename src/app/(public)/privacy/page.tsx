@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import PublicSiteShell from '@/components/PublicSiteShell';
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/privacy' },
   title: 'Privacy Policy | CaliforniaMailer',
   description: 'How CaliforniaMailer handles quote requests, account data, payments, and analytics.',
 };
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-gray-50 py-16">
+    <PublicSiteShell><div className="min-h-screen bg-gray-50 py-16">
       <article className="mx-auto max-w-3xl rounded-2xl bg-white p-8 shadow-sm sm:p-12">
         <Link href="/home" className="text-sm font-medium text-blue-700">← CaliforniaMailer</Link>
         <h1 className="mt-6 text-4xl font-bold text-gray-950">Privacy Policy</h1>
@@ -58,6 +60,6 @@ export default function PrivacyPage() {
           </section>
         </div>
       </article>
-    </main>
+    </div></PublicSiteShell>
   );
 }

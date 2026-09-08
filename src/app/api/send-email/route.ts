@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
 
-const services = new Set(['coop', 'eddm', 'solo']);
+const services = new Set(['coop', 'eddm', 'solo', 'design']);
 const clean = (value: unknown, max: number) =>
   typeof value === 'string' ? value.trim().slice(0, max) : '';
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null);
+  const origin = request.headers.get('origin');
+  if (origin && origin !== request.nextUrl.origin) {
+    return NextResponse.json({ error: 'Request origin is not allowed.' }, { status: 403 });
+  }
+  if (!request.headers.get('content-type')?.startsWith('application/json')) {
+    return NextResponse.json({ error: 'Use a JSON request.' }, { status: 415 });
+  }
+  const raw = await request.text();
+  if (Buffer.byteLength(raw, 'utf8') > 12000) {
+    return NextResponse.json({ error: 'Request is too large.' }, { status: 413 });
+  }
+  let body;
+  try { body = JSON.parse(raw); } catch { body = null; }
   if (!body || body.kind !== 'quote') {
     return NextResponse.json({ error: 'Unsupported email request.' }, { status: 400 });
   }

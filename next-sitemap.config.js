@@ -4,6 +4,12 @@ module.exports = {
   generateRobotsTxt: false, // We have a custom robots.txt
   exclude: [
     '/api/*',
+    '/approve/*',
+    '/offer/*',
+    '/redeem/*',
+    '/track/*',
+    '/payment-success',
+    '/payment-cancelled',
     '/admin/*', 
     '/dashboard',
     '/territories',
