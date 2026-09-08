@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
     to: 'hello@californiamailer.com',
     subject: `Quote request: ${serviceType.toUpperCase()} - ${business}`,
     text,
+    replyTo: email,
   });
 
   if (!result.success) {
