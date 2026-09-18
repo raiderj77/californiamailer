@@ -63,3 +63,21 @@ test('homepage uses one stable root canonical and retires the legacy home URL', 
   assert.match(sitemap, /<loc>https:\/\/californiamailer\.com<\/loc>/);
   assert.doesNotMatch(sitemap, /californiamailer\.com\/home/);
 });
+
+test('sitemap index references the generated child sitemap without referencing itself', () => {
+  const sitemapConfig = read('next-sitemap.config.js');
+  const sitemapIndex = read('public/sitemap.xml');
+
+  assert.doesNotMatch(
+    sitemapConfig,
+    /https:\/\/californiamailer\.com\/sitemap\.xml/,
+  );
+  assert.match(
+    sitemapIndex,
+    /<loc>https:\/\/californiamailer\.com\/sitemap-0\.xml<\/loc>/,
+  );
+  assert.doesNotMatch(
+    sitemapIndex,
+    /<loc>https:\/\/californiamailer\.com\/sitemap\.xml<\/loc>/,
+  );
+});
