@@ -10,7 +10,7 @@ try {
   for (const width of [390, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
     for (const route of [
-      "/home",
+      "/",
       "/services",
       "/quote",
       "/privacy",
@@ -30,7 +30,9 @@ try {
       assert.equal(await page.locator("main").count(), 1, route + " main");
       assert.equal(
         await page.locator("link[rel=canonical]").getAttribute("href"),
-        "https://californiamailer.com" + route,
+        route === "/"
+          ? "https://californiamailer.com"
+          : "https://californiamailer.com" + route,
       );
       assert.equal(
         await page.evaluate(
@@ -55,7 +57,7 @@ try {
         [],
         route + " axe",
       );
-      if (route === "/home") {
+      if (route === "/") {
         await page.screenshot({
           path: "home-" + width + ".png",
           fullPage: true,
@@ -99,6 +101,9 @@ try {
     await page.close();
     console.log("PASS responsive pages and mocked quote flow", width);
   }
+  const legacyHome = await fetch(base + "/home", { redirect: "manual" });
+  assert.equal(legacyHome.status, 308, "legacy home redirect status");
+  assert.equal(legacyHome.headers.get("location"), "/", "legacy home redirect destination");
   const invalid = await fetch(base + "/api/send-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -5,7 +5,7 @@ export const metadata = {
   title: "9 × 12 Co-op Postcard Advertising | CaliforniaMailer",
   description:
     "Share a 9 × 12 postcard with local businesses in Monterey County and California. Ask about ad space, campaign areas, design, and mailing costs.",
-  alternates: { canonical: "/home" },
+  alternates: { canonical: "/" },
 };
 const steps = [
   [

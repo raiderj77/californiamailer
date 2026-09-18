@@ -67,7 +67,7 @@ function PaymentSuccessContent() {
 
           <div className="space-y-3">
             <Link
-              href="/home"
+              href="/"
               className="block w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors"
             >
               Return to Homepage

@@ -43,7 +43,7 @@ export default function ProofApprovalPage({ params }: { params: Promise<{ id: st
   }
 
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
-  if (error || !proof) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-center"><div className="text-6xl mb-4">📋</div><h1 className="text-2xl font-bold mb-2">Proof Not Found</h1><p className="text-gray-500 mb-6">This link may be expired.</p><Link href="/home" className="text-blue-600">Return Home</Link></div>;
+  if (error || !proof) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-center"><div className="text-6xl mb-4">📋</div><h1 className="text-2xl font-bold mb-2">Proof Not Found</h1><p className="text-gray-500 mb-6">This link may be expired.</p><Link href="/" className="text-blue-600">Return Home</Link></div>;
 
   if (submitted) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -53,7 +53,7 @@ export default function ProofApprovalPage({ params }: { params: Promise<{ id: st
         </div>
         <h1 className="text-2xl font-bold mb-2">{submitted === 'approved' ? 'Proof Approved!' : 'Revision Requested'}</h1>
         <p className="text-gray-600 mb-6">{submitted === 'approved' ? 'We will proceed with printing.' : 'We will make changes and send a new proof.'}</p>
-        <Link href="/home" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">Return Home</Link>
+        <Link href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">Return Home</Link>
       </div>
     </div>
   );
@@ -64,14 +64,14 @@ export default function ProofApprovalPage({ params }: { params: Promise<{ id: st
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6"><span className="text-4xl">✅</span></div>
         <h1 className="text-2xl font-bold mb-2">Already Approved</h1>
         <p className="text-gray-600 mb-6">This proof has been approved and is being processed.</p>
-        <Link href="/home" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">Return Home</Link>
+        <Link href="/" className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold">Return Home</Link>
       </div>
     </div>
   );
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-white border-b"><div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center"><Link href="/home" className="text-xl font-bold text-blue-600">CaliforniaMailer</Link><span className="text-sm text-gray-500">Proof Approval</span></div></header>
+      <header className="bg-white border-b"><div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center"><Link href="/" className="text-xl font-bold text-blue-600">CaliforniaMailer</Link><span className="text-sm text-gray-500">Proof Approval</span></div></header>
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl border p-6 mb-6">
           <div className="flex justify-between items-start">

@@ -4,6 +4,7 @@ module.exports = {
   generateRobotsTxt: false, // We have a custom robots.txt
   exclude: [
     '/api/*',
+    '/home', // Permanent legacy redirect; canonical homepage is `/`
     '/approve/*',
     '/offer/*',
     '/redeem/*',
@@ -41,7 +42,7 @@ module.exports = {
 
     // Homepage - highest priority
     result.push({
-      loc: '/home',
+      loc: '/',
       changefreq: 'weekly',
       priority: 1.0,
       lastmod: new Date().toISOString(),

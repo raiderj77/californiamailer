@@ -11,11 +11,18 @@ const nextConfig = {
     }];
   },
   async redirects() {
-    return [{
-      source: '/blog/best-direct-mail-monterey-county',
-      destination: '/services',
-      permanent: true,
-    }];
+    return [
+      {
+        source: '/home',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/blog/best-direct-mail-monterey-county',
+        destination: '/services',
+        permanent: true,
+      },
+    ];
   },
   reactStrictMode: true,
   

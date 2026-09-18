@@ -45,3 +45,21 @@ test('unverified comparison article redirects to the current service page', () =
   assert.match(config, /destination: '\/services'/);
   assert.match(sitemap, /'\/blog\/\*'/);
 });
+
+test('homepage uses one stable root canonical and retires the legacy home URL', () => {
+  const rootPage = read('src/app/page.tsx');
+  const home = read('src/app/(public)/home/page.tsx');
+  const shell = read('src/components/PublicSiteShell.tsx');
+  const redirects = read('next.config.js');
+  const sitemapConfig = read('next-sitemap.config.js');
+  const sitemap = read('public/sitemap-0.xml');
+
+  assert.match(rootPage, /\.\/\(public\)\/home\/page/);
+  assert.match(home, /alternates: \{ canonical: "\/" \}/);
+  assert.doesNotMatch(shell, /href="\/home/);
+  assert.match(redirects, /source: '\/home'[\s\S]*destination: '\/'[\s\S]*permanent: true/);
+  assert.match(sitemapConfig, /'\/home'/);
+  assert.match(sitemapConfig, /loc: '\/'/);
+  assert.match(sitemap, /<loc>https:\/\/californiamailer\.com<\/loc>/);
+  assert.doesNotMatch(sitemap, /californiamailer\.com\/home/);
+});

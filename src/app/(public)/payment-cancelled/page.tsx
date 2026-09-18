@@ -31,7 +31,7 @@ export default function PaymentCancelledPage() {
               Try Again
             </Link>
             <Link
-              href="/home"
+              href="/"
               className="block w-full border border-gray-300 hover:border-gray-400 text-gray-700 py-3 rounded-lg font-semibold transition-colors"
             >
               Return to Homepage

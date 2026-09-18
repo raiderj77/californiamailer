@@ -12,7 +12,7 @@ export default function PrivacyPage() {
   return (
     <PublicSiteShell><div className="min-h-screen bg-gray-50 py-16">
       <article className="mx-auto max-w-3xl rounded-2xl bg-white p-8 shadow-sm sm:p-12">
-        <Link href="/home" className="text-sm font-medium text-blue-700">← CaliforniaMailer</Link>
+        <Link href="/" className="text-sm font-medium text-blue-700">← CaliforniaMailer</Link>
         <h1 className="mt-6 text-4xl font-bold text-gray-950">Privacy Policy</h1>
         <p className="mt-2 text-sm text-gray-500">Last updated July 14, 2026</p>
 
