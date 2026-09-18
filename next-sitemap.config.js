@@ -115,8 +115,5 @@ module.exports = {
         allow: '/',
       },
     ],
-    additionalSitemaps: [
-      'https://californiamailer.com/sitemap.xml',
-    ],
   },
 };
