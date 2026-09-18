@@ -87,7 +87,7 @@ export default function RedeemPage({ params }: { params: Promise<{ code: string 
           <div className="text-6xl mb-4">🎟️</div>
           <h1 className="text-2xl font-bold mb-2">Offer Not Found</h1>
           <p className="text-gray-500 mb-6">Code &quot;{code}&quot; is invalid or expired.</p>
-          <Link href="/home" className="text-blue-600 hover:underline">Return Home</Link>
+          <Link href="/" className="text-blue-600 hover:underline">Return Home</Link>
         </div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function RedeemPage({ params }: { params: Promise<{ code: string 
           <div className="text-6xl mb-4">⏰</div>
           <h1 className="text-2xl font-bold mb-2">Offer Expired</h1>
           <p className="text-gray-500 mb-6">This offer expired on {expDate.toLocaleDateString()}</p>
-          <Link href="/home" className="text-blue-600 hover:underline">Return Home</Link>
+          <Link href="/" className="text-blue-600 hover:underline">Return Home</Link>
         </div>
       </div>
     );
@@ -114,7 +114,7 @@ export default function RedeemPage({ params }: { params: Promise<{ code: string 
     <div className="min-h-screen bg-gray-50">
       <header className="bg-blue-600 text-white">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/home" className="text-xl font-bold">CaliforniaMailer</Link>
+          <Link href="/" className="text-xl font-bold">CaliforniaMailer</Link>
           <span className="text-blue-200 text-sm">Redeem Offer</span>
         </div>
       </header>

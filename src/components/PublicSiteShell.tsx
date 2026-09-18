@@ -10,14 +10,14 @@ export default function PublicSiteShell({
         Skip to content
       </a>
       <header className="cm-header">
-        <Link className="cm-brand" href="/home">
+        <Link className="cm-brand" href="/">
           California<span>Mailer</span>
           <small>LOCAL BUSINESS. LOCAL MAILBOXES.</small>
         </Link>
         <nav aria-label="Main navigation">
           <Link href="/coop-board">Co-op postcards</Link>
           <Link href="/services">Services</Link>
-          <Link href="/home#how-it-works">How it works</Link>
+          <Link href="/#how-it-works">How it works</Link>
           <Link className="cm-button" href="/quote">
             Request a quote ↗
           </Link>
@@ -26,7 +26,7 @@ export default function PublicSiteShell({
       <main id="main-content">{children}</main>
       <footer className="cm-footer">
         <div>
-          <Link className="cm-brand" href="/home">
+          <Link className="cm-brand" href="/">
             CaliforniaMailer
           </Link>
           <p>

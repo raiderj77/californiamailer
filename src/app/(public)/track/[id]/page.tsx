@@ -38,11 +38,11 @@ export default function TrackPage({ params }: { params: Promise<{ id: string }> 
   const isComplete = tracking?.status === 'in-homes';
 
   if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
-  if (error || !campaign) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-center"><div className="text-6xl mb-4">🔍</div><h1 className="text-2xl font-bold mb-2">Campaign Not Found</h1><p className="text-gray-500 mb-6">ID: {id}</p><Link href="/home" className="text-blue-600">Return Home</Link></div>;
+  if (error || !campaign) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-center"><div className="text-6xl mb-4">🔍</div><h1 className="text-2xl font-bold mb-2">Campaign Not Found</h1><p className="text-gray-500 mb-6">ID: {id}</p><Link href="/" className="text-blue-600">Return Home</Link></div>;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-600 text-white"><div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center"><Link href="/home" className="text-xl font-bold">CaliforniaMailer</Link><span className="text-blue-200 text-sm">Campaign Tracker</span></div></header>
+      <header className="bg-blue-600 text-white"><div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center"><Link href="/" className="text-xl font-bold">CaliforniaMailer</Link><span className="text-blue-200 text-sm">Campaign Tracker</span></div></header>
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-xl border p-6 mb-8">
           <div className="flex justify-between items-start mb-6">
@@ -101,7 +101,7 @@ export default function TrackPage({ params }: { params: Promise<{ id: string }> 
 
         <div className="mt-8 text-center"><p className="text-gray-500 text-sm mb-4">Questions?</p><Link href="/quote" className="text-blue-600 font-semibold">Contact Us →</Link></div>
       </main>
-      <footer className="bg-gray-100 py-6 px-4 mt-12"><div className="max-w-4xl mx-auto text-center text-sm text-gray-500">Powered by <Link href="/home" className="text-blue-600">CaliforniaMailer</Link></div></footer>
+      <footer className="bg-gray-100 py-6 px-4 mt-12"><div className="max-w-4xl mx-auto text-center text-sm text-gray-500">Powered by <Link href="/" className="text-blue-600">CaliforniaMailer</Link></div></footer>
     </div>
   );
 }

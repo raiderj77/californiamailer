@@ -14,7 +14,7 @@ Visit https://californiamailer.com/quote with your business category, target are
 The website accepts quote requests. It does not take payment, place print orders, reserve ad spaces, or guarantee delivery dates or advertising results. Checkout remains disabled.
 
 ## Public pages
-- https://californiamailer.com/home
+- https://californiamailer.com/
 - https://californiamailer.com/services
 - https://californiamailer.com/coop-board
 - https://californiamailer.com/quote

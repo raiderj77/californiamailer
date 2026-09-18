@@ -74,7 +74,7 @@ export default function QuotePage() {
                 is not an order or delivery confirmation. We will use the
                 contact details you provided to respond.
               </p>
-              <Link className="cm-button" href="/home">
+              <Link className="cm-button" href="/">
                 Back to home
               </Link>
             </div>

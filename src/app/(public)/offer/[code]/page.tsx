@@ -49,7 +49,7 @@ export default function OfferPage({ params }: { params: Promise<{ code: string }
           <div className="text-6xl mb-4">🎟️</div>
           <h1 className="text-2xl font-bold mb-2">Offer Not Found</h1>
           <p className="text-gray-500 mb-6">Code &quot;{code}&quot; is invalid or expired.</p>
-          <Link href="/home" className="text-blue-600 hover:underline">Return Home</Link>
+          <Link href="/" className="text-blue-600 hover:underline">Return Home</Link>
         </div>
       </div>
     );
@@ -169,7 +169,7 @@ export default function OfferPage({ params }: { params: Promise<{ code: string }
         <div className="text-center py-8">
           <p className="text-gray-400 text-sm">
             Brought to you by{' '}
-            <Link href="/home" className="text-blue-600 hover:underline">
+            <Link href="/" className="text-blue-600 hover:underline">
               CaliforniaMailer
             </Link>
           </p>
