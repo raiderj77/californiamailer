@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import { chromium } from 'playwright-core';
+import axe from 'axe-core';
+const base = process.argv[2] || 'http://127.0.0.1:3129';
+const planner = 'https://californiamailer-campaign-planner.jlr77.chatgpt.site';
+await mkdir('qa', { recursive: true });
+const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
+try {
+  for (const width of [390, 768, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 960 } });
+    await page.route('**/api/**', route => { throw new Error('QA must not send API requests: ' + route.request().url()); });
+    for (const route of ['/', '/coop-board', '/services', '/quote', '/privacy', '/terms', '/areas/salinas', '/areas/carmel-valley']) {
+      const response = await page.goto(base + route, { waitUntil: 'networkidle' });
+      assert.equal(response.status(), 200, route);
+      assert.equal(await page.locator('h1').count(), 1, route);
+      assert.equal(await page.locator('main').count(), 1, route);
+      assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://californiamailer.com' + (route === '/' ? '' : route));
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `${route} ${width} overflow`);
+      const links = await page.getByRole('link', { name: 'Plan my mailing', exact: true }).all();
+      assert.ok(links.length > 0);
+      for (const link of links) assert.equal(await link.getAttribute('href'), planner);
+      if (route === '/' || route === '/coop-board') {
+        assert.equal(await page.locator('[data-sample-slot]').count(), 16);
+        const slots = await page.locator('[data-sample-slot]').evaluateAll(nodes => nodes.map(node => {const r = node.getBoundingClientRect(); return [r.width, r.height];}));
+        assert.ok(slots.every(([w,h]) => Math.abs(w-slots[0][0]) < 1 && Math.abs(h-slots[0][1]) < 1), 'equal slots');
+      }
+      await page.evaluate(axe.source);
+      const violations = await page.evaluate(async () => (await axe.run(document, {runOnly: {type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa']}})).violations.filter(v => ['serious','critical'].includes(v.impact)).map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })));
+      assert.deepEqual(violations, [], `${route} ${width} accessibility`);
+      if (route === '/') {
+        await page.locator('summary').first().click();
+        assert.equal(await page.locator('details').first().getAttribute('open'), '');
+        await page.locator('summary').first().click();
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await page.screenshot({path: `qa/home-${width}.png`, fullPage: true});
+        await page.screenshot({path: `qa/hero-${width}.png`});
+      }
+      console.log(`PASS ${width}px ${route}`);
+    }
+    await page.close();
+  }
+  const page = await browser.newPage();
+  const response = await page.goto(base + '/home');
+  assert.equal(new URL(page.url()).pathname, '/');
+  assert.equal(response.status(), 200);
+  console.log('PASS legacy /home redirect; no forms submitted or APIs called');
+} finally { await browser.close(); }
