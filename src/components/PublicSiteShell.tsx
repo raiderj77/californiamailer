@@ -29,7 +29,7 @@ export default function PublicSiteShell({
             CaliforniaMailer
           </Link>
           <p>
-            Shared postcard advertising for Monterey County and California businesses.
+            Local co-op postcards for Monterey County. Dedicated single-business EDDM quoted throughout California.
           </p>
         </div>
         <nav aria-label="Footer navigation">

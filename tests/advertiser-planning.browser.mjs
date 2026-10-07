@@ -13,6 +13,8 @@ try {
     for (const route of ['/', '/coop-board', '/services', '/quote', '/privacy', '/terms', '/areas/salinas', '/areas/carmel-valley']) {
       const response = await page.goto(base + route, { waitUntil: 'networkidle' });
       assert.equal(response.status(), 200, route);
+      const copy = await page.locator('main').textContent();
+      assert.doesNotMatch(copy, /\$(?:399|599)\b/, `${route} stale package prices`);
       assert.equal(await page.locator('h1').count(), 1, route);
       assert.equal(await page.locator('main').count(), 1, route);
       assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://californiamailer.com' + (route === '/' ? '' : route));
@@ -21,6 +23,11 @@ try {
       assert.ok(links.length > 0);
       for (const link of links) assert.equal(await link.getAttribute('href'), planner);
       if (route === '/' || route === '/coop-board') {
+        assert.match(copy, /\$499/);
+        assert.match(copy, /\$799/);
+        assert.match(copy, /written proof approval/);
+        assert.match(copy, /reusable approved digital ad/);
+        assert.match(copy, /actual mailing-acceptance evidence/);
         assert.equal(await page.locator('[data-sample-slot]').count(), 16);
         const slots = await page.locator('[data-sample-slot]').evaluateAll(nodes => nodes.map(node => {const r = node.getBoundingClientRect(); return [r.width, r.height];}));
         assert.ok(slots.every(([w,h]) => Math.abs(w-slots[0][0]) < 1 && Math.abs(h-slots[0][1]) < 1), 'equal slots');

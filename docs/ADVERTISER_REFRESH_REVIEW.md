@@ -4,11 +4,11 @@ Prepared 2026-10-07 from production/main `a45ccd5f5afbf1aef5b9efe7f1d224a39c3075
 
 ## Scope
 
-- Homepage: original advertiser copy, shared vs dedicated EDDM, indicative $399 / approximately 5,000 homes and $599 / approximately 10,000 homes per advertiser per shared mailing, simple process, audience/route explanation, conditional holiday target, FAQs.
+- Homepage: original advertiser copy, shared vs dedicated EDDM, indicative $499 / approximately 5,000 homes and $799 / approximately 10,000 homes per advertiser per shared mailing, simple process, audience/route explanation, conditional holiday target, FAQs.
 - Original server-rendered sample: 16 equal ad slots total, illustrated as eight per side. Fictional example categories/offers; no claimed sales or availability. Final side allocation, dimensions and postal clear areas require printer approval.
 - Co-op inquiry page and services: aligned descriptions; global primary CTA and new page CTAs use `https://californiamailer-campaign-planner.jlr77.chatgpt.site`.
 - Nonbinding interest only: no category hold, purchase, contract, or payment collection. Costs and refund terms need approval before purchasing. Later purchases require full payment upfront, no deposits.
-- Proposed service help is explicitly subject to written scope. No automatic QR analytics or planner-submission claim.
+- Included shared-package services are confirmed in the written agreement before purchase. No automatic QR analytics or planner-submission claim.
 - Existing quote form, backend, production settings, SEO routes/canonicals/sitemap configuration, and disabled checkout preserved. No customer data, tracking, legal-entity assertions, private address, or vendor economics added.
 
 ## Research reviewed
@@ -47,3 +47,7 @@ node 'C:\Users\jason\AppData\Local\npm-cache\_npx\09c35f05f7dedb59\node_modules\
 This command has NOT been executed. Production Firebase/Stripe settings must remain on Vercel and must not be replaced by local placeholders. No new tool, domain, spend, DNS, email, checkout, or provider permission is needed for this source-only change; production action is held for the parent's QA review. Verify deploy result and public routes before reporting a release.
 
 Remaining limits: global lint debt; external quote delivery remains untested at the owner's request; actual print layout and commercial/refund scope remain unapproved; custom planner domain remains unverified and unused.
+
+## Approved price and scope update
+
+Owner approved shared planning prices of $499 for approximately 5,000 homes and $799 for approximately 10,000 homes, per advertiser per mailing. Both include basic ad design/offer help, one revision, written proof approval, industry exclusivity subject to overlap review, static QR link or offer code, reusable approved digital ad, route summary, and actual mailing-acceptance evidence. Co-op interest is local to Salinas, Castroville, and nearby Monterey County; dedicated EDDM is individually quoted throughout California. No new checkout or analytics. Existing planner fallback retained pending final activation confirmation.

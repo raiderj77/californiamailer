@@ -25,7 +25,7 @@ export default function Services() {
               "coop",
               "9 × 12 co-op postcard",
               "Share a 9 × 12 postcard with 16 equal ad slots total and one advertiser per industry per card.",
-              "Your business category, target community, offer, proposed household reach, and design needs. Campaign details and availability are confirmed in writing.",
+              "Your business category, target community, offer, proposed household reach, and design needs. Initial co-op interest is for Salinas, Castroville, and nearby Monterey County neighborhoods. Exact local routes and availability are unconfirmed.",
             ],
             [
               "design",
@@ -36,7 +36,7 @@ export default function Services() {
             [
               "solo",
               "Dedicated EDDM",
-              "Your business alone on a postcard mailed to selected carrier routes. Quoted separately for your actual quantity and scope.",
+              "Your business alone on a postcard mailed to selected carrier routes throughout California. Individually quoted using actual household count, printing, postage, design, preparation, and fees. Shared-card prices do not apply.",
               "Audience requirements; mailing method; production needs; a separately reviewed scope and estimate.",
             ],
           ].map(([id, title, body, scope]) => (
