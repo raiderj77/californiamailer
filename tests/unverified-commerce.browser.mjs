@@ -41,7 +41,7 @@ try {
     assert.match(home, /\$799/);
     const planner = page.getByRole('link', { name: 'Plan my mailing', exact: true });
     assert.ok(await planner.count() > 0);
-    for (const link of await planner.all()) assert.equal(await link.getAttribute('href'), 'https://californiamailer-campaign-planner.jlr77.chatgpt.site');
+    for (const link of await planner.all()) assert.equal(await link.getAttribute('href'), 'https://plan.californiamailer.com/');
     console.log(`PASS ${width}px unverified payment, no query-based confirmation, accessibility, prices and planner links`);
     await page.close();
   }

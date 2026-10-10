@@ -45,8 +45,11 @@ export default function Services() {
               <p>{body}</p>
               <h3>Include in your request</h3>
               <p>{scope}</p>
-              <a className="cm-button" href={CAMPAIGN_PLANNER_URL}>
-                Plan my mailing
+              <a
+                className="cm-button"
+                href={id === "design" ? "/quote?service=design" : CAMPAIGN_PLANNER_URL}
+              >
+                {id === "design" ? "Request design & print support" : "Plan my mailing"}
               </a>
             </article>
           ))}
