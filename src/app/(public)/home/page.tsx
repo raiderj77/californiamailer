@@ -1,200 +1,57 @@
-import Link from "next/link";
-import Image from "next/image";
 import PublicSiteShell from "@/components/PublicSiteShell";
+import CoopCardSample from "@/components/CoopCardSample";
+import { CAMPAIGN_PLANNER_URL } from "@/lib/campaignPlanner";
+
 export const metadata = {
-  title: "9 × 12 Co-op Postcard Advertising | CaliforniaMailer",
-  description:
-    "Share a 9 × 12 postcard with local businesses in Monterey County and California. Ask about ad space, campaign areas, design, and mailing costs.",
+  title: "9 x 12 Co-op Postcard Advertising | CaliforniaMailer",
+  description: "Plan a shared 9 x 12 postcard for Salinas, Castroville, and nearby Monterey County neighborhoods. 16 equal ad slots, one advertiser per industry per card. Nonbinding planning starts here.",
   alternates: { canonical: "/" },
 };
+
 const steps = [
-  [
-    "01",
-    "Choose your community",
-    "Tell us your business category and the community you want to reach. We review the campaign area and available placement options.",
-  ],
-  [
-    "02",
-    "Plan your ad space",
-    "Share your offer and artwork needs. Your written quote confirms the ad size, shared campaign scope, and your cost.",
-  ],
-  [
-    "03",
-    "Review before anything prints",
-    "Review the final artwork, route selection, scope, and schedule. Production requires a separate written agreement and approval.",
-  ],
+  ["01", "Choose the neighborhood", "Start with your service area, your business category, and a useful offer. The interactive planner helps you shape a starting plan."],
+  ["02", "Make the offer easy to act on", "A clear headline, a reason to respond, and one simple next step. The shared package includes basic ad design and offer help, one revision, and written proof approval."],
+  ["03", "Review the details together", "Before a purchase, review the routes, household count, final price, scope, refund terms, and schedule. Nothing prints without artwork approval."],
 ];
+const questions = [
+  ["What is a co-op postcard?", "Local businesses share one oversized postcard and the printing and mailing costs. Our proposed 9 × 12 card has 16 equal ad slots total: eight on the front and eight on the back."],
+  ["Will a competitor be on my card?", "The shared-card plan allows one advertiser per defined industry per card, subject to review of overlapping services. Category fit is confirmed before any placement. Starting a plan does not hold a category."],
+  ["Are the prices final?", "$499 for approximately 5,000 homes and $799 for approximately 10,000 homes are indicative planning prices per advertiser for one shared mailing. Final routes, household counts, inclusions, fees, and total cost must be confirmed in writing. Dedicated EDDM is quoted separately."],
+  ["What is included in the shared package?", "Basic ad design and offer help, one revision, written proof approval, one advertiser per defined industry subject to overlap review, a static QR link or offer code, a reusable approved digital ad, a route summary, and actual mailing-acceptance evidence after mailing. Your written agreement confirms the scope before purchase. A static QR link does not include automatic scan analytics."],
+  ["When would the holiday mailing happen?", "Mid-November 2026 is a planning target only. It depends on sufficient funding, approved artwork, vendor capacity, and the postal schedule. Arrival dates, response, and sales are not guaranteed."],
+  ["Am I reserving a spot or paying today?", "No. This is a nonbinding interest page. The planner does not reserve a slot, create a contract, or collect payment. No purchase opens until costs and refund terms are approved. If you later purchase, full payment is required upfront; there are no deposits."],
+  ["What if the shared mailing cannot go ahead?", "The written cancellation and refund terms must be approved and shared before any purchase. We are gathering interest now; we are not collecting funds or promising a launch date."],
+  ["Can I have a postcard just for my business?", "Yes, ask for a dedicated EDDM plan anywhere in California. Your business has its own postcard on selected carrier routes. The individual quote uses actual household count, printing, postage, design, preparation, and fees; shared-card prices do not apply."],
+];
+
 export default function HomePage() {
-  return (
-    <PublicSiteShell>
-      <section className="cm-hero">
-        <div>
-          <p className="cm-eyebrow">MONTEREY COUNTY & CALIFORNIA</p>
-          <h1>Share the postcard.<br /><span>Reach your neighborhood.</span></h1>
-          <p className="cm-lead">
-            Put your business on a 9 × 12 co-op postcard alongside other local
-            businesses. Share the printing and mailing costs while reaching
-            households in your selected California community.
-          </p>
-          <div className="cm-actions">
-            <Link className="cm-button" href="/quote?service=coop">
-              Ask about an ad space →
-            </Link>
-            <a className="cm-text-link" href="#how-it-works">
-              See how it works ↓
-            </a>
-          </div>
-          <p className="cm-fine">
-            No mailing list needed for EDDM. No payment to request a quote.
-          </p>
-        </div>
-        <figure className="cm-mail-preview">
-          <Image src="/coop-postcard-9x12-reference-v2.png" width={1448} height={1086} alt="Landscape 9 by 12 co-op postcard concept with eight sample coupon ads surrounding a small CaliforniaMailer panel" priority sizes="(max-width: 760px) 90vw, 600px" />
-          <figcaption>9 × 12 CO-OP POSTCARD <span>Concept layout · Sample ads</span></figcaption>
-        </figure>
-      </section>
-      <div className="cm-strip">
-        <span>One oversized postcard</span>
-        <span>Multiple local businesses</span>
-        <span>Shared printing & mailing costs</span>
+  return <PublicSiteShell>
+    <section className="cm-hero cm-advertiser-hero">
+      <div>
+        <p className="cm-eyebrow">LOCAL CO-OP · CALIFORNIA DEDICATED MAIL</p>
+        <h1>A local offer.<br /><span>A place in the mailbox.</span></h1>
+        <p className="cm-lead">Put your business on a shared 9 × 12 postcard with other local businesses. Reach the neighborhoods you serve while sharing the printing and mailing costs.</p>
+        <div className="cm-actions"><a className="cm-button" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a><a className="cm-text-link" href="#sample">Explore the sample</a></div>
+        <p className="cm-fine">Start a nonbinding plan. No payment. No reserved slot.</p>
+        <div className="cm-hero-facts"><span><strong>16</strong> equal ad slots total</span><span><strong>1</strong> advertiser per industry per card</span></div>
       </div>
-      <section className="cm-section" id="how-it-works">
-        <p className="cm-eyebrow">FROM AN IDEA TO A MAILING PLAN</p>
-        <h2>From your business to their mailbox.</h2>
-        <div className="cm-grid">
-          {steps.map(([n, title, body]) => (
-            <article className="cm-panel" key={n}>
-              <span className="cm-step">{n}</span>
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="cm-section cm-tinted">
-        <p className="cm-eyebrow">CHOOSE YOUR STARTING POINT</p>
-        <h2>Start with a shared postcard.</h2>
-        <div className="cm-grid">
-          {[
-            [
-              "coop",
-              "9 × 12 co-op advertising",
-              "Take an ad space alongside other local businesses and share the printing and mailing costs. Ask about your area and category.",
-            ],
-            [
-              "design",
-              "Design & print support",
-              "Have artwork already, or need help getting started? Include the size, quantity, and design support you need.",
-            ],
-            [
-              "solo",
-              "Custom direct mail",
-              "Planning something beyond a neighborhood mailing? Describe your audience and requirements for a custom review.",
-            ],
-          ].map(([id, title, body]) => (
-            <article className="cm-panel" key={id}>
-              <h3>{title}</h3>
-              <p>{body}</p>
-              <Link href={"/quote?service=" + id}>Request this service →</Link>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="cm-section cm-split" id="areas">
-        <div>
-          <p className="cm-eyebrow">START WITH THE RIGHT AREA</p>
-          <h2>
-            Think in neighborhoods,
-            <br />
-            not guesswork.
-          </h2>
-          <p>
-            Salinas, Monterey, Carmel, Pacific Grove, Seaside, Marina—or another
-            California community. Request an area review; route counts and
-            service availability are confirmed for your campaign.
-          </p>
-          <a
-            className="cm-text-link"
-            href="https://eddm.usps.com/eddm/select-routes.htm"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Explore routes on USPS (opens a new tab) ↗
-          </a>
-        </div>
-        <aside className="cm-panel">
-          <h3>What should I budget?</h3>
-          <p>
-            A mailing budget includes printing, postage, and any design or
-            preparation work. Quantity, format, selected routes, and timing
-            affect the total.
-          </p>
-          <p>
-            Your written quote breaks down the costs for your campaign.
-            Requesting a quote is free and does not place an order.
-          </p>
-          <Link className="cm-button" href="/quote">
-            Request a written quote ↗
-          </Link>
-        </aside>
-      </section>
-      <section className="cm-section cm-faq">
-        <p className="cm-eyebrow">BEFORE YOU START</p>
-        <h2>A few useful answers.</h2>
-        {[
-          [
-            "How does a co-op postcard work?",
-            "Several businesses share one oversized postcard and its printing and mailing costs. Your quote confirms the placement size, campaign area, quantity, funding requirements, and schedule before you commit.",
-          ],
-          [
-            "Is the sample showing available ad spaces?",
-            "The sample illustrates a layout. It does not show booked advertisers or live inventory. Ask about your business category and area for current placement options.",
-          ],
-          [
-            "Do I need a customer mailing list?",
-            "Not for EDDM. It reaches delivery points on the carrier routes you select, rather than a list of named customers.",
-          ],
-          [
-            "How many pieces can I send?",
-            "USPS describes EDDM Retail as 200–5,000 pieces per day per ZIP Code. Larger or different mailings need the appropriate mailing plan. Final route counts and eligibility are checked before a quote is accepted.",
-          ],
-          [
-            "Can I use my own design?",
-            "Yes. Say that you have artwork in your request. Final format, print specifications, and postal eligibility must be reviewed before production. Do not upload artwork or a customer list through the quote form.",
-          ],
-          [
-            "When will my mailing arrive?",
-            "The production schedule and postal-entry plan are confirmed in writing. Postal delivery dates and business results are not guaranteed.",
-          ],
-          [
-            "Do I pay on this website?",
-            "No. Checkout remains disabled. A quote request does not place an order, reserve a mailing, or authorize payment.",
-          ],
-        ].map(([q, a]) => (
-          <details key={q}>
-            <summary>{q}</summary>
-            <p>{a}</p>
-          </details>
-        ))}
-        <p className="cm-fine">
-          Postal guidance checked September 7, 2026.{" "}
-          <a href="https://www.usps.com/business/every-door-direct-mail.htm">
-            Check current USPS requirements
-          </a>
-          .
-        </p>
-      </section>
-      <section className="cm-final">
-        <p className="cm-eyebrow">LET’S START WITH YOUR NEIGHBORHOOD</p>
-        <h2>
-          Where do you want
-          <br />
-          your business to go?
-        </h2>
-        <Link className="cm-button" href="/quote?service=coop">
-          Ask about an ad space ↗
-        </Link>
-      </section>
-    </PublicSiteShell>
-  );
+      <div id="sample"><CoopCardSample /></div>
+    </section>
+    <div className="cm-strip"><span>One useful offer</span><span>Your chosen neighborhoods</span><span>Your proof approval before print</span></div>
+    <section className="cm-section" id="mailing-options">
+      <p className="cm-eyebrow">TWO WAYS TO REACH YOUR NEIGHBORS</p><h2>Share a card. Or make it all yours.</h2>
+      <p className="cm-lead">Start with a planning budget. Final routes, household counts, inclusions, fees, and total price are confirmed in writing before any purchase.</p>
+      <div className="cm-grid cm-price-grid">
+        <article className="cm-panel"><p className="cm-eyebrow">SHARED · ONE MAILING</p><h3>About 5,000 homes</h3><p className="cm-price">$499 <span>per advertiser</span></p><p>One equal ad slot on a 16-slot co-op postcard. A focused starting point for the neighborhoods closest to your business.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
+        <article className="cm-panel cm-featured"><p className="cm-eyebrow">SHARED · ONE MAILING</p><h3>About 10,000 homes</h3><p className="cm-price">$799 <span>per advertiser</span></p><p>The same equal-slot format, with a larger proposed reach. Route availability and the mailing plan determine the final count.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
+        <article className="cm-panel"><p className="cm-eyebrow">DEDICATED EDDM</p><h3>Your business only</h3><p className="cm-price cm-price-quote">Custom quote</p><p>Your own postcard on selected carrier routes throughout California. Individually quoted using actual household count, printing, postage, design, and fees.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
+      </div>
+      <p><strong>Included with either shared package:</strong> basic ad design and offer help, one revision, written proof approval, a static QR link or offer code, a reusable approved digital ad, a route summary, and actual mailing-acceptance evidence after mailing.</p>
+      <p className="cm-fine">Shared prices are indicative planning figures, not a live offer or checkout price. One advertiser per industry per card; category fit requires review.</p>
+    </section>
+    <section className="cm-section cm-tinted" id="how-it-works"><p className="cm-eyebrow">A SIMPLE START</p><h2>You know your business.<br />Start with the offer.</h2><div className="cm-grid">{steps.map(([number,title,body])=><article key={number}><span className="cm-step">{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div></section>
+    <section className="cm-section cm-split" id="areas"><div><p className="cm-eyebrow">WHO SHOULD SEE YOUR OFFER?</p><h2>Start where your customers live.</h2><p>Initial co-op interest is for Salinas, Castroville, and nearby Monterey County neighborhoods. Exact routes are unconfirmed. Each shared card serves its selected local routes, not the whole state. Dedicated single-business EDDM can be quoted throughout California.</p><p>EDDM uses selected carrier routes rather than a list of named customers. Exact routes and current residential counts must be reviewed before a mailing is confirmed.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></div><aside className="cm-panel cm-season"><p className="cm-eyebrow">HOLIDAY MAILING · GATHERING INTEREST</p><h3>A mid-November 2026 target.</h3><p>Bring a seasonal offer worth keeping: a useful service, a neighborhood visit, or an easy next step.</p><p>The target depends on sufficient funding, approved artwork, vendor capacity, and the postal schedule. Arrival, response, and sales are not guaranteed.</p><p className="cm-fine">No confirmed launch or sold-slot count is represented here.</p></aside></section>
+    <section className="cm-section cm-faq"><p className="cm-eyebrow">BEFORE YOU DECIDE</p><h2>Good questions. Clear answers.</h2>{questions.map(([question,answer])=><details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</section>
+    <section className="cm-final"><p className="cm-eyebrow">YOUR BUSINESS. YOUR NEIGHBORHOOD.</p><h2>Give your next mailing<br />a clear starting point.</h2><a className="cm-button" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a><p className="cm-fine cm-final-note">Explore your options in the interactive planner. Nonbinding; no payment or reservation.</p></section>
+  </PublicSiteShell>;
 }

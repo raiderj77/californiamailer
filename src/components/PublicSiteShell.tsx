@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CAMPAIGN_PLANNER_URL } from "@/lib/campaignPlanner";
 export default function PublicSiteShell({
   children,
 }: {
@@ -18,9 +19,7 @@ export default function PublicSiteShell({
           <Link href="/coop-board">Co-op postcards</Link>
           <Link href="/services">Services</Link>
           <Link href="/#how-it-works">How it works</Link>
-          <Link className="cm-button" href="/quote">
-            Request a quote ↗
-          </Link>
+          <a className="cm-button" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a>
         </nav>
       </header>
       <main id="main-content">{children}</main>
@@ -30,7 +29,7 @@ export default function PublicSiteShell({
             CaliforniaMailer
           </Link>
           <p>
-            Shared postcard advertising for Monterey County and California businesses.
+            Local co-op postcards for Monterey County. Dedicated single-business EDDM quoted throughout California.
           </p>
         </div>
         <nav aria-label="Footer navigation">

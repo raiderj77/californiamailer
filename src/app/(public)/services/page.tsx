@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { CAMPAIGN_PLANNER_URL } from "@/lib/campaignPlanner";
 import PublicSiteShell from "@/components/PublicSiteShell";
 export const metadata = {
   title: "EDDM, Design & Mailing Services | CaliforniaMailer",
@@ -24,8 +24,8 @@ export default function Services() {
             [
               "coop",
               "9 × 12 co-op postcard",
-              "Share a postcard and its printing and mailing costs with other local businesses.",
-              "Your business category, target community, offer, preferred placement size, and design needs. Campaign details and availability are confirmed in writing.",
+              "Share a 9 × 12 postcard with 16 equal ad slots total and one advertiser per industry per card.",
+              "Your business category, target community, offer, proposed household reach, and design needs. Initial co-op interest is for Salinas, Castroville, and nearby Monterey County neighborhoods. Exact local routes and availability are unconfirmed.",
             ],
             [
               "design",
@@ -35,8 +35,8 @@ export default function Services() {
             ],
             [
               "solo",
-              "Custom direct mail",
-              "For a mailing that needs a different audience or format.",
+              "Dedicated EDDM",
+              "Your business alone on a postcard mailed to selected carrier routes throughout California. Individually quoted using actual household count, printing, postage, design, preparation, and fees. Shared-card prices do not apply.",
               "Audience requirements; mailing method; production needs; a separately reviewed scope and estimate.",
             ],
           ].map(([id, title, body, scope]) => (
@@ -45,9 +45,12 @@ export default function Services() {
               <p>{body}</p>
               <h3>Include in your request</h3>
               <p>{scope}</p>
-              <Link className="cm-button" href={"/quote?service=" + id}>
-                Request this service ↗
-              </Link>
+              <a
+                className="cm-button"
+                href={id === "design" ? "/quote?service=design" : CAMPAIGN_PLANNER_URL}
+              >
+                {id === "design" ? "Request design & print support" : "Plan my mailing"}
+              </a>
             </article>
           ))}
         </div>
