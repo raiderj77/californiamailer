@@ -13,9 +13,9 @@
   "dependencies": {
     "@next/third-parties": "^16.4.0",
     "firebase": "^12.19.0",
-    "next": "^16.4.0",
+    "next": "^16.4.3",
     "next-seo": "^7.1.0",
-    "nodemailer": "10.1.0",
+    "nodemailer": "^10.3.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "schema-dts": "^1.1.5",
@@ -38,7 +38,8 @@
   },
   "overrides": {
     "@grpc/grpc-js": "1.14.6",
-    "postcss": "8.5.28",
-    "source-map-js": "1.2.2"
+    "postcss": "8.5.23",
+    "source-map-js": "1.2.2",
+    "minimatch": "^11.0.1"
   }
 }
