@@ -3,8 +3,8 @@ import CoopCardSample from "@/components/CoopCardSample";
 import { CAMPAIGN_PLANNER_URL } from "@/lib/campaignPlanner";
 
 export const metadata = {
-  title: "9 x 12 Co-op Postcard Advertising | CaliforniaMailer",
-  description: "Plan a shared 9 x 12 postcard for Salinas, Castroville, and nearby Monterey County neighborhoods. 16 equal ad slots, one advertiser per industry per card. Nonbinding planning starts here.",
+  title: "6x11 Co-op Postcard Advertising — $199 a Spot | CaliforniaMailer",
+  description: "Put your business on a shared 6 x 11 postcard for North Salinas: 16 equal ad slots, one advertiser per industry per card, $199 per advertiser for the current card. Bigger 9 x 12 mailings are planned next.",
   alternates: { canonical: "/" },
 };
 
@@ -14,9 +14,9 @@ const steps = [
   ["03", "Review the details together", "Before a purchase, review the routes, household count, final price, scope, refund terms, and schedule. Nothing prints without artwork approval."],
 ];
 const questions = [
-  ["What is a co-op postcard?", "Local businesses share one oversized postcard and the printing and mailing costs. Our proposed 9 × 12 card has 16 equal ad slots total: eight on the front and eight on the back."],
+  ["What is a co-op postcard?", "Local businesses share one oversized postcard and the printing and mailing costs. Our current 6 × 11 card has 16 equal ad slots total: eight on the front and eight on the back. A bigger 9 × 12 card is planned as a later mailing."],
   ["Will a competitor be on my card?", "The shared-card plan allows one advertiser per defined industry per card, subject to review of overlapping services. Category fit is confirmed before any placement. Starting a plan does not hold a category."],
-  ["Are the prices final?", "$499 for approximately 5,000 homes and $799 for approximately 10,000 homes are indicative planning prices per advertiser for one shared mailing. Final routes, household counts, inclusions, fees, and total cost must be confirmed in writing. Dedicated EDDM is quoted separately."],
+  ["Are the prices final?", "$199 per advertiser is the price for the current 6 × 11 North Salinas card (about 2,443 homes). For the bigger planned mailings, $499 for approximately 5,000 homes and $799 for approximately 10,000 homes are indicative planning prices per advertiser for one shared mailing. Final routes, household counts, inclusions, fees, and total cost must be confirmed in writing. Dedicated EDDM is quoted separately."],
   ["What is included in the shared package?", "Basic ad design and offer help, one revision, written proof approval, one advertiser per defined industry subject to overlap review, a static QR link or offer code, a reusable approved digital ad, a route summary, and actual mailing-acceptance evidence after mailing. Your written agreement confirms the scope before purchase. A static QR link does not include automatic scan analytics."],
   ["When would the holiday mailing happen?", "Mid-November 2026 is a planning target only. It depends on sufficient funding, approved artwork, vendor capacity, and the postal schedule. Arrival dates, response, and sales are not guaranteed."],
   ["Am I reserving a spot or paying today?", "No. This is a nonbinding interest page. The planner does not reserve a slot, create a contract, or collect payment. No purchase opens until costs and refund terms are approved. If you later purchase, full payment is required upfront; there are no deposits."],
@@ -30,7 +30,7 @@ export default function HomePage() {
       <div>
         <p className="cm-eyebrow">LOCAL CO-OP · CALIFORNIA DEDICATED MAIL</p>
         <h1>A local offer.<br /><span>A place in the mailbox.</span></h1>
-        <p className="cm-lead">Put your business on a shared 9 × 12 postcard with other local businesses. Reach the neighborhoods you serve while sharing the printing and mailing costs.</p>
+        <p className="cm-lead">Put your business on a shared 6 × 11 postcard with other local businesses. Reach the neighborhoods you serve while sharing the printing and mailing costs.</p>
         <div className="cm-actions"><a className="cm-button" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a><a className="cm-text-link" href="#sample">Explore the sample</a></div>
         <p className="cm-fine">Start a nonbinding plan. No payment. No reserved slot.</p>
         <div className="cm-hero-facts"><span><strong>16</strong> equal ad slots total</span><span><strong>1</strong> advertiser per industry per card</span></div>
@@ -42,12 +42,12 @@ export default function HomePage() {
       <p className="cm-eyebrow">TWO WAYS TO REACH YOUR NEIGHBORS</p><h2>Share a card. Or make it all yours.</h2>
       <p className="cm-lead">Start with a planning budget. Final routes, household counts, inclusions, fees, and total price are confirmed in writing before any purchase.</p>
       <div className="cm-grid cm-price-grid">
-        <article className="cm-panel"><p className="cm-eyebrow">SHARED · ONE MAILING</p><h3>About 5,000 homes</h3><p className="cm-price">$499 <span>per advertiser</span></p><p>One equal ad slot on a 16-slot co-op postcard. A focused starting point for the neighborhoods closest to your business.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
-        <article className="cm-panel cm-featured"><p className="cm-eyebrow">SHARED · ONE MAILING</p><h3>About 10,000 homes</h3><p className="cm-price">$799 <span>per advertiser</span></p><p>The same equal-slot format, with a larger proposed reach. Route availability and the mailing plan determine the final count.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
+        <article className="cm-panel cm-featured"><p className="cm-eyebrow">SHARED · CURRENT CARD</p><h3>North Salinas · about 2,443 homes</h3><p className="cm-price">$199 <span>per advertiser</span></p><p>One equal ad slot on the current 16-slot 6 × 11 co-op postcard. The focused starting point for the neighborhoods closest to your business.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
+        <article className="cm-panel"><p className="cm-eyebrow">SHARED · BIGGER MAILINGS · PLANNED</p><h3>About 5,000 to 10,000 homes</h3><p className="cm-price">$499–$799 <span>per advertiser</span></p><p>The same equal-slot format on the bigger planned 9 × 12 card, with a larger proposed reach. Route availability and the mailing plan determine the final count. These are indicative planning prices.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
         <article className="cm-panel"><p className="cm-eyebrow">DEDICATED EDDM</p><h3>Your business only</h3><p className="cm-price cm-price-quote">Custom quote</p><p>Your own postcard on selected carrier routes throughout California. Individually quoted using actual household count, printing, postage, design, and fees.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></article>
       </div>
-      <p><strong>Included with either shared package:</strong> basic ad design and offer help, one revision, written proof approval, a static QR link or offer code, a reusable approved digital ad, a route summary, and actual mailing-acceptance evidence after mailing.</p>
-      <p className="cm-fine">Shared prices are indicative planning figures, not a live offer or checkout price. One advertiser per industry per card; category fit requires review.</p>
+      <p><strong>Included with a shared package:</strong> basic ad design and offer help, one revision, written proof approval, a static QR link or offer code, a reusable approved digital ad, a route summary, and actual mailing-acceptance evidence after mailing.</p>
+      <p className="cm-fine">The $199 price is for the current 6 × 11 North Salinas card. Bigger-mailing prices are indicative planning figures, not checkout prices. One advertiser per industry per card; category fit requires review.</p>
     </section>
     <section className="cm-section cm-tinted" id="how-it-works"><p className="cm-eyebrow">A SIMPLE START</p><h2>You know your business.<br />Start with the offer.</h2><div className="cm-grid">{steps.map(([number,title,body])=><article key={number}><span className="cm-step">{number}</span><h3>{title}</h3><p>{body}</p></article>)}</div></section>
     <section className="cm-section cm-split" id="areas"><div><p className="cm-eyebrow">WHO SHOULD SEE YOUR OFFER?</p><h2>Start where your customers live.</h2><p>Initial co-op interest is for Salinas, Castroville, and nearby Monterey County neighborhoods. Exact routes are unconfirmed. Each shared card serves its selected local routes, not the whole state. Dedicated single-business EDDM can be quoted throughout California.</p><p>EDDM uses selected carrier routes rather than a list of named customers. Exact routes and current residential counts must be reviewed before a mailing is confirmed.</p><a className="cm-text-link" href={CAMPAIGN_PLANNER_URL}>Plan my mailing</a></div><aside className="cm-panel cm-season"><p className="cm-eyebrow">HOLIDAY MAILING · GATHERING INTEREST</p><h3>A mid-November 2026 target.</h3><p>Bring a seasonal offer worth keeping: a useful service, a neighborhood visit, or an easy next step.</p><p>The target depends on sufficient funding, approved artwork, vendor capacity, and the postal schedule. Arrival, response, and sales are not guaranteed.</p><p className="cm-fine">No confirmed launch or sold-slot count is represented here.</p></aside></section>
