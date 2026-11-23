@@ -73,6 +73,7 @@ PHASE 5 — UX
 - Mobile first at 360px. Tap targets at least 44px, no horizontal scroll.
 - Seeker test: first-time visitor reaches the primary money action in at most 3 clicks from the homepage.
 - Forms: fewest fields, clear labels, inline errors, success state proven live. A form stuck in "not sending yet" state is a blocker — flag it at the top.
+- Form errors: errors clear once the field is corrected, do not validate before the user finishes the field, never wipe entered input after a failed submit, never leave the submit button disabled until the form is valid, never block paste into any field, accept forgiving input formats (spaces, dashes, case), error messages stay visible until fixed and say what to do, warn before losing unsaved changes, and offer undo for reversible actions.
 - 5-second test: what is this, who is it for, what do I do next — obvious.
 
 PHASE 6 — CRO / CONVERSION (cash register)
