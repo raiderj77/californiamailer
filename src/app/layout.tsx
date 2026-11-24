@@ -18,6 +18,15 @@ export const metadata: Metadata = {
   title: "CaliforniaMailer",
   description: "Direct mail management for California territories",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "CaliforniaMailer",
+    description: "Shared postcard advertising that puts local businesses in North Salinas mailboxes.",
+    url: "https://californiamailer.com",
+    siteName: "CaliforniaMailer",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "CaliforniaMailer" }],
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", images: ["/og-image.png"] },
 };
 
 export default function RootLayout({
