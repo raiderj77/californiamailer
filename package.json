@@ -24,7 +24,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/nodemailer": "8.0.1",
+    "@types/nodemailer": "8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "axe-core": "4.10.3",
@@ -37,9 +37,9 @@
     "typescript": "^5"
   },
   "overrides": {
-    "@grpc/grpc-js": "1.14.6",
-    "postcss": "8.5.23",
-    "source-map-js": "1.2.2",
+    "@grpc/grpc-js": "1.14.7",
+    "postcss": "8.5.33",
+    "source-map-js": "1.2.4",
     "minimatch": "^11.0.1"
   }
 }
